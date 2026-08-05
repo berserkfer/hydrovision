@@ -139,9 +139,9 @@ export function SatelliteIndicesSection({ items, riverName }: SatelliteIndicesSe
               <div>
                 <p className="mb-1 text-[10px] font-semibold uppercase text-slate-400">Leyenda</p>
                 <div className="flex flex-wrap gap-1">
-                  {item.legend.map((entry) => (
+                  {item.legend.map((entry, index) => (
                     <span
-                      key={`${item.definition.code}-${entry.label}-${entry.range}`}
+                      key={`${item.definition.code}-legend-${index}`}
                       className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600"
                     >
                       <span

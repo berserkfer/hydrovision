@@ -1,17 +1,18 @@
-# HydroVision — Prisma / PostgreSQL (Fase 5.0)
+# HydroVision — Prisma / PostgreSQL
 
 ## Esquema
 
-Ver `schema.prisma` — modelo normalizado con 12 entidades principales.
+Ver `schema.prisma` — **Sprint 2A Base de Datos Científica** (8 entidades núcleo + extensiones v2).
 
-## Migración inicial
+Documentación: `docs/SPRINT2A_SCIENTIFIC_DATABASE.md`
 
-```powershell
-npm run db:generate
-npm run db:migrate
-```
+## Migraciones
 
-Migración: `prisma/migrations/20250801180000_fase_5_0_init/`
+| Migración | Descripción |
+|-----------|-------------|
+| `20250801180000_fase_5_0_init` | Inicial Fase 5.0 |
+| `20250801210000_fase_5_1_model_v2` | Modelo ambiental v2 |
+| `20250805120000_sprint_2a_scientific_database` | Sprint 2A — campos científicos + RiesgoAmbiental |
 
 ## Seed
 

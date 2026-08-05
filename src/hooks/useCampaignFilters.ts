@@ -20,9 +20,9 @@ export function useCampaignFilters() {
   const hasActiveFilters = useMemo(
     () =>
       filters.search !== "" ||
-      filters.fecha !== "" ||
+      filters.year !== "" ||
+      filters.month !== "" ||
       filters.responsableId !== "" ||
-      filters.cuencaId !== "" ||
       filters.estado !== "",
     [filters]
   );

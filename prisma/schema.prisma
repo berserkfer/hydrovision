@@ -1,10 +1,15 @@
 // =============================================================================
-// HydroVision — Modelo de Datos Ambiental v2 (Fase 5.1)
+// HydroVision — Base de Datos Científica (Sprint 2A)
 // =============================================================================
-// Entidades: Proyecto, Cuenca, Subcuenca, Rio, Quebrada, PuntoMonitoreo,
-//            Campana, Muestreo, Parametro, Medicion, NormativaECA,
-//            EvaluacionAmbiental, IndiceSatelital, ImagenSatelital, Usuario, Reporte
-// Normalización 3FN · Preparado GEE · Preparado IA · Multi-proyecto
+// Capa científica principal (8 entidades núcleo):
+//   Cuenca → Río → Estación (PuntoMonitoreo) → Campaña → Medición
+//   Parámetro · Índice Satelital · Riesgo Ambiental
+//
+// Extensiones v2 (Fase 5.1): geografía admin, subcuencas, normativa ECA,
+//   proyectos multi-cuenca, imágenes satelitales, usuarios y reportes.
+//
+// Normalización 3FN · Preparado migraciones · Compatible TypeScript
+// NOTA: PostgreSQL no conectado en runtime — mock activo por defecto.
 // =============================================================================
 
 generator client {
@@ -108,6 +113,8 @@ enum TipoParametroCodigo {
   bod5                   @map("bod5")
   cod                    @map("cod")
   coliforms              @map("coliforms")
+  nitrates               @map("nitrates")   // Sprint 2A — Nitratos
+  phosphates             @map("phosphates") // Sprint 2A — Fosfatos
   total_dissolved_solids @map("total_dissolved_solids")
   flow_rate              @map("flow_rate")
 }
@@ -175,11 +182,22 @@ model Distrito {
 // HIDROGRAFÍA — Cuenca → Subcuenca → Río / Quebrada → Punto de Monitoreo
 // =============================================================================
 
+// =============================================================================
+// 1. CUENCA HIDROGRÁFICA — Sprint 2A
+// id · nombre · región · país · descripción (+ vínculo administrativo v2)
+// =============================================================================
+
 model Cuenca {
   id            String         @id
   codigo        String         @unique @db.VarChar(20)
   distritoId    String         @map("distrito_id")
   nombre        String         @db.VarChar(150)
+  /// Región geográfica de estudio (ej. Lambayeque)
+  region        String         @default("Lambayeque") @db.VarChar(120)
+  /// País del área de monitoreo
+  pais          String         @default("Perú") @db.VarChar(80)
+  /// Descripción científica de la cuenca hidrográfica
+  descripcion   String?        @db.Text
   areaKm2       Float          @map("area_km2")
   estado        EstadoRegistro @default(active)
   observaciones String?        @db.Text
@@ -197,6 +215,7 @@ model Cuenca {
 
   @@index([distritoId])
   @@index([estado])
+  @@index([region])
   @@map("cuencas")
 }
 
@@ -220,6 +239,11 @@ model Subcuenca {
   @@index([cuencaId])
   @@map("subcuencas")
 }
+
+// =============================================================================
+// 2. RÍO — Sprint 2A
+// id · nombre · longitud · cuenca_id (+ metadatos cartográficos v2)
+// =============================================================================
 
 model Rio {
   id            String         @id
@@ -334,6 +358,11 @@ model ProyectoRio {
 // PUNTO DE MONITOREO — Estación de campo (compatibilidad UI: Estacion)
 // =============================================================================
 
+// =============================================================================
+// 3. ESTACIÓN DE MONITOREO — Sprint 2A (tabla: estaciones)
+// código · nombre · latitud · longitud · altitud · estado · río asociado
+// =============================================================================
+
 model PuntoMonitoreo {
   id                  String               @id
   codigo              String               @db.VarChar(10)
@@ -372,6 +401,7 @@ model PuntoMonitoreo {
   indicesSatelitales    IndiceSatelital[]
   imagenesSatelitales   ImagenSatelital[]
   evaluacionesAmbiental EvaluacionAmbiental[]
+  riesgosAmbientales    RiesgoAmbiental[]
   reportes              ReportePuntoMonitoreo[]
 
   @@unique([cuencaId, codigo])
@@ -386,6 +416,11 @@ model PuntoMonitoreo {
 
 // =============================================================================
 // CAMPAÑA Y MUESTREO
+// =============================================================================
+
+// =============================================================================
+// 4. CAMPAÑA DE MONITOREO — Sprint 2A
+// fecha · responsable · observaciones (+ metadatos operativos v2)
 // =============================================================================
 
 model Campana {
@@ -409,6 +444,7 @@ model Campana {
   cuenca      Cuenca     @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
   responsable Usuario    @relation("CampanaResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
   muestreos   Muestreo[]
+  mediciones  Medicion[]
 
   @@index([proyectoId])
   @@index([rioId])
@@ -435,6 +471,7 @@ model Muestreo {
   responsable    Usuario               @relation("MuestreoResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
   mediciones     Medicion[]
   evaluacion     EvaluacionAmbiental?
+  riesgos        RiesgoAmbiental[]
 
   @@index([campanaId])
   @@index([puntoMonitoreoId])
@@ -445,6 +482,12 @@ model Muestreo {
 
 // =============================================================================
 // PARÁMETRO · MEDICIÓN · NORMATIVA ECA
+// =============================================================================
+
+// =============================================================================
+// 5. PARÁMETRO DE CALIDAD DEL AGUA — Sprint 2A
+// Catálogo: pH, OD, Conductividad, Turbidez, Temperatura, DBO5, DQO,
+//           Coliformes, Nitratos, Fosfatos (+ TDS, Caudal v2)
 // =============================================================================
 
 model Parametro {
@@ -503,13 +546,23 @@ model NormativaLimiteParametro {
   @@map("normativa_limites_parametro")
 }
 
+// =============================================================================
+// 6. MEDICIÓN — Sprint 2A
+// estación · campaña · parámetro · valor · unidad · cumplimiento ECA · comentario
+// =============================================================================
+
 model Medicion {
   id               String      @id
   muestreoId       String      @map("muestreo_id")
+  campanaId        String?     @map("campana_id")
   parametroId      String      @map("parametro_id")
   puntoMonitoreoId String      @map("estacion_id")
   valor            Float
   unidad           String      @db.VarChar(30)
+  /// Clasificación ECA de la medición individual
+  cumplimientoEca  EstadoECA?  @map("cumplimiento_eca")
+  /// Comentario técnico del analista de campo o laboratorio
+  comentario       String?     @db.Text
   fechaMedicion    DateTime    @map("fecha_medicion")
   metodoAnalisis   String?     @map("metodo_analisis") @db.VarChar(120)
   laboratorio      String?     @db.VarChar(150)
@@ -521,14 +574,17 @@ model Medicion {
   updatedAt        DateTime    @updatedAt @map("updated_at")
 
   muestreo       Muestreo       @relation(fields: [muestreoId], references: [id], onDelete: Cascade)
+  campana        Campana?       @relation(fields: [campanaId], references: [id], onDelete: SetNull)
   parametro      Parametro      @relation(fields: [parametroId], references: [id], onDelete: Restrict)
   puntoMonitoreo PuntoMonitoreo @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
   responsable    Usuario?       @relation("MedicionResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
 
   @@unique([muestreoId, parametroId])
   @@index([puntoMonitoreoId])
+  @@index([campanaId])
   @@index([parametroId])
   @@index([fechaMedicion])
+  @@index([cumplimientoEca])
   @@map("mediciones")
 }
 
@@ -559,6 +615,7 @@ model EvaluacionAmbiental {
   puntoMonitoreo PuntoMonitoreo @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
   normativa      NormativaECA?  @relation(fields: [normativaId], references: [id], onDelete: SetNull)
   evaluadoPor    Usuario?       @relation("EvaluacionEvaluador", fields: [evaluadoPorId], references: [id], onDelete: SetNull)
+  riesgos        RiesgoAmbiental[]
 
   @@index([puntoMonitoreoId])
   @@index([normativaId])
@@ -570,12 +627,19 @@ model EvaluacionAmbiental {
 // SATÉLITE — Índices espectrales + imágenes Sentinel-2 (preparado GEE)
 // =============================================================================
 
+// =============================================================================
+// 7. ÍNDICE SATELITAL — Sprint 2A
+// NDWI · MNDWI · NDVI · NDTI · fecha · fuente · resolución
+// =============================================================================
+
 model IndiceSatelital {
   id                      String          @id
   puntoMonitoreoId        String          @map("estacion_id")
   proyectoId              String?         @map("proyecto_id")
   fechaAdquisicion        DateTime        @map("fecha_adquisicion") @db.Date
   fuente                  FuenteSatelital
+  /// Resolución espacial del producto satelital (metros/píxel)
+  resolucionMetros        Float           @default(10) @map("resolucion_m")
   ndwi                    Float
   ndvi                    Float
   mndwi                   Float
@@ -623,6 +687,40 @@ model ImagenSatelital {
   @@index([proyectoId])
   @@index([fuente])
   @@map("imagenes_satelitales")
+}
+
+// =============================================================================
+// 8. RIESGO AMBIENTAL — Sprint 2A
+// nivel · descripción · color · fecha (vinculado a estación y muestreo)
+// =============================================================================
+
+model RiesgoAmbiental {
+  id               String       @id
+  puntoMonitoreoId String       @map("estacion_id")
+  muestreoId       String?      @map("muestreo_id")
+  evaluacionId     String?      @map("evaluacion_id")
+  /// Nivel de riesgo ambiental agregado
+  nivel            NivelAlerta
+  /// Descripción interpretativa del riesgo
+  descripcion      String       @db.Text
+  /// Color de visualización (hex, ej. #10b981)
+  color            String       @db.VarChar(20)
+  /// Fecha de registro del riesgo
+  fecha            DateTime     @db.Date
+  score            Float?
+  estado           EstadoRegistro @default(active)
+  observaciones    String?      @db.Text
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  puntoMonitoreo PuntoMonitoreo        @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Cascade)
+  muestreo       Muestreo?            @relation(fields: [muestreoId], references: [id], onDelete: SetNull)
+  evaluacion     EvaluacionAmbiental? @relation(fields: [evaluacionId], references: [id], onDelete: SetNull)
+
+  @@index([puntoMonitoreoId, fecha])
+  @@index([muestreoId])
+  @@index([nivel])
+  @@map("riesgos_ambientales")
 }
 
 // =============================================================================

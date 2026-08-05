@@ -291,6 +291,8 @@ const CODIGO_TO_DOMAIN: Record<
   bod5: "dbo5",
   cod: "dqo",
   coliforms: "coliformes",
+  nitrates: "nitratos",
+  phosphates: "fosfatos",
   total_dissolved_solids: "solidosDisueltosTotales",
   flow_rate: "caudal",
 };
@@ -314,6 +316,8 @@ export function aggregateMedicionesToParametros(
       dbo5: 0,
       dqo: 0,
       coliformes: undefined,
+      nitratos: undefined,
+      fosfatos: undefined,
       solidosDisueltosTotales: 0,
       caudal: 0,
       ...mapEntityMeta(muestreo.createdAt, muestreo.updatedAt),
@@ -322,7 +326,7 @@ export function aggregateMedicionesToParametros(
     for (const medicion of rows) {
       const field = CODIGO_TO_DOMAIN[medicion.parametro.codigo];
       if (!field) continue;
-      (base as Record<string, number | undefined>)[field] = medicion.valor;
+      base[field] = medicion.valor;
     }
 
     return base;

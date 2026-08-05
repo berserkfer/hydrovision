@@ -12,7 +12,7 @@ interface ExecutiveSummaryPanelProps {
 
 export function ExecutiveSummaryPanel({ summary }: ExecutiveSummaryPanelProps) {
   return (
-    <Card className="hv-animate-fade-in sticky top-6 overflow-hidden">
+    <Card className="hv-animate-fade-in overflow-hidden">
       <CardHeader className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
         <CardTitle className="flex items-center gap-2 text-base">
           <ShieldAlert className="h-4 w-4 text-cyan-600" />

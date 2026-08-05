@@ -4,7 +4,10 @@
 
 import { PrismaClient } from "@prisma/client";
 import { mockDataStore } from "../src/data/mock/store";
-import { PARAMETRO_CATALOG } from "../src/database/constants/parametros-catalog";
+import {
+  PARAMETRO_CATALOG,
+  type ParametroDomainFields,
+} from "../src/database/constants/parametros-catalog";
 
 const prisma = new PrismaClient();
 
@@ -395,7 +398,7 @@ async function seedMuestreosAndMediciones(): Promise<void> {
     if (!params) continue;
 
     for (const catalogEntry of PARAMETRO_CATALOG) {
-      const valor = params[catalogEntry.domainField];
+      const valor = (params as ParametroDomainFields)[catalogEntry.domainField];
       if (valor === undefined) continue;
 
       const medicionId = `med-${muestra.id}-${catalogEntry.codigo}`;

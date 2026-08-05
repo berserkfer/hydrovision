@@ -79,11 +79,13 @@ export abstract class BaseSatelliteIndex implements ISatelliteIndex {
 
   getColorScale(): IndexColorScaleStop[] {
     const base = this.definition.visualizationColor;
+    const { min, max } = this.definition.expectedRange;
+    const mid = (min + max) / 2;
+
     return [
-      { value: this.definition.expectedRange.min, color: "#f8fafc" },
-      { value: 0, color: "#cbd5e1" },
-      { value: (this.definition.expectedRange.max + this.definition.expectedRange.min) / 2, color: base },
-      { value: this.definition.expectedRange.max, color: base },
+      { value: min, color: "#f8fafc" },
+      { value: mid, color: "#cbd5e1" },
+      { value: max, color: base },
     ];
   }
 }

@@ -35,7 +35,7 @@ export function StationDetailPanel({ detail, onClose }: StationDetailPanelProps)
   const { entity, measurement, compliance, parameters, history } = detail;
 
   return (
-    <aside className="hv-animate-fade-in sticky top-6 h-fit w-full shrink-0 xl:w-[380px]">
+    <aside className="hv-animate-fade-in h-fit w-full shrink-0">
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
         {/* Cabecera */}
         <div className="border-b border-slate-700/10 bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-4">

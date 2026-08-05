@@ -12,7 +12,7 @@ declare global {
   var __hydrovisionPrisma: PrismaClientInstance | undefined;
 }
 
-async function loadPrismaClient(): Promise<new () => PrismaClientInstance> {
+async function loadPrismaClient(): Promise<typeof import("@prisma/client").PrismaClient> {
   const { PrismaClient } = await import("@prisma/client");
   return PrismaClient;
 }

@@ -18,7 +18,7 @@ export class FutureEarthEngineProvider implements IDataProvider {
     return buildSnapshot(createEmptyDataStore(), this.getMetadata());
   }
 
-  getStore() {
+  getStore(): never {
     throw new Error(
       "[FutureEarthEngineProvider] GEE no conectado. Configure GEE_PROJECT_ID y DATA_SOURCE=gee."
     );

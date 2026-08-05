@@ -3,3 +3,7 @@ export * from "./monitoring.repository";
 export * from "./campaign.repository";
 export * from "./sample.repository";
 export * from "./temporal.repository";
+export * from "./station.repository";
+export * from "./parameter.repository";
+export * from "./report.repository";
+export * from "./environmental-evaluation.repository";

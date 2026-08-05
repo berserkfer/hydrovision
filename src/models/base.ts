@@ -5,7 +5,8 @@
 export interface EntityMeta {
   createdAt: string;
   updatedAt: string;
-  isSimulated: true;
+  /** true = mock/local; false = persistido en base de datos */
+  isSimulated: boolean;
 }
 
 /** Coordenadas geográficas WGS84 */

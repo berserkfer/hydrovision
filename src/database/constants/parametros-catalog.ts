@@ -11,6 +11,8 @@ export type ParametroCodigoDb =
   | "bod5"
   | "cod"
   | "coliforms"
+  | "nitrates"
+  | "phosphates"
   | "total_dissolved_solids"
   | "flow_rate";
 
@@ -34,6 +36,8 @@ export interface ParametroDomainFields {
   dbo5: number;
   dqo: number;
   coliformes?: number;
+  nitratos?: number;
+  fosfatos?: number;
   solidosDisueltosTotales: number;
   caudal: number;
 }
@@ -47,6 +51,8 @@ export const PARAMETRO_CATALOG: ParametroCatalogEntry[] = [
   { id: "param-bod5", codigo: "bod5", nombre: "DBO5", unidad: "mg/L", limiteEcaMax: 15, descripcion: "Demanda bioquímica de oxígeno", domainField: "dbo5" },
   { id: "param-cod", codigo: "cod", nombre: "DQO", unidad: "mg/L", limiteEcaMax: 40, descripcion: "Demanda química de oxígeno", domainField: "dqo" },
   { id: "param-coliforms", codigo: "coliforms", nombre: "Coliformes", unidad: "NMP/100mL", limiteEcaMax: 1000, descripcion: "Coliformes totales", domainField: "coliformes" },
+  { id: "param-nitrates", codigo: "nitrates", nombre: "Nitratos", unidad: "mg/L", limiteEcaMax: 50, descripcion: "Nitratos como N", domainField: "nitratos" },
+  { id: "param-phosphates", codigo: "phosphates", nombre: "Fosfatos", unidad: "mg/L", limiteEcaMax: 0.5, descripcion: "Fosfatos como P", domainField: "fosfatos" },
   { id: "param-tds", codigo: "total_dissolved_solids", nombre: "Sólidos Disueltos Totales", unidad: "mg/L", limiteEcaMax: 1500, descripcion: "Sólidos disueltos totales", domainField: "solidosDisueltosTotales" },
   { id: "param-flow-rate", codigo: "flow_rate", nombre: "Caudal", unidad: "m³/s", descripcion: "Caudal instantáneo", domainField: "caudal" },
 ];

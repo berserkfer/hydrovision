@@ -30,22 +30,24 @@ function applyFilters(campaigns: CampanaSummary[], filters: CampaignFilters): Ca
         c.codigo.toLowerCase().includes(q) ||
         c.responsableNombre.toLowerCase().includes(q) ||
         c.rioNombre.toLowerCase().includes(q) ||
-        c.cuencaNombre.toLowerCase().includes(q);
+        c.cuencaNombre.toLowerCase().includes(q) ||
+        c.observaciones.toLowerCase().includes(q);
       if (!match) return false;
     }
 
-    if (filters.fecha && !c.fechaInicio.startsWith(filters.fecha)) return false;
+    if (filters.year && !c.fechaInicio.startsWith(filters.year)) return false;
+    if (filters.month && c.fechaInicio.slice(5, 7) !== filters.month) return false;
     if (filters.responsableId && c.responsableId !== filters.responsableId) return false;
-    if (filters.cuencaId && c.cuencaId !== filters.cuencaId) return false;
     if (filters.estado && c.estado !== filters.estado) return false;
 
     return true;
   });
 }
 
-export function useCampaigns({ initialCampaigns, initialStats, pageSize = 5 }: UseCampaignsOptions) {
+export function useCampaigns({ initialCampaigns, initialStats, pageSize = 8 }: UseCampaignsOptions) {
   const [campaigns, setCampaigns] = useState(initialCampaigns);
   const [stats, setStats] = useState(initialStats);
+  const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const { filters, setFilter, resetFilters, hasActiveFilters } = useCampaignFilters();
 
   const filtered = useMemo(() => applyFilters(campaigns, filters), [campaigns, filters]);
@@ -93,5 +95,7 @@ export function useCampaigns({ initialCampaigns, initialStats, pageSize = 5 }: U
     hasActiveFilters,
     createCampaign: handleCreate,
     pagination,
+    viewMode,
+    setViewMode,
   };
 }

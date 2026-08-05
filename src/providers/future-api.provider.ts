@@ -18,7 +18,7 @@ export class FutureApiProvider implements IDataProvider {
     return buildSnapshot(createEmptyDataStore(), this.getMetadata());
   }
 
-  getStore() {
+  getStore(): never {
     throw new Error(
       "[FutureApiProvider] API no conectada. Configure API_BASE_URL y DATA_SOURCE=api."
     );

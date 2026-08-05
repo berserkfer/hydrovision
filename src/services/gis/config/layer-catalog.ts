@@ -133,7 +133,7 @@ export const GIS_LAYER_CATALOG: MapLayer[] = [
       { label: "Seco", color: "#ecfdf5" },
       { label: "Agua", color: "#059669" },
     ],
-    metadata: { ...BASE_META, category: "satellite", format: "simulated" },
+    metadata: { ...BASE_META, category: "satellite", format: "mock" },
   },
   {
     id: GIS_LAYER_IDS.NDTI,

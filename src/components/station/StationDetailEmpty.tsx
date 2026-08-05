@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/Card";
  */
 export function StationDetailEmpty() {
   return (
-    <aside className="sticky top-6 hidden h-fit w-full shrink-0 xl:block xl:w-[380px]">
+    <aside className="h-fit w-full shrink-0">
       <Card className="border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-12 text-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">

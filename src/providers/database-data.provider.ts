@@ -4,7 +4,7 @@
  */
 
 import { dataSourceConfig } from "@/config";
-import { databaseConfig } from "@/config/database.config";
+import { databaseConfig, isDatabaseConfigured } from "@/config/database.config";
 import type { HydroVisionDataStore } from "@/models";
 import type { IDataProvider, DataProviderMetadata } from "@/types/data-provider";
 import { buildSnapshot } from "./provider.utils";
@@ -55,7 +55,7 @@ export class DatabaseDataProvider implements IDataProvider {
   }
 
   isAvailable(): boolean {
-    if (!databaseConfig.isDatabaseConfigured()) {
+    if (!isDatabaseConfigured()) {
       return false;
     }
     return this.storeCache !== null || this.connectionAvailable;
@@ -96,7 +96,7 @@ export class DatabaseDataProvider implements IDataProvider {
       return this.connectionAvailable;
     }
 
-    if (!databaseConfig.isDatabaseConfigured()) {
+    if (!isDatabaseConfigured()) {
       this.connectionVerified = true;
       this.connectionAvailable = false;
       return false;

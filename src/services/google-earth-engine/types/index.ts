@@ -11,4 +11,4 @@ export type {
   GeeIndexResult,
   GeeProviderMode,
   GeeProviderStatus,
-} from "./types/gee.types";
+} from "./gee.types";

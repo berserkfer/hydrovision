@@ -88,7 +88,7 @@ export function parametrosToECAMeasurement(
     temperature: params.temperatura,
     bod5: params.dbo5,
     cod: params.dqo,
-    coliformes: params.coliformes,
+    coliforms: params.coliformes,
     isSimulated: true,
   };
 }
