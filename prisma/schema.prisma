@@ -1,0 +1,692 @@
+// =============================================================================
+// HydroVision — Modelo de Datos Ambiental v2 (Fase 5.1)
+// =============================================================================
+// Entidades: Proyecto, Cuenca, Subcuenca, Rio, Quebrada, PuntoMonitoreo,
+//            Campana, Muestreo, Parametro, Medicion, NormativaECA,
+//            EvaluacionAmbiental, IndiceSatelital, ImagenSatelital, Usuario, Reporte
+// Normalización 3FN · Preparado GEE · Preparado IA · Multi-proyecto
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// ENUMS
+// =============================================================================
+
+enum EstadoRegistro {
+  active   @map("active")
+  inactive @map("inactive")
+  archived @map("archived")
+}
+
+enum EstadoECA {
+  compliant     @map("compliant")
+  alert         @map("alert")
+  non_compliant @map("non_compliant")
+}
+
+enum EstadoPuntoMonitoreo {
+  active      @map("active")
+  maintenance @map("maintenance")
+  offline     @map("offline")
+}
+
+enum EstadoCampana {
+  planned   @map("planned")
+  active    @map("active")
+  completed @map("completed")
+  cancelled @map("cancelled")
+}
+
+enum EstadoMuestreo {
+  registered @map("registered")
+  validated  @map("validated")
+  rejected   @map("rejected")
+}
+
+enum EstadoProyecto {
+  planned   @map("planned")
+  active    @map("active")
+  completed @map("completed")
+  archived  @map("archived")
+}
+
+enum EstadoNormativa {
+  draft  @map("draft")
+  active @map("active")
+  revoked @map("revoked")
+}
+
+enum EstadoReporte {
+  draft     @map("draft")
+  generated @map("generated")
+  published @map("published")
+  archived  @map("archived")
+}
+
+enum RolUsuario {
+  admin          @map("admin")
+  researcher     @map("researcher")
+  field_operator @map("field_operator")
+  viewer         @map("viewer")
+}
+
+enum FuenteSatelital {
+  landsat8  @map("landsat8")
+  landsat9  @map("landsat9")
+  sentinel2 @map("sentinel2")
+}
+
+enum NivelAlerta {
+  low      @map("low")
+  medium   @map("medium")
+  high     @map("high")
+  critical @map("critical")
+}
+
+enum TipoCuerpoAgua {
+  river     @map("river")
+  stream    @map("stream")
+  canal     @map("canal")
+  reservoir @map("reservoir")
+  lagoon    @map("lagoon")
+}
+
+enum TipoParametroCodigo {
+  ph                     @map("ph")
+  turbidity              @map("turbidity")
+  conductivity           @map("conductivity")
+  dissolved_oxygen       @map("dissolved_oxygen")
+  temperature            @map("temperature")
+  bod5                   @map("bod5")
+  cod                    @map("cod")
+  coliforms              @map("coliforms")
+  total_dissolved_solids @map("total_dissolved_solids")
+  flow_rate              @map("flow_rate")
+}
+
+enum CalidadDato {
+  valid     @map("valid")
+  estimated @map("estimated")
+  suspect   @map("suspect")
+}
+
+// =============================================================================
+// GEOGRAFÍA ADMINISTRATIVA
+// =============================================================================
+
+model Departamento {
+  id            String         @id
+  codigo        String         @unique @db.VarChar(10)
+  nombre        String         @db.VarChar(120)
+  estado        EstadoRegistro @default(active)
+  observaciones String?        @db.Text
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  provincias       Provincia[]
+  puntosMonitoreo  PuntoMonitoreo[]
+
+  @@map("departamentos")
+}
+
+model Provincia {
+  id             String         @id
+  departamentoId String         @map("departamento_id")
+  nombre         String         @db.VarChar(120)
+  estado         EstadoRegistro @default(active)
+  observaciones  String?        @db.Text
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  departamento    Departamento     @relation(fields: [departamentoId], references: [id], onDelete: Restrict)
+  distritos       Distrito[]
+  puntosMonitoreo PuntoMonitoreo[]
+
+  @@index([departamentoId])
+  @@map("provincias")
+}
+
+model Distrito {
+  id            String         @id
+  provinciaId   String         @map("provincia_id")
+  nombre        String         @db.VarChar(120)
+  estado        EstadoRegistro @default(active)
+  observaciones String?        @db.Text
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  provincia       Provincia        @relation(fields: [provinciaId], references: [id], onDelete: Restrict)
+  cuencas         Cuenca[]
+  puntosMonitoreo PuntoMonitoreo[]
+
+  @@index([provinciaId])
+  @@map("distritos")
+}
+
+// =============================================================================
+// HIDROGRAFÍA — Cuenca → Subcuenca → Río / Quebrada → Punto de Monitoreo
+// =============================================================================
+
+model Cuenca {
+  id            String         @id
+  codigo        String         @unique @db.VarChar(20)
+  distritoId    String         @map("distrito_id")
+  nombre        String         @db.VarChar(150)
+  areaKm2       Float          @map("area_km2")
+  estado        EstadoRegistro @default(active)
+  observaciones String?        @db.Text
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  distrito        Distrito         @relation(fields: [distritoId], references: [id], onDelete: Restrict)
+  subcuencas      Subcuenca[]
+  rios            Rio[]
+  quebradas       Quebrada[]
+  puntosMonitoreo PuntoMonitoreo[]
+  campanas        Campana[]
+  reportes        Reporte[]
+  proyectos       ProyectoCuenca[]
+
+  @@index([distritoId])
+  @@index([estado])
+  @@map("cuencas")
+}
+
+model Subcuenca {
+  id            String         @id
+  cuencaId      String         @map("cuenca_id")
+  codigo        String         @db.VarChar(20)
+  nombre        String         @db.VarChar(150)
+  areaKm2       Float?         @map("area_km2")
+  estado        EstadoRegistro @default(active)
+  observaciones String?        @db.Text
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  cuenca          Cuenca           @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  rios            Rio[]
+  quebradas       Quebrada[]
+  puntosMonitoreo PuntoMonitoreo[]
+
+  @@unique([cuencaId, codigo])
+  @@index([cuencaId])
+  @@map("subcuencas")
+}
+
+model Rio {
+  id            String         @id
+  codigo        String         @db.VarChar(20)
+  cuencaId      String         @map("cuenca_id")
+  subcuencaId   String?        @map("subcuenca_id")
+  nombre        String         @db.VarChar(150)
+  longitudKm    Float          @map("longitud_km")
+  centroLat     Float          @map("centro_lat")
+  centroLng     Float          @map("centro_lng")
+  zoomMapa      Int            @default(12) @map("zoom_mapa")
+  estado        EstadoRegistro @default(active)
+  observaciones String?        @db.Text
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  cuenca          Cuenca           @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  subcuenca       Subcuenca?       @relation(fields: [subcuencaId], references: [id], onDelete: SetNull)
+  quebradas       Quebrada[]
+  puntosMonitoreo PuntoMonitoreo[]
+  campanas        Campana[]
+  reportes        Reporte[]
+  proyectos       ProyectoRio[]
+
+  @@unique([cuencaId, codigo])
+  @@index([cuencaId])
+  @@index([subcuencaId])
+  @@map("rios")
+}
+
+model Quebrada {
+  id            String         @id
+  codigo        String         @db.VarChar(20)
+  cuencaId      String         @map("cuenca_id")
+  subcuencaId   String?        @map("subcuenca_id")
+  rioId         String?        @map("rio_id")
+  nombre        String         @db.VarChar(150)
+  longitudKm    Float?         @map("longitud_km")
+  latitude      Float?
+  longitude     Float?
+  estado        EstadoRegistro @default(active)
+  observaciones String?        @db.Text
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  cuenca          Cuenca           @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  subcuenca       Subcuenca?       @relation(fields: [subcuencaId], references: [id], onDelete: SetNull)
+  rio             Rio?             @relation(fields: [rioId], references: [id], onDelete: SetNull)
+  puntosMonitoreo PuntoMonitoreo[]
+
+  @@unique([cuencaId, codigo])
+  @@index([cuencaId])
+  @@index([rioId])
+  @@map("quebradas")
+}
+
+// =============================================================================
+// PROYECTO — Soporte multi-proyecto ambiental
+// =============================================================================
+
+model Proyecto {
+  id            String         @id
+  codigo        String         @unique @db.VarChar(30)
+  nombre        String         @db.VarChar(200)
+  descripcion   String         @db.Text
+  fechaInicio   DateTime       @map("fecha_inicio") @db.Date
+  fechaFin      DateTime?      @map("fecha_fin") @db.Date
+  estado        EstadoProyecto @default(active)
+  observaciones String?        @db.Text
+  responsableId String         @map("responsable_id")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  responsable        Usuario            @relation("ProyectoResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
+  cuencas            ProyectoCuenca[]
+  rios               ProyectoRio[]
+  campanas           Campana[]
+  reportes           Reporte[]
+  indicesSatelitales IndiceSatelital[]
+  imagenesSatelitales ImagenSatelital[]
+
+  @@index([responsableId])
+  @@index([estado])
+  @@map("proyectos")
+}
+
+model ProyectoCuenca {
+  proyectoId String @map("proyecto_id")
+  cuencaId   String @map("cuenca_id")
+
+  proyecto Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  cuenca   Cuenca   @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+
+  @@id([proyectoId, cuencaId])
+  @@index([cuencaId])
+  @@map("proyecto_cuencas")
+}
+
+model ProyectoRio {
+  proyectoId String @map("proyecto_id")
+  rioId      String @map("rio_id")
+
+  proyecto Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
+  rio      Rio      @relation(fields: [rioId], references: [id], onDelete: Restrict)
+
+  @@id([proyectoId, rioId])
+  @@index([rioId])
+  @@map("proyecto_rios")
+}
+
+// =============================================================================
+// PUNTO DE MONITOREO — Estación de campo (compatibilidad UI: Estacion)
+// =============================================================================
+
+model PuntoMonitoreo {
+  id                  String               @id
+  codigo              String               @db.VarChar(10)
+  nombre              String               @db.VarChar(200)
+  cuencaId            String               @map("cuenca_id")
+  subcuencaId         String?              @map("subcuenca_id")
+  rioId               String?              @map("rio_id")
+  quebradaId          String?              @map("quebrada_id")
+  departamentoId      String               @map("departamento_id")
+  provinciaId         String               @map("provincia_id")
+  distritoId          String               @map("distrito_id")
+  latitude            Float
+  longitude           Float
+  altitud             Float
+  tipoCuerpoAgua      TipoCuerpoAgua       @default(river) @map("tipo_cuerpo_agua")
+  tramo               String               @db.VarChar(120)
+  descripcion         String?              @db.Text
+  fotografiaUrl       String?              @map("fotografia_url") @db.VarChar(500)
+  fechaInstalacion    DateTime             @map("fecha_instalacion") @db.Date
+  estado              EstadoPuntoMonitoreo @default(active)
+  estadoRegistro      EstadoRegistro       @default(active) @map("estado_registro")
+  observaciones       String?              @db.Text
+  ultimaActualizacion DateTime             @map("ultima_actualizacion")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt @map("updated_at")
+
+  cuenca                Cuenca                @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  subcuenca             Subcuenca?            @relation(fields: [subcuencaId], references: [id], onDelete: SetNull)
+  rio                   Rio?                  @relation(fields: [rioId], references: [id], onDelete: Restrict)
+  quebrada              Quebrada?             @relation(fields: [quebradaId], references: [id], onDelete: SetNull)
+  departamento          Departamento          @relation(fields: [departamentoId], references: [id], onDelete: Restrict)
+  provincia             Provincia             @relation(fields: [provinciaId], references: [id], onDelete: Restrict)
+  distrito              Distrito              @relation(fields: [distritoId], references: [id], onDelete: Restrict)
+  muestreos             Muestreo[]
+  mediciones            Medicion[]
+  indicesSatelitales    IndiceSatelital[]
+  imagenesSatelitales   ImagenSatelital[]
+  evaluacionesAmbiental EvaluacionAmbiental[]
+  reportes              ReportePuntoMonitoreo[]
+
+  @@unique([cuencaId, codigo])
+  @@index([cuencaId])
+  @@index([subcuencaId])
+  @@index([departamentoId])
+  @@index([provinciaId])
+  @@index([distritoId])
+  @@index([estado])
+  @@map("estaciones")
+}
+
+// =============================================================================
+// CAMPAÑA Y MUESTREO
+// =============================================================================
+
+model Campana {
+  id            String        @id
+  codigo        String        @unique @db.VarChar(20)
+  nombre        String        @db.VarChar(200)
+  proyectoId    String?       @map("proyecto_id")
+  rioId         String        @map("rio_id")
+  cuencaId      String        @map("cuenca_id")
+  fechaInicio   DateTime      @map("fecha_inicio") @db.Date
+  fechaFin      DateTime      @map("fecha_fin") @db.Date
+  responsableId String        @map("responsable_id")
+  estado        EstadoCampana @default(planned)
+  objetivo      String        @db.Text
+  observaciones String?       @db.Text
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  proyecto    Proyecto?  @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
+  rio         Rio        @relation(fields: [rioId], references: [id], onDelete: Restrict)
+  cuenca      Cuenca     @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  responsable Usuario    @relation("CampanaResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
+  muestreos   Muestreo[]
+
+  @@index([proyectoId])
+  @@index([rioId])
+  @@index([estado])
+  @@map("campanas")
+}
+
+model Muestreo {
+  id               String         @id
+  campanaId        String         @map("campana_id")
+  puntoMonitoreoId String         @map("estacion_id")
+  codigoMuestra    String         @unique @map("codigo_muestra") @db.VarChar(50)
+  fechaMuestreo    DateTime       @map("fecha_muestreo")
+  responsableId    String         @map("responsable_id")
+  clima            String         @db.VarChar(50)
+  colorAparente    String         @map("color_aparente") @db.VarChar(50)
+  estado           EstadoMuestreo @default(registered)
+  observaciones    String?        @db.Text
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  campana        Campana               @relation(fields: [campanaId], references: [id], onDelete: Restrict)
+  puntoMonitoreo PuntoMonitoreo        @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
+  responsable    Usuario               @relation("MuestreoResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
+  mediciones     Medicion[]
+  evaluacion     EvaluacionAmbiental?
+
+  @@index([campanaId])
+  @@index([puntoMonitoreoId])
+  @@index([fechaMuestreo])
+  @@index([estado])
+  @@map("muestreos")
+}
+
+// =============================================================================
+// PARÁMETRO · MEDICIÓN · NORMATIVA ECA
+// =============================================================================
+
+model Parametro {
+  id            String              @id
+  codigo        TipoParametroCodigo @unique
+  nombre        String              @db.VarChar(120)
+  unidad        String              @db.VarChar(30)
+  descripcion   String?             @db.Text
+  estado        EstadoRegistro      @default(active)
+  observaciones String?             @db.Text
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+
+  mediciones Medicion[]
+  limites    NormativaLimiteParametro[]
+
+  @@map("parametros")
+}
+
+model NormativaECA {
+  id            String          @id
+  codigo        String          @unique @db.VarChar(30)
+  nombre        String          @db.VarChar(200)
+  descripcion   String          @db.Text
+  version       String          @db.VarChar(20)
+  vigenteDesde  DateTime        @map("vigente_desde") @db.Date
+  vigenteHasta  DateTime?       @map("vigente_hasta") @db.Date
+  estado        EstadoNormativa @default(active)
+  observaciones String?         @db.Text
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  limites      NormativaLimiteParametro[]
+  evaluaciones EvaluacionAmbiental[]
+
+  @@index([estado])
+  @@map("normativas_eca")
+}
+
+model NormativaLimiteParametro {
+  id            String   @id
+  normativaId   String   @map("normativa_id")
+  parametroId   String   @map("parametro_id")
+  limiteMin     Float?   @map("limite_min")
+  limiteMax     Float?   @map("limite_max")
+  unidad        String   @db.VarChar(30)
+  observaciones String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  normativa NormativaECA @relation(fields: [normativaId], references: [id], onDelete: Cascade)
+  parametro Parametro    @relation(fields: [parametroId], references: [id], onDelete: Restrict)
+
+  @@unique([normativaId, parametroId])
+  @@index([parametroId])
+  @@map("normativa_limites_parametro")
+}
+
+model Medicion {
+  id               String      @id
+  muestreoId       String      @map("muestreo_id")
+  parametroId      String      @map("parametro_id")
+  puntoMonitoreoId String      @map("estacion_id")
+  valor            Float
+  unidad           String      @db.VarChar(30)
+  fechaMedicion    DateTime    @map("fecha_medicion")
+  metodoAnalisis   String?     @map("metodo_analisis") @db.VarChar(120)
+  laboratorio      String?     @db.VarChar(150)
+  responsableId    String?     @map("responsable_id")
+  calidadDato      CalidadDato @default(valid) @map("calidad_dato")
+  estado           EstadoRegistro @default(active)
+  observaciones    String?     @db.Text
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  muestreo       Muestreo       @relation(fields: [muestreoId], references: [id], onDelete: Cascade)
+  parametro      Parametro      @relation(fields: [parametroId], references: [id], onDelete: Restrict)
+  puntoMonitoreo PuntoMonitoreo @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
+  responsable    Usuario?       @relation("MedicionResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
+
+  @@unique([muestreoId, parametroId])
+  @@index([puntoMonitoreoId])
+  @@index([parametroId])
+  @@index([fechaMedicion])
+  @@map("mediciones")
+}
+
+// =============================================================================
+// EVALUACIÓN AMBIENTAL — ECA + preparación IA
+// =============================================================================
+
+model EvaluacionAmbiental {
+  id                  String       @id
+  muestreoId          String       @unique @map("muestreo_id")
+  puntoMonitoreoId    String       @map("estacion_id")
+  normativaId         String?      @map("normativa_id")
+  estado              EstadoECA
+  scoreRiesgo         Float?       @map("score_riesgo")
+  nivelAlerta         NivelAlerta? @map("nivel_alerta")
+  parametrosViolados  Json         @default("[]") @map("parametros_violados")
+  parametrosEnAlerta  Json         @default("[]") @map("parametros_en_alerta")
+  normativaReferencia String       @map("normativa_referencia") @db.VarChar(255)
+  evaluadoEn          DateTime     @map("evaluado_en")
+  evaluadoPorId       String?      @map("evaluado_por_id")
+  modelVersion        String?      @map("model_version") @db.VarChar(50)
+  estadoRegistro      EstadoRegistro @default(active) @map("estado_registro")
+  observaciones       String?      @db.Text
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  muestreo       Muestreo       @relation(fields: [muestreoId], references: [id], onDelete: Cascade)
+  puntoMonitoreo PuntoMonitoreo @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
+  normativa      NormativaECA?  @relation(fields: [normativaId], references: [id], onDelete: SetNull)
+  evaluadoPor    Usuario?       @relation("EvaluacionEvaluador", fields: [evaluadoPorId], references: [id], onDelete: SetNull)
+
+  @@index([puntoMonitoreoId])
+  @@index([normativaId])
+  @@index([estado])
+  @@map("evaluaciones_ambientales")
+}
+
+// =============================================================================
+// SATÉLITE — Índices espectrales + imágenes Sentinel-2 (preparado GEE)
+// =============================================================================
+
+model IndiceSatelital {
+  id                      String          @id
+  puntoMonitoreoId        String          @map("estacion_id")
+  proyectoId              String?         @map("proyecto_id")
+  fechaAdquisicion        DateTime        @map("fecha_adquisicion") @db.Date
+  fuente                  FuenteSatelital
+  ndwi                    Float
+  ndvi                    Float
+  mndwi                   Float
+  ndti                    Float
+  temperaturaSuperficial  Float?          @map("temperatura_superficial")
+  coberturaVegetal        Float?          @map("cobertura_vegetal")
+  coberturaNubosa         Float           @map("cobertura_nubosa")
+  tileId                  String?         @map("tile_id") @db.VarChar(50)
+  estado                  EstadoRegistro  @default(active)
+  observaciones           String?         @db.Text
+  createdAt               DateTime        @default(now()) @map("created_at")
+  updatedAt               DateTime        @updatedAt @map("updated_at")
+
+  puntoMonitoreo PuntoMonitoreo  @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Cascade)
+  proyecto       Proyecto?       @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
+  imagenes       ImagenSatelital[]
+
+  @@index([puntoMonitoreoId, fechaAdquisicion])
+  @@index([proyectoId])
+  @@index([fuente])
+  @@map("indices_satelitales")
+}
+
+model ImagenSatelital {
+  id               String          @id
+  indiceSatelitalId String?        @map("indice_satelital_id")
+  puntoMonitoreoId String          @map("estacion_id")
+  proyectoId       String?         @map("proyecto_id")
+  fuente           FuenteSatelital @default(sentinel2)
+  fechaAdquisicion DateTime        @map("fecha_adquisicion") @db.Date
+  url              String          @db.VarChar(500)
+  tileId           String?         @map("tile_id") @db.VarChar(50)
+  bandas           Json?
+  metadata         Json?
+  estado           EstadoRegistro  @default(active)
+  observaciones    String?         @db.Text
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+
+  indiceSatelital IndiceSatelital? @relation(fields: [indiceSatelitalId], references: [id], onDelete: SetNull)
+  puntoMonitoreo  PuntoMonitoreo   @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Cascade)
+  proyecto        Proyecto?        @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
+
+  @@index([puntoMonitoreoId])
+  @@index([proyectoId])
+  @@index([fuente])
+  @@map("imagenes_satelitales")
+}
+
+// =============================================================================
+// USUARIO · REPORTE
+// =============================================================================
+
+model Usuario {
+  id            String         @id
+  nombre        String         @db.VarChar(150)
+  email         String         @unique @db.VarChar(255)
+  rol           RolUsuario     @default(viewer)
+  institucion   String         @db.VarChar(200)
+  activo        Boolean        @default(true)
+  estado        EstadoRegistro @default(active)
+  observaciones String?        @db.Text
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  proyectosResponsable   Proyecto[]            @relation("ProyectoResponsable")
+  campanasResponsable    Campana[]             @relation("CampanaResponsable")
+  muestreosResponsable   Muestreo[]            @relation("MuestreoResponsable")
+  medicionesResponsable  Medicion[]            @relation("MedicionResponsable")
+  evaluacionesRealizadas EvaluacionAmbiental[] @relation("EvaluacionEvaluador")
+  reportesGenerados      Reporte[]             @relation("ReporteGenerador")
+
+  @@index([rol])
+  @@index([estado])
+  @@map("usuarios")
+}
+
+model Reporte {
+  id            String        @id
+  titulo        String        @db.VarChar(255)
+  proyectoId    String?       @map("proyecto_id")
+  rioId         String        @map("rio_id")
+  cuencaId      String        @map("cuenca_id")
+  fechaInicio   DateTime      @map("fecha_inicio") @db.Date
+  fechaFin      DateTime      @map("fecha_fin") @db.Date
+  generadoPorId String        @map("generado_por_id")
+  estado        EstadoReporte @default(draft)
+  resumen       String        @db.Text
+  observaciones String?       @db.Text
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  proyecto    Proyecto?             @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
+  rio         Rio                   @relation(fields: [rioId], references: [id], onDelete: Restrict)
+  cuenca      Cuenca                @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  generadoPor Usuario               @relation("ReporteGenerador", fields: [generadoPorId], references: [id], onDelete: Restrict)
+  puntos      ReportePuntoMonitoreo[]
+
+  @@index([proyectoId])
+  @@index([rioId])
+  @@index([estado])
+  @@map("reportes")
+}
+
+model ReportePuntoMonitoreo {
+  reporteId          String @map("reporte_id")
+  puntoMonitoreoId   String @map("estacion_id")
+
+  reporte        Reporte        @relation(fields: [reporteId], references: [id], onDelete: Cascade)
+  puntoMonitoreo PuntoMonitoreo @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
+
+  @@id([reporteId, puntoMonitoreoId])
+  @@map("reporte_estaciones")
+}

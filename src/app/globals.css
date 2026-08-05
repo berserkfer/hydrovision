@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Leaflet: resetea estilos por defecto de DivIcon en marcadores personalizados */
+.hydrovision-station-marker {
+  background: transparent;
+  border: none;
+}
+
+/* Animaciones HydroVision — Fase 2.2 */
+@keyframes hv-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hv-pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.hv-animate-fade-in {
+  animation: hv-fade-in 0.35s ease-out both;
+}
+
+.hv-animate-pulse-soft {
+  animation: hv-pulse-soft 1.5s ease-in-out infinite;
+}
