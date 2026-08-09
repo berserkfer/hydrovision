@@ -1,12 +1,12 @@
 import { CampaignsView } from "@/components/campaigns/CampaignsView";
-import {
-  getAllCampanaSummaries,
-  getCampaignStats,
-} from "@/lib/repositories/campaign.repository";
+import { fetchCampaignsList } from "@/lib/api/campaigns.client";
 
-export default function CampanasPage() {
-  const initialCampaigns = getAllCampanaSummaries();
-  const initialStats = getCampaignStats();
+export const dynamic = "force-dynamic";
+
+export default async function CampanasPage() {
+  const { items: initialCampaigns, stats: initialStats } = await fetchCampaignsList({
+    pageSize: 500,
+  });
 
   return (
     <CampaignsView initialCampaigns={initialCampaigns} initialStats={initialStats} />

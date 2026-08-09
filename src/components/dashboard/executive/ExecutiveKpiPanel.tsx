@@ -8,7 +8,7 @@ import {
   MapPin,
   ShieldCheck,
 } from "lucide-react";
-import { KpiGrid, type KpiItem } from "@/components/ui/KpiGrid";
+import { type KpiItem } from "@/components/ui/KpiGrid";
 import { formatDate } from "@/lib/utils";
 import type { ExecutiveKpiMetrics } from "@/types/executive";
 

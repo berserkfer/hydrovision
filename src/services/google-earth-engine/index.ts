@@ -2,14 +2,7 @@
  * Google Earth Engine — Sprint 1 + Sprint 2 Auth
  */
 
-import {
-  getEarthEngineAuthService,
-  getEarthEngineTokenManager,
-  getEnvironmentValidator,
-  getCredentialValidator,
-  geeCredentialsRepository,
-  resetEarthEngineAuth,
-} from "./auth";
+import { getEarthEngineAuthService, geeCredentialsRepository, resetEarthEngineAuth } from "./auth";
 import { GeeFactory } from "./gee.factory";
 import type { IGEEProvider } from "./interfaces";
 import { geeConfigRepository } from "./repositories";

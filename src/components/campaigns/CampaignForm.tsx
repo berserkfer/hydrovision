@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, type Resolver } from "react-hook-form";
 import { FilterSelect } from "@/components/map/filters/FilterSelect";
 import { FormField, TextArea, TextInput } from "@/components/ui/FormField";
 import { FieldError } from "@/components/ui/FieldError";
@@ -11,27 +13,19 @@ import {
   getResponsablesOptions,
   getRiosByCuenca,
 } from "@/lib/repositories/campaign.repository";
+import {
+  campaignFormSchema,
+  type CampaignFormValues,
+} from "@/lib/validators/form-schemas";
 import type { CreateCampanaInput } from "@/types/campaign";
 
 interface CampaignFormProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (input: CreateCampanaInput) => void;
+  onSubmit: (input: CreateCampanaInput) => void | Promise<void>;
 }
 
-interface FormState {
-  nombre: string;
-  responsableId: string;
-  fecha: string;
-  cuencaId: string;
-  rioId: string;
-  objetivo: string;
-  descripcion: string;
-  estacionIds: string[];
-  observaciones: string;
-}
-
-const EMPTY_FORM: FormState = {
+const EMPTY_VALUES: CampaignFormValues = {
   nombre: "",
   responsableId: "",
   fecha: "",
@@ -44,72 +38,57 @@ const EMPTY_FORM: FormState = {
 };
 
 export function CampaignForm({ open, onClose, onSubmit }: CampaignFormProps) {
-  const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<CampaignFormValues>({
+    resolver: zodResolver(campaignFormSchema) as Resolver<CampaignFormValues>,
+    defaultValues: EMPTY_VALUES,
+  });
 
-  const rioOptions = form.cuencaId
-    ? [{ value: "", label: "Seleccionar río…" }, ...getRiosByCuenca(form.cuencaId)]
+  const cuencaId = watch("cuencaId");
+  const rioId = watch("rioId");
+  const estacionIds = watch("estacionIds") ?? [];
+
+  useEffect(() => {
+    if (open) reset(EMPTY_VALUES);
+  }, [open, reset]);
+
+  const rioOptions = cuencaId
+    ? [{ value: "", label: "Seleccionar río…" }, ...getRiosByCuenca(cuencaId)]
     : [{ value: "", label: "Seleccione una cuenca primero" }];
 
-  const estacionOptions = form.rioId ? getEstacionesByRio(form.rioId) : [];
+  const estacionOptions = rioId ? getEstacionesByRio(rioId) : [];
 
   const resetAndClose = useCallback(() => {
-    setForm(EMPTY_FORM);
-    setErrors({});
+    reset(EMPTY_VALUES);
     onClose();
-  }, [onClose]);
+  }, [onClose, reset]);
 
-  const validate = (): boolean => {
-    const next: Partial<Record<keyof FormState, string>> = {};
-    if (!form.nombre.trim()) next.nombre = "El nombre es obligatorio";
-    if (!form.responsableId) next.responsableId = "Seleccione un responsable";
-    if (!form.fecha) next.fecha = "La fecha es obligatoria";
-    if (!form.cuencaId) next.cuencaId = "Seleccione una cuenca";
-    if (!form.rioId) next.rioId = "Seleccione un río";
-    if (!form.objetivo.trim()) next.objetivo = "El objetivo es obligatorio";
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    onSubmit({
-      nombre: form.nombre,
-      responsableId: form.responsableId,
-      fecha: form.fecha,
-      cuencaId: form.cuencaId,
-      rioId: form.rioId,
-      objetivo: form.objetivo,
-      descripcion: form.descripcion,
-      estacionIds: form.estacionIds,
-      observaciones: form.observaciones,
+  const submit = handleSubmit(async (values) => {
+    await onSubmit({
+      nombre: values.nombre,
+      responsableId: values.responsableId,
+      fecha: values.fecha,
+      cuencaId: values.cuencaId,
+      rioId: values.rioId,
+      objetivo: values.objetivo,
+      descripcion: values.descripcion ?? "",
+      estacionIds: values.estacionIds ?? [],
+      observaciones: values.observaciones ?? "",
     });
-
     resetAndClose();
-  };
-
-  const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      if (key === "cuencaId") {
-        next.rioId = "";
-        next.estacionIds = [];
-      }
-      if (key === "rioId") next.estacionIds = [];
-      return next;
-    });
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
-  };
+  });
 
   const toggleEstacion = (estacionId: string) => {
-    setForm((prev) => ({
-      ...prev,
-      estacionIds: prev.estacionIds.includes(estacionId)
-        ? prev.estacionIds.filter((id) => id !== estacionId)
-        : [...prev.estacionIds, estacionId],
-    }));
+    const next = estacionIds.includes(estacionId)
+      ? estacionIds.filter((id) => id !== estacionId)
+      : [...estacionIds, estacionId];
+    setValue("estacionIds", next);
   };
 
   return (
@@ -119,25 +98,15 @@ export function CampaignForm({ open, onClose, onSubmit }: CampaignFormProps) {
       title="Nueva Campaña"
       description="Registre una campaña de monitoreo ambiental. Los datos se guardan en memoria (simulado)."
     >
-      <form onSubmit={handleSubmit} className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4">
+      <form onSubmit={submit} className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4">
         <FormField id="camp-nombre" label="Nombre" required>
-          <TextInput
-            id="camp-nombre"
-            value={form.nombre}
-            onChange={(e) => setField("nombre", e.target.value)}
-            placeholder="Ej. Campaña Seca 2025 — Reque"
-          />
-          {errors.nombre && <FieldError message={errors.nombre} />}
+          <TextInput id="camp-nombre" {...register("nombre")} placeholder="Ej. Campaña Seca 2025 — Reque" />
+          {errors.nombre && <FieldError message={errors.nombre.message} />}
         </FormField>
 
         <FormField id="camp-fecha" label="Fecha de inicio" required>
-          <TextInput
-            id="camp-fecha"
-            type="date"
-            value={form.fecha}
-            onChange={(e) => setField("fecha", e.target.value)}
-          />
-          {errors.fecha && <FieldError message={errors.fecha} />}
+          <TextInput id="camp-fecha" type="date" {...register("fecha")} />
+          {errors.fecha && <FieldError message={errors.fecha.message} />}
         </FormField>
 
         <FormField id="camp-responsable" label="Responsable" required>
@@ -145,30 +114,20 @@ export function CampaignForm({ open, onClose, onSubmit }: CampaignFormProps) {
             id="camp-responsable"
             label="Responsable"
             hideLabel
-            value={form.responsableId}
+            value={watch("responsableId")}
             options={[{ value: "", label: "Seleccionar responsable…" }, ...getResponsablesOptions()]}
-            onChange={(v) => setField("responsableId", v)}
+            onChange={(v) => setValue("responsableId", v, { shouldValidate: true })}
           />
-          {errors.responsableId && <FieldError message={errors.responsableId} />}
+          {errors.responsableId && <FieldError message={errors.responsableId.message} />}
         </FormField>
 
         <FormField id="camp-objetivo" label="Objetivo" required>
-          <TextArea
-            id="camp-objetivo"
-            value={form.objetivo}
-            onChange={(e) => setField("objetivo", e.target.value)}
-            placeholder="Objetivo principal de la campaña…"
-          />
-          {errors.objetivo && <FieldError message={errors.objetivo} />}
+          <TextArea id="camp-objetivo" {...register("objetivo")} placeholder="Objetivo principal de la campaña…" />
+          {errors.objetivo && <FieldError message={errors.objetivo.message} />}
         </FormField>
 
         <FormField id="camp-descripcion" label="Descripción">
-          <TextArea
-            id="camp-descripcion"
-            value={form.descripcion}
-            onChange={(e) => setField("descripcion", e.target.value)}
-            placeholder="Alcance, metodología o contexto de la campaña…"
-          />
+          <TextArea id="camp-descripcion" {...register("descripcion")} placeholder="Alcance, metodología o contexto de la campaña…" />
         </FormField>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -177,11 +136,15 @@ export function CampaignForm({ open, onClose, onSubmit }: CampaignFormProps) {
               id="camp-cuenca"
               label="Cuenca"
               hideLabel
-              value={form.cuencaId}
+              value={cuencaId}
               options={[{ value: "", label: "Seleccionar cuenca…" }, ...getCuencasOptions()]}
-              onChange={(v) => setField("cuencaId", v)}
+              onChange={(v) => {
+                setValue("cuencaId", v, { shouldValidate: true });
+                setValue("rioId", "");
+                setValue("estacionIds", []);
+              }}
             />
-            {errors.cuencaId && <FieldError message={errors.cuencaId} />}
+            {errors.cuencaId && <FieldError message={errors.cuencaId.message} />}
           </FormField>
 
           <FormField id="camp-rio" label="Río" required>
@@ -189,12 +152,15 @@ export function CampaignForm({ open, onClose, onSubmit }: CampaignFormProps) {
               id="camp-rio"
               label="Río"
               hideLabel
-              value={form.rioId}
+              value={rioId}
               options={rioOptions}
-              onChange={(v) => setField("rioId", v)}
-              disabled={!form.cuencaId}
+              onChange={(v) => {
+                setValue("rioId", v, { shouldValidate: true });
+                setValue("estacionIds", []);
+              }}
+              disabled={!cuencaId}
             />
-            {errors.rioId && <FieldError message={errors.rioId} />}
+            {errors.rioId && <FieldError message={errors.rioId.message} />}
           </FormField>
         </div>
 
@@ -208,7 +174,7 @@ export function CampaignForm({ open, onClose, onSubmit }: CampaignFormProps) {
                 >
                   <input
                     type="checkbox"
-                    checked={form.estacionIds.includes(opt.value)}
+                    checked={estacionIds.includes(opt.value)}
                     onChange={() => toggleEstacion(opt.value)}
                     className="rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
                   />
@@ -223,12 +189,7 @@ export function CampaignForm({ open, onClose, onSubmit }: CampaignFormProps) {
         )}
 
         <FormField id="camp-obs" label="Observaciones">
-          <TextArea
-            id="camp-obs"
-            value={form.observaciones}
-            onChange={(e) => setField("observaciones", e.target.value)}
-            placeholder="Notas adicionales de la campaña…"
-          />
+          <TextArea id="camp-obs" {...register("observaciones")} placeholder="Notas adicionales de la campaña…" />
         </FormField>
 
         <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">

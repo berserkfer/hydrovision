@@ -35,20 +35,20 @@ import {
   RolUsuario as RolUsuarioEnum,
 } from "@/constants/enums";
 import type {
-  Campana as PrismaCampana,
-  Cuenca as PrismaCuenca,
-  Departamento as PrismaDepartamento,
-  Distrito as PrismaDistrito,
-  EvaluacionAmbiental,
-  IndiceSatelital,
-  Medicion,
+  Campaign as PrismaCampaign,
+  Watershed as PrismaWatershed,
+  Department as PrismaDepartment,
+  District as PrismaDistrict,
+  EnvironmentalAssessment,
+  SatelliteIndex,
+  Measurement,
   Muestreo,
-  Parametro,
-  Provincia as PrismaProvincia,
-  PuntoMonitoreo as PrismaPuntoMonitoreo,
+  Parameter,
+  Province as PrismaProvince,
+  Station as PrismaStation,
   Reporte as PrismaReporte,
   ReportePuntoMonitoreo,
-  Rio as PrismaRio,
+  River as PrismaRiver,
   Usuario as PrismaUsuario,
 } from "@prisma/client";
 import { PARAMETRO_CATALOG_BY_CODIGO } from "@/database/constants/parametros-catalog";
@@ -73,7 +73,7 @@ function mapEntityMeta(createdAt: Date, updatedAt: Date) {
   };
 }
 
-export function mapDepartamento(row: PrismaDepartamento): Departamento {
+export function mapDepartamento(row: PrismaDepartment): Departamento {
   return {
     id: row.id,
     codigo: row.codigo,
@@ -82,25 +82,25 @@ export function mapDepartamento(row: PrismaDepartamento): Departamento {
   };
 }
 
-export function mapProvincia(row: PrismaProvincia): Provincia {
+export function mapProvincia(row: PrismaProvince): Provincia {
   return {
     id: row.id,
-    departamentoId: row.departamentoId,
+    departamentoId: row.departmentId,
     nombre: row.nombre,
     ...mapEntityMeta(row.createdAt, row.updatedAt),
   };
 }
 
-export function mapDistrito(row: PrismaDistrito): Distrito {
+export function mapDistrito(row: PrismaDistrict): Distrito {
   return {
     id: row.id,
-    provinciaId: row.provinciaId,
+    provinciaId: row.provinceId,
     nombre: row.nombre,
     ...mapEntityMeta(row.createdAt, row.updatedAt),
   };
 }
 
-export function mapCuenca(row: PrismaCuenca): Cuenca {
+export function mapCuenca(row: PrismaWatershed): Cuenca {
   return {
     id: row.id,
     distritoId: row.distritoId,
@@ -110,7 +110,7 @@ export function mapCuenca(row: PrismaCuenca): Cuenca {
   };
 }
 
-export function mapRio(row: PrismaRio): Rio {
+export function mapRio(row: PrismaRiver): Rio {
   return {
     id: row.id,
     cuencaId: row.cuencaId,
@@ -131,8 +131,8 @@ const PRISMA_ESTADO_ESTACION: Record<string, EstadoEstacion> = {
   offline: EstadoEstacionEnum.FUERA_LINEA,
 };
 
-/** Mapea PuntoMonitoreo (DB v2) → Estacion (dominio UI) */
-export function mapEstacion(row: PrismaPuntoMonitoreo): Estacion {
+/** Mapea Station (DB) → Estacion (dominio UI) */
+export function mapEstacion(row: PrismaStation): Estacion {
   return {
     id: row.id,
     codigo: row.codigo,
@@ -157,7 +157,7 @@ const PRISMA_ESTADO_CAMPANA: Record<string, EstadoCampana> = {
   cancelled: EstadoCampanaEnum.CANCELADA,
 };
 
-export function mapCampana(row: PrismaCampana): CampanaMonitoreo {
+export function mapCampana(row: PrismaCampaign): CampanaMonitoreo {
   return {
     id: row.id,
     codigo: row.codigo,
@@ -194,7 +194,7 @@ const PRISMA_FUENTE: Record<string, FuenteSatelital> = {
   sentinel2: FuenteSatelitalEnum.SENTINEL_2,
 };
 
-export function mapIndiceSatelital(row: IndiceSatelital): IndicesSatelitales {
+export function mapIndiceSatelital(row: SatelliteIndex): IndicesSatelitales {
   return {
     id: row.id,
     estacionId: row.puntoMonitoreoId,
@@ -262,7 +262,7 @@ const PRISMA_ESTADO_ECA: Record<string, EstadoECA> = {
   non_compliant: EstadoECAEnum.NO_CUMPLE,
 };
 
-export function mapEvaluacionAmbiental(row: EvaluacionAmbiental): ClasificacionECA {
+export function mapEvaluacionAmbiental(row: EnvironmentalAssessment): ClasificacionECA {
   return {
     id: row.id,
     muestraId: row.muestreoId,
@@ -300,7 +300,7 @@ const CODIGO_TO_DOMAIN: Record<
 /** Agrega mediciones normalizadas al shape plano esperado por la UI */
 export function aggregateMedicionesToParametros(
   muestreos: Muestreo[],
-  mediciones: Array<Medicion & { parametro: Parametro }>
+  mediciones: Array<Measurement & { parametro: Parameter }>
 ): ParametrosFisicoquimicos[] {
   return muestreos.map((muestreo) => {
     const rows = mediciones.filter((m) => m.muestreoId === muestreo.id);
@@ -333,6 +333,6 @@ export function aggregateMedicionesToParametros(
   });
 }
 
-export function getParametroCatalogEntry(codigo: Parametro["codigo"]) {
+export function getParametroCatalogEntry(codigo: Parameter["codigo"]) {
   return PARAMETRO_CATALOG_BY_CODIGO[codigo];
 }

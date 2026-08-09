@@ -1,582 +1,312 @@
 /**
- * Seed PostgreSQL v2 — datos equivalentes a mockDataStore (Fase 5.1)
+ * Seed PostgreSQL — Sprint 3B / 3D
+ * Catálogos ambientales · 5 cuencas · 10 ríos · 30 estaciones
  */
 
 import { PrismaClient } from "@prisma/client";
-import { mockDataStore } from "../src/data/mock/store";
-import {
-  PARAMETRO_CATALOG,
-  type ParametroDomainFields,
-} from "../src/database/constants/parametros-catalog";
+import { CATALOG_IDS, seedCatalogs } from "./seed/catalogs";
+import { seedAuthorization } from "./seed/authorization";
 
 const prisma = new PrismaClient();
 
-const NORMATIVA_ID = "eca-agua-receptores-v1";
-const SUBCUENCA_REQUE_ID = "subcuenca-reque-media";
+const NOW = new Date("2025-08-05T12:00:00.000Z");
 
-function parseDate(value: string): Date {
-  return new Date(value);
-}
+// =============================================================================
+// Geografía administrativa
+// =============================================================================
 
-function cuencaCodigo(id: string): string {
-  return id.replace("cuenca-", "CUC-").toUpperCase().slice(0, 20);
-}
+const DEPARTAMENTO = {
+  id: "dept-lambayeque",
+  codigo: "LAM",
+  nombre: "Lambayeque",
+};
 
-function rioCodigo(id: string): string {
-  return id.replace("rio-", "RIO-").toUpperCase().slice(0, 20);
-}
+const PROVINCIA = {
+  id: "prov-lambayeque",
+  departmentId: DEPARTAMENTO.id,
+  nombre: "Lambayeque",
+};
 
-/** Resuelve jerarquía administrativa desde cuencaId */
-function resolveGeoFromCuenca(cuencaId: string) {
-  const cuenca = mockDataStore.cuencas.find((c) => c.id === cuencaId);
-  if (!cuenca) {
-    return {
-      distritoId: "reque",
-      provinciaId: "lambayeque-prov",
-      departamentoId: "lambayeque",
-    };
-  }
-  const distrito = mockDataStore.distritos.find((d) => d.id === cuenca.distritoId)!;
-  const provincia = mockDataStore.provincias.find((p) => p.id === distrito.provinciaId)!;
+const DISTRITOS = [
+  { id: "dist-reque", nombre: "Reque" },
+  { id: "dist-monsefu", nombre: "Monsefú" },
+  { id: "dist-chiclayo", nombre: "Chiclayo" },
+  { id: "dist-ferrenafe", nombre: "Ferreñafe" },
+  { id: "dist-saana", nombre: "Saña" },
+];
+
+// =============================================================================
+// Cuencas (5)
+// =============================================================================
+
+const CUENCAS = [
+  {
+    id: "cuenca-reque",
+    codigo: "CUC-REQUE",
+    distritoId: "dist-reque",
+    nombre: "Cuenca Río Reque",
+    region: "Lambayeque",
+    descripcion: "Cuenca media del río Reque, principal eje de monitoreo HydroVision.",
+    areaKm2: 1240,
+  },
+  {
+    id: "cuenca-chancay",
+    codigo: "CUC-CHANCAY",
+    distritoId: "dist-chiclayo",
+    nombre: "Cuenca Río Chancay",
+    region: "Lambayeque",
+    descripcion: "Cuenca costera con influencia agrícola intensiva.",
+    areaKm2: 980,
+  },
+  {
+    id: "cuenca-zana",
+    codigo: "CUC-ZANA",
+    distritoId: "dist-saana",
+    nombre: "Cuenca Río Zaña",
+    region: "Lambayeque",
+    descripcion: "Cuenca histórica con uso mixto agrícola y urbano.",
+    areaKm2: 760,
+  },
+  {
+    id: "cuenca-lambayeque",
+    codigo: "CUC-LAMBAY",
+    distritoId: "dist-monsefu",
+    nombre: "Cuenca Río Lambayeque",
+    region: "Lambayeque",
+    descripcion: "Cuenca alta con aporte andino y tramo intermedio cultivado.",
+    areaKm2: 1580,
+  },
+  {
+    id: "cuenca-ferrenafe",
+    codigo: "CUC-FERRE",
+    distritoId: "dist-ferrenafe",
+    nombre: "Cuenca Ferreñafe",
+    region: "Lambayeque",
+    descripcion: "Subcuenca de la vertiente occidental de la región.",
+    areaKm2: 620,
+  },
+];
+
+// =============================================================================
+// Ríos (10 — 2 por cuenca)
+// =============================================================================
+
+const RIOS = [
+  { id: "rio-reque", codigo: "RIO-REQUE", cuencaId: "cuenca-reque", nombre: "Río Reque", longitudKm: 108, centroLat: -6.72, centroLng: -79.82, zoomMapa: 12 },
+  { id: "rio-reque-bajo", codigo: "RIO-RQB", cuencaId: "cuenca-reque", nombre: "Reque Bajo", longitudKm: 42, centroLat: -6.78, centroLng: -79.76, zoomMapa: 13 },
+  { id: "rio-chancay", codigo: "RIO-CHANC", cuencaId: "cuenca-chancay", nombre: "Río Chancay", longitudKm: 95, centroLat: -6.65, centroLng: -79.55, zoomMapa: 12 },
+  { id: "rio-chancay-sur", codigo: "RIO-CHS", cuencaId: "cuenca-chancay", nombre: "Chancay Sur", longitudKm: 38, centroLat: -6.71, centroLng: -79.58, zoomMapa: 13 },
+  { id: "rio-zana", codigo: "RIO-ZANA", cuencaId: "cuenca-zana", nombre: "Río Zaña", longitudKm: 88, centroLat: -6.92, centroLng: -79.45, zoomMapa: 12 },
+  { id: "rio-zana-medio", codigo: "RIO-ZNM", cuencaId: "cuenca-zana", nombre: "Zaña Medio", longitudKm: 35, centroLat: -6.88, centroLng: -79.48, zoomMapa: 13 },
+  { id: "rio-lambayeque", codigo: "RIO-LAMB", cuencaId: "cuenca-lambayeque", nombre: "Río Lambayeque", longitudKm: 120, centroLat: -6.58, centroLng: -79.68, zoomMapa: 12 },
+  { id: "rio-lambayeque-alto", codigo: "RIO-LBA", cuencaId: "cuenca-lambayeque", nombre: "Lambayeque Alto", longitudKm: 48, centroLat: -6.52, centroLng: -79.72, zoomMapa: 13 },
+  { id: "rio-ferrenafe", codigo: "RIO-FERR", cuencaId: "cuenca-ferrenafe", nombre: "Río Ferreñafe", longitudKm: 72, centroLat: -6.62, centroLng: -79.88, zoomMapa: 12 },
+  { id: "rio-ferrenafe-este", codigo: "RIO-FRE", cuencaId: "cuenca-ferrenafe", nombre: "Ferreñafe Este", longitudKm: 30, centroLat: -6.66, centroLng: -79.84, zoomMapa: 13 },
+];
+
+const TRAMOS = ["Alto", "Medio", "Bajo"] as const;
+const ESTADOS = ["active", "active", "active", "maintenance", "offline"] as const;
+
+function stationCoords(rioIndex: number, stationIndex: number) {
+  const rio = RIOS[rioIndex];
+  const offsetLat = (stationIndex - 1) * 0.04;
+  const offsetLng = (stationIndex - 1) * 0.03;
   return {
-    distritoId: distrito.id,
-    provinciaId: provincia.id,
-    departamentoId: provincia.departamentoId,
+    latitude: Number((rio.centroLat + offsetLat).toFixed(6)),
+    longitude: Number((rio.centroLng - offsetLng).toFixed(6)),
+    altitud: 80 + rioIndex * 15 + stationIndex * 8,
   };
 }
 
-async function seedParametrosCatalog(): Promise<void> {
-  for (const param of PARAMETRO_CATALOG) {
-    await prisma.parametro.upsert({
-      where: { id: param.id },
-      update: {
-        nombre: param.nombre,
-        unidad: param.unidad,
-        descripcion: param.descripcion,
-      },
-      create: {
-        id: param.id,
-        codigo: param.codigo,
-        nombre: param.nombre,
-        unidad: param.unidad,
-        descripcion: param.descripcion,
-      },
-    });
-  }
-}
+function buildStations() {
+  const stations: Array<{
+    id: string;
+    codigo: string;
+    nombre: string;
+    cuencaId: string;
+    rioId: string;
+    distritoId: string;
+    tramo: string;
+    estado: (typeof ESTADOS)[number];
+    coords: ReturnType<typeof stationCoords>;
+  }> = [];
 
-async function seedNormativaECA(): Promise<void> {
-  await prisma.normativaECA.upsert({
-    where: { id: NORMATIVA_ID },
-    update: {
-      nombre: "ECA Agua — Cuerpos receptores",
-      descripcion: "Estándares de Calidad Ambiental para agua — referencia orientativa Perú",
-      version: "1.0",
-      vigenteDesde: parseDate("2023-01-01"),
-      estado: "active",
-    },
-    create: {
-      id: NORMATIVA_ID,
-      codigo: "ECA-AGUA-RECEPTORES",
-      nombre: "ECA Agua — Cuerpos receptores",
-      descripcion: "Estándares de Calidad Ambiental para agua — referencia orientativa Perú",
-      version: "1.0",
-      vigenteDesde: parseDate("2023-01-01"),
-      estado: "active",
-    },
+  let counter = 1;
+
+  RIOS.forEach((rio, rioIndex) => {
+    const cuenca = CUENCAS.find((c) => c.id === rio.cuencaId)!;
+
+    TRAMOS.forEach((tramo, tramoIndex) => {
+      const codigo = `E${String(counter).padStart(2, "0")}`;
+      stations.push({
+        id: `est-${codigo.toLowerCase()}`,
+        codigo,
+        nombre: `Estación ${codigo} — ${rio.nombre} (${tramo})`,
+        cuencaId: cuenca.id,
+        rioId: rio.id,
+        distritoId: cuenca.distritoId,
+        tramo: `Tramo ${tramo}`,
+        estado: ESTADOS[(rioIndex + tramoIndex) % ESTADOS.length],
+        coords: stationCoords(rioIndex, tramoIndex + 1),
+      });
+      counter += 1;
+    });
   });
 
-  for (const param of PARAMETRO_CATALOG) {
-    const limiteId = `lim-${NORMATIVA_ID}-${param.codigo}`;
-    await prisma.normativaLimiteParametro.upsert({
-      where: { id: limiteId },
-      update: {
-        limiteMin: param.limiteEcaMin ?? null,
-        limiteMax: param.limiteEcaMax ?? null,
-        unidad: param.unidad,
-      },
-      create: {
-        id: limiteId,
-        normativaId: NORMATIVA_ID,
-        parametroId: param.id,
-        limiteMin: param.limiteEcaMin ?? null,
-        limiteMax: param.limiteEcaMax ?? null,
-        unidad: param.unidad,
-      },
-    });
-  }
+  return stations;
 }
+
+const STATIONS = buildStations();
 
 async function seedGeography(): Promise<void> {
-  for (const row of mockDataStore.departamentos) {
-    await prisma.departamento.upsert({
-      where: { id: row.id },
-      update: { codigo: row.codigo, nombre: row.nombre },
-      create: { id: row.id, codigo: row.codigo, nombre: row.nombre },
-    });
-  }
-
-  for (const row of mockDataStore.provincias) {
-    await prisma.provincia.upsert({
-      where: { id: row.id },
-      update: { departamentoId: row.departamentoId, nombre: row.nombre },
-      create: { id: row.id, departamentoId: row.departamentoId, nombre: row.nombre },
-    });
-  }
-
-  for (const row of mockDataStore.distritos) {
-    await prisma.distrito.upsert({
-      where: { id: row.id },
-      update: { provinciaId: row.provinciaId, nombre: row.nombre },
-      create: { id: row.id, provinciaId: row.provinciaId, nombre: row.nombre },
-    });
-  }
-
-  for (const row of mockDataStore.cuencas) {
-    await prisma.cuenca.upsert({
-      where: { id: row.id },
-      update: {
-        codigo: cuencaCodigo(row.id),
-        distritoId: row.distritoId,
-        nombre: row.nombre,
-        areaKm2: row.areaKm2,
-      },
-      create: {
-        id: row.id,
-        codigo: cuencaCodigo(row.id),
-        distritoId: row.distritoId,
-        nombre: row.nombre,
-        areaKm2: row.areaKm2,
-      },
-    });
-  }
-
-  await prisma.subcuenca.upsert({
-    where: { id: SUBCUENCA_REQUE_ID },
-    update: {
-      codigo: "SUB-REQUE-MEDIA",
-      nombre: "Subcuenca Media — Río Reque",
-      areaKm2: 620,
-    },
-    create: {
-      id: SUBCUENCA_REQUE_ID,
-      cuencaId: "cuenca-reque",
-      codigo: "SUB-REQUE-MEDIA",
-      nombre: "Subcuenca Media — Río Reque",
-      areaKm2: 620,
-    },
+  await prisma.department.upsert({
+    where: { id: DEPARTAMENTO.id },
+    update: { nombre: DEPARTAMENTO.nombre },
+    create: DEPARTAMENTO,
   });
 
-  await prisma.quebrada.upsert({
-    where: { id: "qb-reque-norte" },
-    update: {
-      codigo: "QB-REQUE-01",
-      nombre: "Quebrada La Pampa",
-      longitudKm: 8.5,
-      latitude: -6.6521,
-      longitude: -79.8812,
-    },
-    create: {
-      id: "qb-reque-norte",
-      cuencaId: "cuenca-reque",
-      subcuencaId: SUBCUENCA_REQUE_ID,
-      rioId: "rio-reque",
-      codigo: "QB-REQUE-01",
-      nombre: "Quebrada La Pampa",
-      longitudKm: 8.5,
-      latitude: -6.6521,
-      longitude: -79.8812,
-    },
+  await prisma.province.upsert({
+    where: { id: PROVINCIA.id },
+    update: { nombre: PROVINCIA.nombre },
+    create: PROVINCIA,
   });
 
-  for (const row of mockDataStore.rios) {
-    const subcuencaId = row.id === "rio-reque" ? SUBCUENCA_REQUE_ID : null;
-    await prisma.rio.upsert({
-      where: { id: row.id },
-      update: {
-        codigo: rioCodigo(row.id),
-        cuencaId: row.cuencaId,
-        subcuencaId,
-        nombre: row.nombre,
-        longitudKm: row.longitudKm,
-        centroLat: row.centro.latitude,
-        centroLng: row.centro.longitude,
-        zoomMapa: row.centro.zoom,
-      },
+  for (const distrito of DISTRITOS) {
+    await prisma.district.upsert({
+      where: { id: distrito.id },
+      update: { nombre: distrito.nombre },
       create: {
-        id: row.id,
-        codigo: rioCodigo(row.id),
-        cuencaId: row.cuencaId,
-        subcuencaId,
-        nombre: row.nombre,
-        longitudKm: row.longitudKm,
-        centroLat: row.centro.latitude,
-        centroLng: row.centro.longitude,
-        zoomMapa: row.centro.zoom,
+        id: distrito.id,
+        provinceId: PROVINCIA.id,
+        nombre: distrito.nombre,
       },
     });
   }
 }
 
-async function seedUsuarios(): Promise<void> {
-  for (const row of mockDataStore.usuarios) {
-    await prisma.usuario.upsert({
-      where: { id: row.id },
+async function seedWatersheds(): Promise<void> {
+  for (const cuenca of CUENCAS) {
+    await prisma.watershed.upsert({
+      where: { id: cuenca.id },
       update: {
-        nombre: row.nombre,
-        email: row.email,
-        rol: row.rol,
-        institucion: row.institucion,
-        activo: row.activo,
+        nombre: cuenca.nombre,
+        region: cuenca.region,
+        descripcion: cuenca.descripcion,
+        areaKm2: cuenca.areaKm2,
       },
       create: {
-        id: row.id,
-        nombre: row.nombre,
-        email: row.email,
-        rol: row.rol,
-        institucion: row.institucion,
-        activo: row.activo,
+        id: cuenca.id,
+        codigo: cuenca.codigo,
+        distritoId: cuenca.distritoId,
+        nombre: cuenca.nombre,
+        region: cuenca.region,
+        pais: "Perú",
+        descripcion: cuenca.descripcion,
+        areaKm2: cuenca.areaKm2,
       },
     });
   }
 }
 
-async function seedProyectoReque(): Promise<void> {
-  await prisma.proyecto.upsert({
-    where: { id: "proy-reque-2025" },
-    update: {
-      codigo: "PROY-REQUE-2025",
-      nombre: "Monitoreo Calidad del Agua — Río Reque",
-      descripcion:
-        "Proyecto de tesis — caracterización fisicoquímica y evaluación ECA del río Reque (Lambayeque).",
-      fechaInicio: parseDate("2025-01-01"),
-      fechaFin: parseDate("2025-12-31"),
-      estado: "active",
-      responsableId: "usr-admin",
-    },
-    create: {
-      id: "proy-reque-2025",
-      codigo: "PROY-REQUE-2025",
-      nombre: "Monitoreo Calidad del Agua — Río Reque",
-      descripcion:
-        "Proyecto de tesis — caracterización fisicoquímica y evaluación ECA del río Reque (Lambayeque).",
-      fechaInicio: parseDate("2025-01-01"),
-      fechaFin: parseDate("2025-12-31"),
-      estado: "active",
-      responsableId: "usr-admin",
-    },
-  });
-
-  await prisma.proyectoCuenca.upsert({
-    where: { proyectoId_cuencaId: { proyectoId: "proy-reque-2025", cuencaId: "cuenca-reque" } },
-    update: {},
-    create: { proyectoId: "proy-reque-2025", cuencaId: "cuenca-reque" },
-  });
-
-  await prisma.proyectoRio.upsert({
-    where: { proyectoId_rioId: { proyectoId: "proy-reque-2025", rioId: "rio-reque" } },
-    update: {},
-    create: { proyectoId: "proy-reque-2025", rioId: "rio-reque" },
-  });
-}
-
-async function seedPuntosMonitoreo(): Promise<void> {
-  for (const row of mockDataStore.estaciones) {
-    const geo = resolveGeoFromCuenca(row.cuencaId);
-    const subcuencaId = row.rioId === "rio-reque" ? SUBCUENCA_REQUE_ID : null;
-
-    await prisma.puntoMonitoreo.upsert({
-      where: { id: row.id },
+async function seedRivers(): Promise<void> {
+  for (const rio of RIOS) {
+    await prisma.river.upsert({
+      where: { id: rio.id },
       update: {
-        codigo: row.codigo,
-        nombre: row.nombre,
-        cuencaId: row.cuencaId,
-        subcuencaId,
-        rioId: row.rioId,
-        departamentoId: geo.departamentoId,
-        provinciaId: geo.provinciaId,
-        distritoId: geo.distritoId,
-        latitude: row.coordenadas.latitude,
-        longitude: row.coordenadas.longitude,
-        altitud: row.altitud,
-        tipoCuerpoAgua: "river",
-        tramo: row.tramo,
-        descripcion: row.descripcion,
-        fechaInstalacion: parseDate(row.fechaInstalacion),
-        estado: row.estadoOperativo,
-        ultimaActualizacion: parseDate(row.ultimaActualizacion),
+        nombre: rio.nombre,
+        longitudKm: rio.longitudKm,
+        centroLat: rio.centroLat,
+        centroLng: rio.centroLng,
       },
       create: {
-        id: row.id,
-        codigo: row.codigo,
-        nombre: row.nombre,
-        cuencaId: row.cuencaId,
-        subcuencaId,
-        rioId: row.rioId,
-        departamentoId: geo.departamentoId,
-        provinciaId: geo.provinciaId,
-        distritoId: geo.distritoId,
-        latitude: row.coordenadas.latitude,
-        longitude: row.coordenadas.longitude,
-        altitud: row.altitud,
-        tipoCuerpoAgua: "river",
-        tramo: row.tramo,
-        descripcion: row.descripcion,
-        fechaInstalacion: parseDate(row.fechaInstalacion),
-        estado: row.estadoOperativo,
-        ultimaActualizacion: parseDate(row.ultimaActualizacion),
+        id: rio.id,
+        codigo: rio.codigo,
+        cuencaId: rio.cuencaId,
+        nombre: rio.nombre,
+        longitudKm: rio.longitudKm,
+        centroLat: rio.centroLat,
+        centroLng: rio.centroLng,
+        zoomMapa: rio.zoomMapa,
       },
     });
   }
 }
 
-async function seedCampanas(): Promise<void> {
-  for (const row of mockDataStore.campanas) {
-    const proyectoId = row.rioId === "rio-reque" ? "proy-reque-2025" : null;
+async function seedStations(): Promise<void> {
+  const entidades = [
+    "ANA — Autoridad Nacional del Agua",
+    "Proyecto HydroVision UCV",
+    "GORE Lambayeque",
+  ];
 
-    await prisma.campana.upsert({
-      where: { id: row.id },
+  for (const [index, est] of STATIONS.entries()) {
+    const sensorTypeId =
+      index % 3 === 0
+        ? CATALOG_IDS.sensorMultiparametric
+        : index % 3 === 1
+          ? CATALOG_IDS.sensorManual
+          : CATALOG_IDS.sensorSatellite;
+
+    await prisma.station.upsert({
+      where: { id: est.id },
       update: {
-        codigo: row.codigo,
-        nombre: row.nombre,
-        proyectoId,
-        rioId: row.rioId,
-        cuencaId: row.cuencaId,
-        fechaInicio: parseDate(row.fechaInicio),
-        fechaFin: parseDate(row.fechaFin),
-        responsableId: row.responsableId,
-        estado: row.estado,
-        objetivo: row.objetivo,
+        nombre: est.nombre,
+        tramo: est.tramo,
+        estado: est.estado,
+        latitude: est.coords.latitude,
+        longitude: est.coords.longitude,
+        altitud: est.coords.altitud,
+        codigoOficial: `PE-LAM-${est.codigo}`,
+        entidadResponsable: entidades[index % entidades.length],
+        ultimaActualizacion: NOW,
       },
       create: {
-        id: row.id,
-        codigo: row.codigo,
-        nombre: row.nombre,
-        proyectoId,
-        rioId: row.rioId,
-        cuencaId: row.cuencaId,
-        fechaInicio: parseDate(row.fechaInicio),
-        fechaFin: parseDate(row.fechaFin),
-        responsableId: row.responsableId,
-        estado: row.estado,
-        objetivo: row.objetivo,
+        id: est.id,
+        codigo: est.codigo,
+        codigoOficial: `PE-LAM-${est.codigo}`,
+        nombre: est.nombre,
+        cuencaId: est.cuencaId,
+        rioId: est.rioId,
+        departmentId: DEPARTAMENTO.id,
+        provinceId: PROVINCIA.id,
+        districtId: est.distritoId,
+        waterBodyTypeId: CATALOG_IDS.waterBodyRiver,
+        sensorTypeId,
+        tipoEstacion: index % 4 === 0 ? "automatica" : index % 4 === 1 ? "mixta" : "manual",
+        latitude: est.coords.latitude,
+        longitude: est.coords.longitude,
+        altitud: est.coords.altitud,
+        tramo: est.tramo,
+        entidadResponsable: entidades[index % entidades.length],
+        descripcion: `Punto de monitoreo ${est.codigo} en ${est.tramo.toLowerCase()} del ${RIOS.find((r) => r.id === est.rioId)?.nombre ?? "río"}.`,
+        fechaInstalacion: new Date("2022-03-15"),
+        estado: est.estado,
+        ultimaActualizacion: NOW,
       },
     });
-  }
-}
-
-async function seedMuestreosAndMediciones(): Promise<void> {
-  for (const muestra of mockDataStore.muestras) {
-    await prisma.muestreo.upsert({
-      where: { id: muestra.id },
-      update: {
-        campanaId: muestra.campanaId,
-        puntoMonitoreoId: muestra.estacionId,
-        codigoMuestra: muestra.codigoMuestra,
-        fechaMuestreo: parseDate(muestra.fechaMuestreo),
-        responsableId: muestra.responsableId,
-        clima: muestra.clima,
-        colorAparente: muestra.colorAparente,
-        estado: "validated",
-        observaciones: muestra.observaciones ?? null,
-      },
-      create: {
-        id: muestra.id,
-        campanaId: muestra.campanaId,
-        puntoMonitoreoId: muestra.estacionId,
-        codigoMuestra: muestra.codigoMuestra,
-        fechaMuestreo: parseDate(muestra.fechaMuestreo),
-        responsableId: muestra.responsableId,
-        clima: muestra.clima,
-        colorAparente: muestra.colorAparente,
-        estado: "validated",
-        observaciones: muestra.observaciones ?? null,
-      },
-    });
-
-    const params = mockDataStore.parametros.find((p) => p.muestraId === muestra.id);
-    if (!params) continue;
-
-    for (const catalogEntry of PARAMETRO_CATALOG) {
-      const valor = (params as ParametroDomainFields)[catalogEntry.domainField];
-      if (valor === undefined) continue;
-
-      const medicionId = `med-${muestra.id}-${catalogEntry.codigo}`;
-
-      await prisma.medicion.upsert({
-        where: { id: medicionId },
-        update: {
-          valor: Number(valor),
-          unidad: catalogEntry.unidad,
-          fechaMedicion: parseDate(muestra.fechaMuestreo),
-          metodoAnalisis: "SM 2550 B / APHA 4500",
-          laboratorio: "Lab. Calidad Ambiental — UNMSM (simulado)",
-          responsableId: "usr-operador",
-        },
-        create: {
-          id: medicionId,
-          muestreoId: muestra.id,
-          parametroId: catalogEntry.id,
-          puntoMonitoreoId: muestra.estacionId,
-          valor: Number(valor),
-          unidad: catalogEntry.unidad,
-          fechaMedicion: parseDate(muestra.fechaMuestreo),
-          metodoAnalisis: "SM 2550 B / APHA 4500",
-          laboratorio: "Lab. Calidad Ambiental — UNMSM (simulado)",
-          responsableId: "usr-operador",
-          calidadDato: "valid",
-        },
-      });
-    }
-  }
-}
-
-async function seedEvaluaciones(): Promise<void> {
-  for (const row of mockDataStore.clasificaciones) {
-    await prisma.evaluacionAmbiental.upsert({
-      where: { id: row.id },
-      update: {
-        muestreoId: row.muestraId,
-        puntoMonitoreoId: row.estacionId,
-        normativaId: NORMATIVA_ID,
-        estado: row.estado,
-        parametrosViolados: row.parametrosViolados,
-        parametrosEnAlerta: row.parametrosEnAlerta,
-        normativaReferencia: row.normativaReferencia,
-        evaluadoEn: parseDate(row.evaluadoEn),
-      },
-      create: {
-        id: row.id,
-        muestreoId: row.muestraId,
-        puntoMonitoreoId: row.estacionId,
-        normativaId: NORMATIVA_ID,
-        estado: row.estado,
-        parametrosViolados: row.parametrosViolados,
-        parametrosEnAlerta: row.parametrosEnAlerta,
-        normativaReferencia: row.normativaReferencia,
-        evaluadoEn: parseDate(row.evaluadoEn),
-        evaluadoPorId: "usr-investigador",
-      },
-    });
-  }
-}
-
-async function seedIndicesSatelitales(): Promise<void> {
-  for (const row of mockDataStore.indicesSatelitales) {
-    await prisma.indiceSatelital.upsert({
-      where: { id: row.id },
-      update: {
-        puntoMonitoreoId: row.estacionId,
-        proyectoId: "proy-reque-2025",
-        fechaAdquisicion: parseDate(row.fechaAdquisicion),
-        fuente: row.fuente,
-        ndwi: row.ndwi,
-        ndvi: row.ndvi,
-        mndwi: row.mndwi,
-        ndti: row.ndti,
-        temperaturaSuperficial: Number((24 + row.ndvi * 5).toFixed(2)),
-        coberturaVegetal: Number((row.ndvi * 100).toFixed(1)),
-        coberturaNubosa: row.coberturaNubosa,
-      },
-      create: {
-        id: row.id,
-        puntoMonitoreoId: row.estacionId,
-        proyectoId: "proy-reque-2025",
-        fechaAdquisicion: parseDate(row.fechaAdquisicion),
-        fuente: row.fuente,
-        ndwi: row.ndwi,
-        ndvi: row.ndvi,
-        mndwi: row.mndwi,
-        ndti: row.ndti,
-        temperaturaSuperficial: Number((24 + row.ndvi * 5).toFixed(2)),
-        coberturaVegetal: Number((row.ndvi * 100).toFixed(1)),
-        coberturaNubosa: row.coberturaNubosa,
-      },
-    });
-
-    if (row.fuente === "sentinel2") {
-      await prisma.imagenSatelital.upsert({
-        where: { id: `img-${row.id}` },
-        update: {
-          url: `https://storage.example.com/sentinel2/${row.estacionId}/${row.fechaAdquisicion}.tif`,
-        },
-        create: {
-          id: `img-${row.id}`,
-          indiceSatelitalId: row.id,
-          puntoMonitoreoId: row.estacionId,
-          proyectoId: "proy-reque-2025",
-          fuente: "sentinel2",
-          fechaAdquisicion: parseDate(row.fechaAdquisicion),
-          url: `https://storage.example.com/sentinel2/${row.estacionId}/${row.fechaAdquisicion}.tif`,
-          bandas: { B2: true, B3: true, B4: true, B8: true, B11: true },
-        },
-      });
-    }
-  }
-}
-
-async function seedReportes(): Promise<void> {
-  for (const row of mockDataStore.reportes) {
-    await prisma.reporte.upsert({
-      where: { id: row.id },
-      update: {
-        titulo: row.titulo,
-        proyectoId: "proy-reque-2025",
-        rioId: row.rioId,
-        cuencaId: row.cuencaId,
-        fechaInicio: parseDate(row.fechaInicio),
-        fechaFin: parseDate(row.fechaFin),
-        generadoPorId: row.generadoPorId,
-        estado: row.estado,
-        resumen: row.resumen,
-      },
-      create: {
-        id: row.id,
-        titulo: row.titulo,
-        proyectoId: "proy-reque-2025",
-        rioId: row.rioId,
-        cuencaId: row.cuencaId,
-        fechaInicio: parseDate(row.fechaInicio),
-        fechaFin: parseDate(row.fechaFin),
-        generadoPorId: row.generadoPorId,
-        estado: row.estado,
-        resumen: row.resumen,
-      },
-    });
-
-    for (const puntoId of row.estacionIds) {
-      await prisma.reportePuntoMonitoreo.upsert({
-        where: {
-          reporteId_puntoMonitoreoId: { reporteId: row.id, puntoMonitoreoId: puntoId },
-        },
-        update: {},
-        create: { reporteId: row.id, puntoMonitoreoId: puntoId },
-      });
-    }
   }
 }
 
 async function main(): Promise<void> {
-  console.log("[HydroVision] Seed Fase 5.1 — Modelo v2...");
+  console.log("🌱 Sprint 3D — Seeding HydroVision PostgreSQL…");
 
-  await seedParametrosCatalog();
-  await seedNormativaECA();
+  await seedCatalogs(prisma);
+  await seedAuthorization(prisma);
   await seedGeography();
-  await seedUsuarios();
-  await seedProyectoReque();
-  await seedPuntosMonitoreo();
-  await seedCampanas();
-  await seedMuestreosAndMediciones();
-  await seedEvaluaciones();
-  await seedIndicesSatelitales();
-  await seedReportes();
+  await seedWatersheds();
+  await seedRivers();
+  await seedStations();
 
-  console.log("[HydroVision] Seed v2 completado.");
+  console.log(`✅ ${CUENCAS.length} cuencas`);
+  console.log(`✅ ${RIOS.length} ríos`);
+  console.log(`✅ ${STATIONS.length} estaciones`);
+  console.log("✅ roles, permisos y usuarios ficticios (Sprint 3I)");
+  console.log("🎉 Seed completado.");
 }
 
 main()
-  .catch((error: unknown) => {
-    console.error("[HydroVision] Error en seed:", error);
+  .catch((error) => {
+    console.error("❌ Error en seed:", error);
     process.exit(1);
   })
   .finally(async () => {

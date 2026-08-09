@@ -1,15 +1,14 @@
 // =============================================================================
-// HydroVision — Base de Datos Científica (Sprint 2A)
+// HydroVision — PostgreSQL + Prisma (Sprint 3A–3D)
 // =============================================================================
-// Capa científica principal (8 entidades núcleo):
-//   Cuenca → Río → Estación (PuntoMonitoreo) → Campaña → Medición
-//   Parámetro · Índice Satelital · Riesgo Ambiental
+// Modelos núcleo (API Prisma en inglés · tablas PostgreSQL en español via @@map):
+//   Watershed · River · Station · Campaign · Parameter · Measurement
+//   SatelliteIndex · EnvironmentalAssessment
 //
-// Extensiones v2 (Fase 5.1): geografía admin, subcuencas, normativa ECA,
-//   proyectos multi-cuenca, imágenes satelitales, usuarios y reportes.
+// Extensiones v2: geografía admin, subcuencas, normativa ECA, proyectos,
+//   imágenes satelitales, usuarios y reportes.
 //
-// Normalización 3FN · Preparado migraciones · Compatible TypeScript
-// NOTA: PostgreSQL no conectado en runtime — mock activo por defecto.
+// Runtime UI: mock activo (DATA_SOURCE=mock). PostgreSQL preparado, no conectado.
 // =============================================================================
 
 generator client {
@@ -125,11 +124,25 @@ enum CalidadDato {
   suspect   @map("suspect")
 }
 
+enum NivelConfianza {
+  high      @map("high")
+  medium    @map("medium")
+  low       @map("low")
+  estimated @map("estimated")
+}
+
+enum TipoEstacion {
+  automatica @map("automatica")
+  manual     @map("manual")
+  mixta      @map("mixta")
+  referencia @map("referencia")
+}
+
 // =============================================================================
-// GEOGRAFÍA ADMINISTRATIVA
+// CATÁLOGOS AMBIENTALES — Sprint 3D
 // =============================================================================
 
-model Departamento {
+model Department {
   id            String         @id
   codigo        String         @unique @db.VarChar(10)
   nombre        String         @db.VarChar(120)
@@ -138,48 +151,174 @@ model Departamento {
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
-  provincias       Provincia[]
-  puntosMonitoreo  PuntoMonitoreo[]
+  provinces Province[]
+  stations  Station[]
 
+  @@index([estado])
   @@map("departamentos")
 }
 
-model Provincia {
-  id             String         @id
-  departamentoId String         @map("departamento_id")
-  nombre         String         @db.VarChar(120)
-  estado         EstadoRegistro @default(active)
-  observaciones  String?        @db.Text
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @updatedAt @map("updated_at")
+model Province {
+  id           String         @id
+  departmentId String         @map("departamento_id")
+  nombre       String         @db.VarChar(120)
+  estado       EstadoRegistro @default(active)
+  observaciones String?       @db.Text
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
 
-  departamento    Departamento     @relation(fields: [departamentoId], references: [id], onDelete: Restrict)
-  distritos       Distrito[]
-  puntosMonitoreo PuntoMonitoreo[]
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  districts  District[]
+  stations   Station[]
 
-  @@index([departamentoId])
+  @@index([departmentId])
+  @@index([estado])
   @@map("provincias")
 }
 
-model Distrito {
-  id            String         @id
-  provinciaId   String         @map("provincia_id")
-  nombre        String         @db.VarChar(120)
-  estado        EstadoRegistro @default(active)
-  observaciones String?        @db.Text
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
+model District {
+  id          String         @id
+  provinceId  String         @map("provincia_id")
+  nombre      String         @db.VarChar(120)
+  estado      EstadoRegistro @default(active)
+  observaciones String?      @db.Text
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
 
-  provincia       Provincia        @relation(fields: [provinciaId], references: [id], onDelete: Restrict)
-  cuencas         Cuenca[]
-  puntosMonitoreo PuntoMonitoreo[]
+  province  Province    @relation(fields: [provinceId], references: [id], onDelete: Restrict)
+  watersheds Watershed[]
+  stations  Station[]
 
-  @@index([provinciaId])
+  @@index([provinceId])
+  @@index([estado])
   @@map("distritos")
 }
 
+model WaterBodyType {
+  id            String         @id
+  codigo        String         @unique @db.VarChar(30)
+  nombre        String         @db.VarChar(120)
+  descripcion   String?        @db.Text
+  estado        EstadoRegistro @default(active)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  stations Station[]
+
+  @@index([estado])
+  @@map("cat_tipos_cuerpo_agua")
+}
+
+model ParameterCategory {
+  id            String         @id
+  codigo        String         @unique @db.VarChar(30)
+  nombre        String         @db.VarChar(120)
+  descripcion   String?        @db.Text
+  estado        EstadoRegistro @default(active)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  parameters Parameter[]
+
+  @@index([estado])
+  @@map("cat_categorias_parametro")
+}
+
+model MeasurementUnit {
+  id            String         @id
+  codigo        String         @unique @db.VarChar(30)
+  simbolo       String         @db.VarChar(20)
+  nombre        String         @db.VarChar(120)
+  descripcion   String?        @db.Text
+  estado        EstadoRegistro @default(active)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  parameters  Parameter[]
+  measurements Measurement[]
+
+  @@index([estado])
+  @@map("cat_unidades_medicion")
+}
+
+model EcaStandard {
+  id            String          @id
+  codigo        String          @unique @db.VarChar(30)
+  nombre        String          @db.VarChar(200)
+  descripcion   String          @db.Text
+  version       String          @db.VarChar(20)
+  vigenteDesde  DateTime        @map("vigente_desde") @db.Date
+  vigenteHasta  DateTime?       @map("vigente_hasta") @db.Date
+  estado        EstadoNormativa @default(active)
+  observaciones String?         @db.Text
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  parameterLimits EcaStandardParameterLimit[]
+  assessments     EnvironmentalAssessment[]
+  campaigns       Campaign[]
+
+  @@index([estado])
+  @@index([vigenteDesde, vigenteHasta])
+  @@map("normativas_eca")
+}
+
+model EcaStandardParameterLimit {
+  id            String   @id
+  ecaStandardId String   @map("normativa_id")
+  parametroId   String   @map("parametro_id")
+  limiteMin     Float?   @map("limite_min")
+  limiteMax     Float?   @map("limite_max")
+  unidad        String   @db.VarChar(30)
+  observaciones String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  ecaStandard EcaStandard @relation(fields: [ecaStandardId], references: [id], onDelete: Cascade)
+  parameter   Parameter   @relation(fields: [parametroId], references: [id], onDelete: Restrict)
+
+  @@unique([ecaStandardId, parametroId])
+  @@index([parametroId])
+  @@map("normativa_limites_parametro")
+}
+
+model SatelliteSource {
+  id               String         @id
+  codigo           String         @unique @db.VarChar(30)
+  nombre           String         @db.VarChar(120)
+  plataforma       String         @db.VarChar(80)
+  resolucionMetros Float?         @map("resolucion_m")
+  descripcion      String?        @db.Text
+  estado           EstadoRegistro @default(active)
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  satelliteIndices SatelliteIndex[]
+
+  @@index([estado])
+  @@index([plataforma])
+  @@map("cat_fuentes_satelitales")
+}
+
+model SensorType {
+  id            String         @id
+  codigo        String         @unique @db.VarChar(30)
+  nombre        String         @db.VarChar(120)
+  tecnologia    String         @db.VarChar(80)
+  descripcion   String?        @db.Text
+  estado        EstadoRegistro @default(active)
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  stations Station[]
+
+  @@index([estado])
+  @@index([tecnologia])
+  @@map("cat_tipos_sensor")
+}
+
 // =============================================================================
-// HIDROGRAFÍA — Cuenca → Subcuenca → Río / Quebrada → Punto de Monitoreo
+// HIDROGRAFÍA — Watershed → Subcuenca → Río / Quebrada → Punto de Monitoreo
 // =============================================================================
 
 // =============================================================================
@@ -187,7 +326,7 @@ model Distrito {
 // id · nombre · región · país · descripción (+ vínculo administrativo v2)
 // =============================================================================
 
-model Cuenca {
+model Watershed {
   id            String         @id
   codigo        String         @unique @db.VarChar(20)
   distritoId    String         @map("distrito_id")
@@ -204,12 +343,12 @@ model Cuenca {
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
-  distrito        Distrito         @relation(fields: [distritoId], references: [id], onDelete: Restrict)
+  distrito        District         @relation(fields: [distritoId], references: [id], onDelete: Restrict)
   subcuencas      Subcuenca[]
-  rios            Rio[]
+  rios            River[]
   quebradas       Quebrada[]
-  puntosMonitoreo PuntoMonitoreo[]
-  campanas        Campana[]
+  puntosMonitoreo Station[]
+  campanas        Campaign[]
   reportes        Reporte[]
   proyectos       ProyectoCuenca[]
 
@@ -230,10 +369,10 @@ model Subcuenca {
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
-  cuenca          Cuenca           @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
-  rios            Rio[]
+  cuenca          Watershed           @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  rios            River[]
   quebradas       Quebrada[]
-  puntosMonitoreo PuntoMonitoreo[]
+  puntosMonitoreo Station[]
 
   @@unique([cuencaId, codigo])
   @@index([cuencaId])
@@ -245,7 +384,7 @@ model Subcuenca {
 // id · nombre · longitud · cuenca_id (+ metadatos cartográficos v2)
 // =============================================================================
 
-model Rio {
+model River {
   id            String         @id
   codigo        String         @db.VarChar(20)
   cuencaId      String         @map("cuenca_id")
@@ -260,11 +399,11 @@ model Rio {
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
-  cuenca          Cuenca           @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  cuenca          Watershed           @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
   subcuenca       Subcuenca?       @relation(fields: [subcuencaId], references: [id], onDelete: SetNull)
   quebradas       Quebrada[]
-  puntosMonitoreo PuntoMonitoreo[]
-  campanas        Campana[]
+  puntosMonitoreo Station[]
+  campanas        Campaign[]
   reportes        Reporte[]
   proyectos       ProyectoRio[]
 
@@ -289,10 +428,10 @@ model Quebrada {
   createdAt     DateTime       @default(now()) @map("created_at")
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
-  cuenca          Cuenca           @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  cuenca          Watershed           @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
   subcuenca       Subcuenca?       @relation(fields: [subcuencaId], references: [id], onDelete: SetNull)
-  rio             Rio?             @relation(fields: [rioId], references: [id], onDelete: SetNull)
-  puntosMonitoreo PuntoMonitoreo[]
+  rio             River?             @relation(fields: [rioId], references: [id], onDelete: SetNull)
+  puntosMonitoreo Station[]
 
   @@unique([cuencaId, codigo])
   @@index([cuencaId])
@@ -320,9 +459,9 @@ model Proyecto {
   responsable        Usuario            @relation("ProyectoResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
   cuencas            ProyectoCuenca[]
   rios               ProyectoRio[]
-  campanas           Campana[]
+  campanas           Campaign[]
   reportes           Reporte[]
-  indicesSatelitales IndiceSatelital[]
+  indicesSatelitales SatelliteIndex[]
   imagenesSatelitales ImagenSatelital[]
 
   @@index([responsableId])
@@ -335,7 +474,7 @@ model ProyectoCuenca {
   cuencaId   String @map("cuenca_id")
 
   proyecto Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
-  cuenca   Cuenca   @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  cuenca   Watershed   @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
 
   @@id([proyectoId, cuencaId])
   @@index([cuencaId])
@@ -347,7 +486,7 @@ model ProyectoRio {
   rioId      String @map("rio_id")
 
   proyecto Proyecto @relation(fields: [proyectoId], references: [id], onDelete: Cascade)
-  rio      Rio      @relation(fields: [rioId], references: [id], onDelete: Restrict)
+  rio      River      @relation(fields: [rioId], references: [id], onDelete: Restrict)
 
   @@id([proyectoId, rioId])
   @@index([rioId])
@@ -363,25 +502,33 @@ model ProyectoRio {
 // código · nombre · latitud · longitud · altitud · estado · río asociado
 // =============================================================================
 
-model PuntoMonitoreo {
+model Station {
   id                  String               @id
   codigo              String               @db.VarChar(10)
+  /// Código oficial de registro (MINAM / ANA / entidad)
+  codigoOficial       String?              @map("codigo_oficial") @db.VarChar(30)
   nombre              String               @db.VarChar(200)
   cuencaId            String               @map("cuenca_id")
   subcuencaId         String?              @map("subcuenca_id")
   rioId               String?              @map("rio_id")
   quebradaId          String?              @map("quebrada_id")
-  departamentoId      String               @map("departamento_id")
-  provinciaId         String               @map("provincia_id")
-  distritoId          String               @map("distrito_id")
+  departmentId        String               @map("departamento_id")
+  provinceId          String               @map("provincia_id")
+  districtId          String               @map("distrito_id")
+  waterBodyTypeId     String?              @map("water_body_type_id")
+  sensorTypeId        String?              @map("sensor_type_id")
   latitude            Float
   longitude           Float
   altitud             Float
   tipoCuerpoAgua      TipoCuerpoAgua       @default(river) @map("tipo_cuerpo_agua")
+  tipoEstacion        TipoEstacion         @default(manual) @map("tipo_estacion")
   tramo               String               @db.VarChar(120)
+  /// Entidad pública o institución responsable del monitoreo
+  entidadResponsable  String?              @map("entidad_responsable") @db.VarChar(200)
   descripcion         String?              @db.Text
   fotografiaUrl       String?              @map("fotografia_url") @db.VarChar(500)
   fechaInstalacion    DateTime             @map("fecha_instalacion") @db.Date
+  /// Estado operativo de la estación en campo
   estado              EstadoPuntoMonitoreo @default(active)
   estadoRegistro      EstadoRegistro       @default(active) @map("estado_registro")
   observaciones       String?              @db.Text
@@ -389,28 +536,34 @@ model PuntoMonitoreo {
   createdAt           DateTime             @default(now()) @map("created_at")
   updatedAt           DateTime             @updatedAt @map("updated_at")
 
-  cuenca                Cuenca                @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  cuenca                Watershed                @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
   subcuenca             Subcuenca?            @relation(fields: [subcuencaId], references: [id], onDelete: SetNull)
-  rio                   Rio?                  @relation(fields: [rioId], references: [id], onDelete: Restrict)
+  rio                   River?                  @relation(fields: [rioId], references: [id], onDelete: Restrict)
   quebrada              Quebrada?             @relation(fields: [quebradaId], references: [id], onDelete: SetNull)
-  departamento          Departamento          @relation(fields: [departamentoId], references: [id], onDelete: Restrict)
-  provincia             Provincia             @relation(fields: [provinciaId], references: [id], onDelete: Restrict)
-  distrito              Distrito              @relation(fields: [distritoId], references: [id], onDelete: Restrict)
+  department            Department          @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  province              Province             @relation(fields: [provinceId], references: [id], onDelete: Restrict)
+  district              District              @relation(fields: [districtId], references: [id], onDelete: Restrict)
+  waterBodyType         WaterBodyType?        @relation(fields: [waterBodyTypeId], references: [id], onDelete: SetNull)
+  sensorType            SensorType?           @relation(fields: [sensorTypeId], references: [id], onDelete: SetNull)
   muestreos             Muestreo[]
-  mediciones            Medicion[]
-  indicesSatelitales    IndiceSatelital[]
+  mediciones            Measurement[]
+  indicesSatelitales    SatelliteIndex[]
   imagenesSatelitales   ImagenSatelital[]
-  evaluacionesAmbiental EvaluacionAmbiental[]
+  evaluacionesAmbiental EnvironmentalAssessment[]
   riesgosAmbientales    RiesgoAmbiental[]
   reportes              ReportePuntoMonitoreo[]
 
   @@unique([cuencaId, codigo])
   @@index([cuencaId])
   @@index([subcuencaId])
-  @@index([departamentoId])
-  @@index([provinciaId])
-  @@index([distritoId])
+  @@index([departmentId])
+  @@index([provinceId])
+  @@index([districtId])
+  @@index([waterBodyTypeId])
+  @@index([sensorTypeId])
   @@index([estado])
+  @@index([tipoEstacion])
+  @@index([entidadResponsable])
   @@map("estaciones")
 }
 
@@ -423,13 +576,14 @@ model PuntoMonitoreo {
 // fecha · responsable · observaciones (+ metadatos operativos v2)
 // =============================================================================
 
-model Campana {
+model Campaign {
   id            String        @id
   codigo        String        @unique @db.VarChar(20)
   nombre        String        @db.VarChar(200)
   proyectoId    String?       @map("proyecto_id")
   rioId         String        @map("rio_id")
   cuencaId      String        @map("cuenca_id")
+  ecaStandardId String?       @map("eca_standard_id")
   fechaInicio   DateTime      @map("fecha_inicio") @db.Date
   fechaFin      DateTime      @map("fecha_fin") @db.Date
   responsableId String        @map("responsable_id")
@@ -439,16 +593,19 @@ model Campana {
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  proyecto    Proyecto?  @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
-  rio         Rio        @relation(fields: [rioId], references: [id], onDelete: Restrict)
-  cuenca      Cuenca     @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
-  responsable Usuario    @relation("CampanaResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
+  proyecto    Proyecto?   @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
+  rio         River       @relation(fields: [rioId], references: [id], onDelete: Restrict)
+  cuenca      Watershed   @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  ecaStandard EcaStandard? @relation(fields: [ecaStandardId], references: [id], onDelete: SetNull)
+  responsable Usuario     @relation("CampanaResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
   muestreos   Muestreo[]
-  mediciones  Medicion[]
+  mediciones  Measurement[]
 
   @@index([proyectoId])
   @@index([rioId])
+  @@index([ecaStandardId])
   @@index([estado])
+  @@index([fechaInicio, fechaFin])
   @@map("campanas")
 }
 
@@ -466,11 +623,11 @@ model Muestreo {
   createdAt        DateTime       @default(now()) @map("created_at")
   updatedAt        DateTime       @updatedAt @map("updated_at")
 
-  campana        Campana               @relation(fields: [campanaId], references: [id], onDelete: Restrict)
-  puntoMonitoreo PuntoMonitoreo        @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
+  campana        Campaign               @relation(fields: [campanaId], references: [id], onDelete: Restrict)
+  puntoMonitoreo Station        @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
   responsable    Usuario               @relation("MuestreoResponsable", fields: [responsableId], references: [id], onDelete: Restrict)
-  mediciones     Medicion[]
-  evaluacion     EvaluacionAmbiental?
+  mediciones     Measurement[]
+  evaluacion     EnvironmentalAssessment?
   riesgos        RiesgoAmbiental[]
 
   @@index([campanaId])
@@ -490,60 +647,28 @@ model Muestreo {
 //           Coliformes, Nitratos, Fosfatos (+ TDS, Caudal v2)
 // =============================================================================
 
-model Parametro {
+model Parameter {
   id            String              @id
   codigo        TipoParametroCodigo @unique
   nombre        String              @db.VarChar(120)
   unidad        String              @db.VarChar(30)
+  categoryId    String?             @map("category_id")
+  unitId        String?             @map("unit_id")
   descripcion   String?             @db.Text
   estado        EstadoRegistro      @default(active)
   observaciones String?             @db.Text
   createdAt     DateTime            @default(now()) @map("created_at")
   updatedAt     DateTime            @updatedAt @map("updated_at")
 
-  mediciones Medicion[]
-  limites    NormativaLimiteParametro[]
+  category   ParameterCategory?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  unit       MeasurementUnit?           @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  mediciones Measurement[]
+  limites    EcaStandardParameterLimit[]
 
-  @@map("parametros")
-}
-
-model NormativaECA {
-  id            String          @id
-  codigo        String          @unique @db.VarChar(30)
-  nombre        String          @db.VarChar(200)
-  descripcion   String          @db.Text
-  version       String          @db.VarChar(20)
-  vigenteDesde  DateTime        @map("vigente_desde") @db.Date
-  vigenteHasta  DateTime?       @map("vigente_hasta") @db.Date
-  estado        EstadoNormativa @default(active)
-  observaciones String?         @db.Text
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
-
-  limites      NormativaLimiteParametro[]
-  evaluaciones EvaluacionAmbiental[]
-
+  @@index([categoryId])
+  @@index([unitId])
   @@index([estado])
-  @@map("normativas_eca")
-}
-
-model NormativaLimiteParametro {
-  id            String   @id
-  normativaId   String   @map("normativa_id")
-  parametroId   String   @map("parametro_id")
-  limiteMin     Float?   @map("limite_min")
-  limiteMax     Float?   @map("limite_max")
-  unidad        String   @db.VarChar(30)
-  observaciones String?  @db.Text
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-
-  normativa NormativaECA @relation(fields: [normativaId], references: [id], onDelete: Cascade)
-  parametro Parametro    @relation(fields: [parametroId], references: [id], onDelete: Restrict)
-
-  @@unique([normativaId, parametroId])
-  @@index([parametroId])
-  @@map("normativa_limites_parametro")
+  @@map("parametros")
 }
 
 // =============================================================================
@@ -551,40 +676,45 @@ model NormativaLimiteParametro {
 // estación · campaña · parámetro · valor · unidad · cumplimiento ECA · comentario
 // =============================================================================
 
-model Medicion {
-  id               String      @id
-  muestreoId       String      @map("muestreo_id")
-  campanaId        String?     @map("campana_id")
-  parametroId      String      @map("parametro_id")
-  puntoMonitoreoId String      @map("estacion_id")
+model Measurement {
+  id               String          @id
+  muestreoId       String          @map("muestreo_id")
+  campanaId        String?         @map("campana_id")
+  parametroId      String          @map("parametro_id")
+  puntoMonitoreoId String          @map("estacion_id")
+  unitId           String?         @map("unit_id")
   valor            Float
-  unidad           String      @db.VarChar(30)
-  /// Clasificación ECA de la medición individual
-  cumplimientoEca  EstadoECA?  @map("cumplimiento_eca")
-  /// Comentario técnico del analista de campo o laboratorio
-  comentario       String?     @db.Text
-  fechaMedicion    DateTime    @map("fecha_medicion")
-  metodoAnalisis   String?     @map("metodo_analisis") @db.VarChar(120)
-  laboratorio      String?     @db.VarChar(150)
-  responsableId    String?     @map("responsable_id")
-  calidadDato      CalidadDato @default(valid) @map("calidad_dato")
-  estado           EstadoRegistro @default(active)
-  observaciones    String?     @db.Text
-  createdAt        DateTime    @default(now()) @map("created_at")
-  updatedAt        DateTime    @updatedAt @map("updated_at")
+  unidad           String          @db.VarChar(30)
+  cumplimientoEca  EstadoECA?      @map("cumplimiento_eca")
+  comentario       String?         @db.Text
+  fechaMedicion    DateTime        @map("fecha_medicion")
+  metodoAnalisis   String?         @map("metodo_analisis") @db.VarChar(120)
+  laboratorio      String?         @db.VarChar(150)
+  equipoUtilizado  String?         @map("equipo_utilizado") @db.VarChar(150)
+  nivelConfianza   NivelConfianza? @map("nivel_confianza")
+  responsableId    String?         @map("responsable_id")
+  calidadDato      CalidadDato     @default(valid) @map("calidad_dato")
+  estado           EstadoRegistro  @default(active)
+  observaciones    String?         @db.Text
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
 
-  muestreo       Muestreo       @relation(fields: [muestreoId], references: [id], onDelete: Cascade)
-  campana        Campana?       @relation(fields: [campanaId], references: [id], onDelete: SetNull)
-  parametro      Parametro      @relation(fields: [parametroId], references: [id], onDelete: Restrict)
-  puntoMonitoreo PuntoMonitoreo @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
-  responsable    Usuario?       @relation("MedicionResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
+  muestreo       Muestreo         @relation(fields: [muestreoId], references: [id], onDelete: Cascade)
+  campana        Campaign?        @relation(fields: [campanaId], references: [id], onDelete: SetNull)
+  parametro      Parameter        @relation(fields: [parametroId], references: [id], onDelete: Restrict)
+  measurementUnit MeasurementUnit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  puntoMonitoreo Station          @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
+  responsable    Usuario?         @relation("MedicionResponsable", fields: [responsableId], references: [id], onDelete: SetNull)
 
   @@unique([muestreoId, parametroId])
   @@index([puntoMonitoreoId])
   @@index([campanaId])
   @@index([parametroId])
+  @@index([unitId])
   @@index([fechaMedicion])
   @@index([cumplimientoEca])
+  @@index([nivelConfianza])
+  @@index([laboratorio])
   @@map("mediciones")
 }
 
@@ -592,7 +722,7 @@ model Medicion {
 // EVALUACIÓN AMBIENTAL — ECA + preparación IA
 // =============================================================================
 
-model EvaluacionAmbiental {
+model EnvironmentalAssessment {
   id                  String       @id
   muestreoId          String       @unique @map("muestreo_id")
   puntoMonitoreoId    String       @map("estacion_id")
@@ -612,8 +742,8 @@ model EvaluacionAmbiental {
   updatedAt           DateTime     @updatedAt @map("updated_at")
 
   muestreo       Muestreo       @relation(fields: [muestreoId], references: [id], onDelete: Cascade)
-  puntoMonitoreo PuntoMonitoreo @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
-  normativa      NormativaECA?  @relation(fields: [normativaId], references: [id], onDelete: SetNull)
+  puntoMonitoreo Station @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
+  normativa      EcaStandard?  @relation(fields: [normativaId], references: [id], onDelete: SetNull)
   evaluadoPor    Usuario?       @relation("EvaluacionEvaluador", fields: [evaluadoPorId], references: [id], onDelete: SetNull)
   riesgos        RiesgoAmbiental[]
 
@@ -632,13 +762,13 @@ model EvaluacionAmbiental {
 // NDWI · MNDWI · NDVI · NDTI · fecha · fuente · resolución
 // =============================================================================
 
-model IndiceSatelital {
+model SatelliteIndex {
   id                      String          @id
   puntoMonitoreoId        String          @map("estacion_id")
   proyectoId              String?         @map("proyecto_id")
+  satelliteSourceId       String?         @map("satellite_source_id")
   fechaAdquisicion        DateTime        @map("fecha_adquisicion") @db.Date
   fuente                  FuenteSatelital
-  /// Resolución espacial del producto satelital (metros/píxel)
   resolucionMetros        Float           @default(10) @map("resolucion_m")
   ndwi                    Float
   ndvi                    Float
@@ -653,12 +783,14 @@ model IndiceSatelital {
   createdAt               DateTime        @default(now()) @map("created_at")
   updatedAt               DateTime        @updatedAt @map("updated_at")
 
-  puntoMonitoreo PuntoMonitoreo  @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Cascade)
-  proyecto       Proyecto?       @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
-  imagenes       ImagenSatelital[]
+  puntoMonitoreo  Station          @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Cascade)
+  proyecto        Proyecto?        @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
+  satelliteSource SatelliteSource? @relation(fields: [satelliteSourceId], references: [id], onDelete: SetNull)
+  imagenes        ImagenSatelital[]
 
   @@index([puntoMonitoreoId, fechaAdquisicion])
   @@index([proyectoId])
+  @@index([satelliteSourceId])
   @@index([fuente])
   @@map("indices_satelitales")
 }
@@ -679,8 +811,8 @@ model ImagenSatelital {
   createdAt        DateTime        @default(now()) @map("created_at")
   updatedAt        DateTime        @updatedAt @map("updated_at")
 
-  indiceSatelital IndiceSatelital? @relation(fields: [indiceSatelitalId], references: [id], onDelete: SetNull)
-  puntoMonitoreo  PuntoMonitoreo   @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Cascade)
+  indiceSatelital SatelliteIndex? @relation(fields: [indiceSatelitalId], references: [id], onDelete: SetNull)
+  puntoMonitoreo  Station   @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Cascade)
   proyecto        Proyecto?        @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
 
   @@index([puntoMonitoreoId])
@@ -713,9 +845,9 @@ model RiesgoAmbiental {
   createdAt        DateTime     @default(now()) @map("created_at")
   updatedAt        DateTime     @updatedAt @map("updated_at")
 
-  puntoMonitoreo PuntoMonitoreo        @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Cascade)
+  puntoMonitoreo Station        @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Cascade)
   muestreo       Muestreo?            @relation(fields: [muestreoId], references: [id], onDelete: SetNull)
-  evaluacion     EvaluacionAmbiental? @relation(fields: [evaluacionId], references: [id], onDelete: SetNull)
+  evaluacion     EnvironmentalAssessment? @relation(fields: [evaluacionId], references: [id], onDelete: SetNull)
 
   @@index([puntoMonitoreoId, fecha])
   @@index([muestreoId])
@@ -740,15 +872,59 @@ model Usuario {
   updatedAt     DateTime       @updatedAt @map("updated_at")
 
   proyectosResponsable   Proyecto[]            @relation("ProyectoResponsable")
-  campanasResponsable    Campana[]             @relation("CampanaResponsable")
+  campanasResponsable    Campaign[]             @relation("CampanaResponsable")
   muestreosResponsable   Muestreo[]            @relation("MuestreoResponsable")
-  medicionesResponsable  Medicion[]            @relation("MedicionResponsable")
-  evaluacionesRealizadas EvaluacionAmbiental[] @relation("EvaluacionEvaluador")
+  medicionesResponsable  Measurement[]            @relation("MedicionResponsable")
+  evaluacionesRealizadas EnvironmentalAssessment[] @relation("EvaluacionEvaluador")
   reportesGenerados      Reporte[]             @relation("ReporteGenerador")
+  dataImports            DataImport[]
+  reportExports          ReportExport[]
+  auditLogs              AuditLog[]
 
   @@index([rol])
   @@index([estado])
   @@map("usuarios")
+}
+
+// =============================================================================
+// ROLES Y PERMISOS — Sprint 3I (User = Usuario · tabla usuarios)
+// =============================================================================
+
+model Role {
+  id          String           @id
+  code        String           @unique @db.VarChar(40)
+  name        String           @db.VarChar(120)
+  description String?          @db.Text
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+
+  permissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id
+  code        String           @unique @db.VarChar(60)
+  name        String           @db.VarChar(120)
+  category    String?          @db.VarChar(60)
+  description String?          @db.Text
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id")
+  permissionId String @map("permission_id")
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
 }
 
 model Reporte {
@@ -767,8 +943,8 @@ model Reporte {
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
   proyecto    Proyecto?             @relation(fields: [proyectoId], references: [id], onDelete: SetNull)
-  rio         Rio                   @relation(fields: [rioId], references: [id], onDelete: Restrict)
-  cuenca      Cuenca                @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
+  rio         River                   @relation(fields: [rioId], references: [id], onDelete: Restrict)
+  cuenca      Watershed                @relation(fields: [cuencaId], references: [id], onDelete: Restrict)
   generadoPor Usuario               @relation("ReporteGenerador", fields: [generadoPorId], references: [id], onDelete: Restrict)
   puntos      ReportePuntoMonitoreo[]
 
@@ -783,8 +959,107 @@ model ReportePuntoMonitoreo {
   puntoMonitoreoId   String @map("estacion_id")
 
   reporte        Reporte        @relation(fields: [reporteId], references: [id], onDelete: Cascade)
-  puntoMonitoreo PuntoMonitoreo @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
+  puntoMonitoreo Station @relation(fields: [puntoMonitoreoId], references: [id], onDelete: Restrict)
 
   @@id([reporteId, puntoMonitoreoId])
   @@map("reporte_estaciones")
+}
+
+// =============================================================================
+// IMPORTACIÓN DE DATOS — Sprint 3F
+// =============================================================================
+
+enum DataImportStatus {
+  pending    @map("pending")
+  validated  @map("validated")
+  completed  @map("completed")
+  partial    @map("partial")
+  failed     @map("failed")
+}
+
+model DataImport {
+  id                String           @id
+  fileName          String           @map("file_name") @db.VarChar(255)
+  fileSize          Int              @map("file_size")
+  mimeType          String?          @map("mime_type") @db.VarChar(120)
+  responsableId     String           @map("responsable_id")
+  responsableNombre String?          @map("responsable_nombre") @db.VarChar(150)
+  totalRows         Int              @map("total_rows")
+  validRows         Int              @default(0) @map("valid_rows")
+  warningRows       Int              @default(0) @map("warning_rows")
+  errorRows         Int              @default(0) @map("error_rows")
+  importedRows      Int              @default(0) @map("imported_rows")
+  rejectedRows      Int              @default(0) @map("rejected_rows")
+  status            DataImportStatus @default(pending)
+  columnMapping     Json?            @map("column_mapping")
+  errorLog          Json?            @map("error_log")
+  startedAt         DateTime         @default(now()) @map("started_at")
+  completedAt       DateTime?        @map("completed_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+
+  responsable Usuario @relation(fields: [responsableId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([startedAt])
+  @@index([responsableId])
+  @@map("data_imports")
+}
+
+enum ReportExportFormat {
+  csv   @map("csv")
+  xlsx  @map("xlsx")
+  pdf   @map("pdf")
+}
+
+model ReportExport {
+  id                String             @id
+  fileFormat        ReportExportFormat @map("file_format")
+  fileName          String             @map("file_name") @db.VarChar(255)
+  responsableId     String             @map("responsable_id")
+  responsableNombre String?            @map("responsable_nombre") @db.VarChar(150)
+  filters           Json
+  sections          Json?
+  recordCount       Int                @map("record_count")
+  createdAt         DateTime           @default(now()) @map("created_at")
+
+  responsable Usuario @relation(fields: [responsableId], references: [id], onDelete: Restrict)
+
+  @@index([createdAt])
+  @@index([responsableId])
+  @@map("report_exports")
+}
+
+// =============================================================================
+// AUDITORÍA Y TRAZABILIDAD — Sprint 3H
+// =============================================================================
+
+enum AuditAction {
+  CREATE @map("create")
+  UPDATE @map("update")
+  DELETE @map("delete")
+  IMPORT @map("import")
+  EXPORT @map("export")
+}
+
+model AuditLog {
+  id                String      @id
+  entityType        String      @map("entity_type") @db.VarChar(80)
+  entityId          String      @map("entity_id") @db.VarChar(80)
+  action            AuditAction
+  timestamp         DateTime    @default(now())
+  previousData      Json?       @map("previous_data")
+  newData           Json?       @map("new_data")
+  description       String?     @db.Text
+  responsableId     String      @map("responsable_id")
+  responsableNombre String?     @map("responsable_nombre") @db.VarChar(150)
+
+  responsable Usuario @relation(fields: [responsableId], references: [id], onDelete: Restrict)
+
+  @@index([entityType])
+  @@index([entityId])
+  @@index([action])
+  @@index([timestamp])
+  @@index([responsableId])
+  @@map("audit_logs")
 }

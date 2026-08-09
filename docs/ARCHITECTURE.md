@@ -1,130 +1,161 @@
-# HydroVision — Arquitectura del Sistema (v3.4)
+# HydroVision — Arquitectura del Sistema (Sprint 3C)
 
 ## 1. Visión general
 
-HydroVision es una plataforma web para el monitoreo integrado de la calidad del agua del **río Reque** (Lambayeque, Perú). Combina datos de campo, índices satelitales (GEE), clasificación ECA e inteligencia artificial.
+HydroVision es una plataforma web para el monitoreo integrado de la calidad del agua del **río Reque** (Lambayeque, Perú). A partir del Sprint 3C adopta una **arquitectura en capas** (Layered Architecture) que separa presentación, API, lógica de negocio y acceso a datos.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    PRESENTACIÓN (src/components, src/app)               │
-│  Dashboard · Mapa · Campañas · Muestreos · UI compartida                │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
+│  PRESENTACIÓN — src/app, src/components, src/hooks                        │
+│  Páginas React · consume APIs REST · sin acceso directo a Prisma          │
+└───────────────────────────────┬─────────────────────────────────────────┘
+                                │ HTTP (fetch)
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    APLICACIÓN (src/hooks, src/services)                 │
-│  useMapFilters · useCampaigns · useSamples · GEE · IA · Reportes        │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
+│  API — src/app/api/* + src/server/api                                   │
+│  Route Handlers · respuestas JSON · errores consistentes                │
+└───────────────────────────────┬─────────────────────────────────────────┘
+                                │
+                                ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    INFRAESTRUCTURA (src/repositories)                   │
-│  geography · monitoring · campaign · sample — mock → Prisma (futuro)    │
-└─────────────────────────────────────────────────────────────────────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    ▼               ▼               ▼
-┌──────────────────────┐ ┌─────────────────┐ ┌──────────────────────────┐
-│   PostgreSQL         │ │ Google Earth    │ │ Servicio IA (Fase 6)     │
-│   Prisma ORM         │ │ Engine (Fase 4) │ │ Python FastAPI           │
-└──────────────────────┘ └─────────────────┘ └──────────────────────────┘
+│  SERVICIOS — src/server/services                                        │
+│  Lógica de negocio · orquestación · validaciones de dominio               │
+└───────────────────────────────┬─────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│  REPOSITORIOS — src/server/repositories                                 │
+│  Acceso a PostgreSQL (Prisma) o mock · mapeo entidad → DTO                │
+└───────────────────────────────┬─────────────────────────────────────────┘
+                                │
+              ┌─────────────────┴─────────────────┐
+              ▼                                   ▼
+┌──────────────────────────┐      ┌──────────────────────────┐
+│  src/server/db (Prisma)    │      │  src/data/mock           │
+│  PostgreSQL                │      │  Datos simulados         │
+└──────────────────────────┘      └──────────────────────────┘
 ```
 
-## 2. Estructura de carpetas (Fase 3.4)
+## 2. Estructura backend (Sprint 3C)
 
 ```
-src/
-├── app/                    # Rutas Next.js App Router
-│   ├── page.tsx            # Dashboard
-│   ├── campanas/           # Gestión de campañas
-│   ├── muestreos/          # Registro de muestras
-│   └── api/
-├── components/             # UI React (presentación)
-│   ├── dashboard/
-│   ├── campaigns/
-│   ├── sampling/
-│   ├── map/
-│   ├── station/
-│   └── ui/                 # Componentes reutilizables
-├── config/                 # Configuración app, BD, módulos
-├── constants/              # Enums, filtros, sampling
-├── hooks/                  # Estado y lógica de UI
-├── models/                 # Entidades de dominio
-├── repositories/           # Acceso a datos (mock → Prisma)
-├── services/               # Casos de uso e integraciones
-│   ├── gee/                # Google Earth Engine
-│   ├── ai/                 # Inteligencia artificial
-│   └── reports/            # PDF, Excel, estadísticas
-├── types/                  # DTOs y contratos TypeScript
-├── utils/                  # Utilidades puras (fechas, cn, repos)
-├── data/mock/              # Fuente mock unificada
-└── lib/                    # Compatibilidad + dominio (ECA, adapters)
-    ├── eca/                # Clasificador ECA
-    ├── adapters/           # Legacy adapter
-    └── db/                 # Cliente Prisma (stub)
+src/server/
+├── db/                 # Prisma Client singleton
+├── repositories/       # Acceso a datos (StationRepository, …)
+├── services/           # Lógica de negocio (StationService, …)
+├── validators/         # Validación de entrada (StationValidator, …)
+├── dto/                # Contratos de transferencia (StationDTO, …)
+└── api/                # Utilidades HTTP (errores, respuestas, handler)
 ```
 
-## 3. Principios arquitectónicos
+Capas transversales:
 
-| Principio | Implementación |
-|-----------|----------------|
-| **Clean Architecture** | Capas: Presentación → Servicios → Repositorios → Datos |
-| **SOLID — SRP** | Cada repositorio/servicio una responsabilidad |
-| **SOLID — DIP** | Interfaces `IEarthEngineService`, `IRiskPredictionService`, etc. |
-| **DRY** | `KpiGrid`, `FieldError`, `resolveNombre`, fechas en `@/utils` |
-| **OCP** | Mock intercambiable por implementación real vía interfaces |
+| Carpeta | Rol |
+|---------|-----|
+| `src/lib/api/` | Cliente HTTP del frontend hacia Route Handlers |
+| `src/app/api/` | Endpoints REST expuestos por Next.js |
 
-## 4. Módulos funcionales
+## 3. Flujo de datos — módulo Estaciones
 
-| Ruta | Módulo | Fase |
-|------|--------|------|
-| `/` | Dashboard + mapa | 1–2 |
-| `/campanas` | Campañas de monitoreo | 3.2 |
-| `/muestreos` | Registro de muestras | 3.3 |
-| GEE | `src/services/gee/` | 4 (preparado) |
-| Reportes | `src/services/reports/` | 5 (preparado) |
-| IA | `src/services/ai/` | 6 (preparado) |
+```
+/estaciones (page)
+    │
+    ▼
+lib/api/stations.client.ts  ──fetch──▶  GET /api/stations
+                                              │
+                                              ▼
+                                    server/services/station.service.ts
+                                              │
+                                              ▼
+                                    server/repositories/station.repository.ts
+                                              │
+                                    ┌─────────┴─────────┐
+                                    ▼                   ▼
+                              prisma.station       getMockStations()
+```
 
-## 5. Integraciones preparadas
+Detalle: `GET /api/stations/:id` → `StationService.getById()` → repositorio + datos auxiliares mock (campañas, mediciones) hasta Sprint 3D+.
 
-### Google Earth Engine (`src/services/gee/`)
+## 4. Responsabilidades por capa
 
-| Componente | Responsabilidad |
-|------------|-----------------|
-| `EarthEngineService` | Orquestación de consultas GEE |
-| `SatelliteImageRepository` | Persistencia/consulta de imágenes |
-| `MapLayerManager` | Capas raster/vector en mapa |
-| `IndicesCalculator` | NDWI, NDVI, MNDWI, NDTI |
+| Capa | Responsabilidad | No debe |
+|------|-----------------|---------|
+| **Presentación** | UI, filtros cliente, navegación | Importar Prisma ni repositorios server |
+| **API (Route Handlers)** | HTTP, status codes, serialización JSON | Contener lógica de negocio compleja |
+| **Servicios** | Reglas de negocio, composición, validación | Conocer detalles HTTP ni JSX |
+| **Repositorios** | Queries Prisma/mock, mappers entidad→DTO | Exponer HTTP ni renderizar UI |
+| **DTO** | Tipos del contrato API | Depender de React o Prisma |
+| **Validators** | Validar IDs, query params, payloads | Acceder a base de datos |
+| **DB** | Conexión singleton Prisma | Lógica de dominio |
 
-### Inteligencia Artificial (`src/services/ai/`)
+## 5. Módulo Estaciones (referencia para futuros módulos)
 
-| Componente | Responsabilidad |
-|------------|-----------------|
-| `RiskPredictionService` | Score de riesgo de contaminación |
-| `WaterQualityAnalyzer` | Análisis multi-parámetro |
-| `RecommendationEngine` | Recomendaciones operativas |
+| Componente | Archivo |
+|------------|---------|
+| DTO | `server/dto/station.dto.ts` |
+| Validator | `server/validators/station.validator.ts` |
+| Repository | `server/repositories/station.repository.ts` |
+| Service | `server/services/station.service.ts` |
+| API | `app/api/stations/route.ts`, `app/api/stations/[id]/route.ts` |
+| Cliente UI | `lib/api/stations.client.ts` |
 
-### Reportes (`src/services/reports/`)
+Patrón replicable para Campañas, Muestreos, etc.: DTO → Validator → Repository → Service → Route Handler → Client.
 
-| Componente | Responsabilidad |
-|------------|-----------------|
-| `PDFService` | Informes técnicos |
-| `ExcelService` | Exportación tabular |
-| `StatisticsService` | Agregaciones temporales |
+## 6. Manejo de errores
 
-## 6. Clasificación ECA
+Respuesta de éxito:
 
-Centralizada en `src/lib/eca/classifier.ts`. Tres estados: Cumple, En alerta, No cumple.
+```json
+{
+  "success": true,
+  "data": { ... },
+  "meta": { "timestamp": "...", "source": "database" }
+}
+```
 
-## 7. PostgreSQL
+Respuesta de error:
 
-Schema en `prisma/schema.prisma`. Activación: `USE_DATABASE=true` + `@/config/database.config`.
+```json
+{
+  "success": false,
+  "error": { "code": "NOT_FOUND", "message": "Estación 'x' no encontrada" }
+}
+```
 
-## 8. Compatibilidad legacy
+Códigos: `VALIDATION_ERROR` (400), `NOT_FOUND` (404), `DATABASE_ERROR` (503), `INTERNAL_ERROR` (500).
 
-Imports `@/lib/repositories/*`, `@/lib/utils`, `@/lib/earth-engine/client` re-exportan desde las nuevas capas sin romper código existente.
+## 7. Configuración de datos
 
-## 9. Despliegue
+| Variable | Efecto |
+|----------|--------|
+| `DATA_SOURCE=mock` | Dashboard, campañas, muestreos → mock |
+| `STATIONS_DATA_SOURCE=database` | Estaciones → PostgreSQL vía capas server |
+| `DATABASE_URL` | Conexión PostgreSQL |
 
-- **Desarrollo**: `npm run dev`
-- **Demo tesis**: Vercel + Railway/Render (PostgreSQL + Python services)
+## 8. Beneficios para escalabilidad y mantenimiento
+
+- **Separación de concerns**: cambios en UI no afectan queries; cambios en BD no rompen contratos API.
+- **Testabilidad**: servicios y repositorios aislados, mockeables sin Next.js.
+- **Escalabilidad**: Route Handlers pueden moverse a microservicios manteniendo DTOs.
+- **Tipado fuerte**: TypeScript en DTO, servicio y cliente API.
+- **Evolución por módulos**: Estaciones ya en capas; otros módulos siguen mock hasta migración incremental.
+
+## 9. Integraciones futuras (sin cambios Sprint 3C)
+
+| Integración | Ubicación prevista |
+|-------------|-------------------|
+| Google Earth Engine | `server/services/gee/` |
+| Autenticación | middleware + `server/validators/auth` |
+| IA | `server/services/ai/` |
+
+## 10. Comandos
+
+```bash
+npm run dev
+npm run lint
+npm run build
+npm run seed          # PostgreSQL
+npx prisma migrate deploy
+```
+
+Documentación de base de datos: [DATABASE.md](./DATABASE.md).

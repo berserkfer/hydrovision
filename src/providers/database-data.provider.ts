@@ -4,7 +4,7 @@
  */
 
 import { dataSourceConfig } from "@/config";
-import { databaseConfig, isDatabaseConfigured } from "@/config/database.config";
+import { isDatabaseConfigured } from "@/config/database.config";
 import type { HydroVisionDataStore } from "@/models";
 import type { IDataProvider, DataProviderMetadata } from "@/types/data-provider";
 import { buildSnapshot } from "./provider.utils";

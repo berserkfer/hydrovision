@@ -33,7 +33,7 @@ interface DashboardViewProps {
  * Vista principal del dashboard — Fase 4.2 Dashboard Ejecutivo.
  * Conserva todos los componentes previos e integra capa ejecutiva.
  */
-export function DashboardView({ stats, summaries, timeSeries }: DashboardViewProps) {
+export function DashboardView({ stats: _stats, summaries, timeSeries }: DashboardViewProps) {
   const {
     filters,
     riverContext,

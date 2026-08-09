@@ -1,5 +1,4 @@
 import type { ComplianceStatus, StationSummary } from "@/types";
-import type { RiverContext } from "@/types/geography";
 
 /** Estado operativo de la estación de monitoreo */
 export type OperationalStatus = "active" | "maintenance" | "offline";

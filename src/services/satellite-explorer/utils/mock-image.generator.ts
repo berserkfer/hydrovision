@@ -5,10 +5,6 @@
 import type { SatelliteImage } from "../interfaces/satellite-image.interface";
 import type { SatellitePlatform, SatelliteSearchQuery } from "../types/satellite-explorer.types";
 
-function pad(n: number): string {
-  return n.toString().padStart(2, "0");
-}
-
 function buildSimulatedThumbnail(platform: SatellitePlatform, cloudCover: number): string {
   const base =
     platform === "sentinel2" ? "#0ea5e9" : platform === "landsat8" ? "#6366f1" : "#8b5cf6";

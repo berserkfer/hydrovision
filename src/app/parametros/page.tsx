@@ -4,13 +4,19 @@ import {
   getParameterChartData,
   getParameterFilterOptions,
   getParameterSummaryStats,
-} from "@/lib/repositories/parameter.repository";
+} from "@/lib/api/parameters.client";
 
-export default function ParametrosPage() {
-  const initialRecords = getAllParameterRecords();
-  const initialStats = getParameterSummaryStats();
-  const chartData = getParameterChartData();
-  const { estaciones, campanas, fechas } = getParameterFilterOptions();
+export const dynamic = "force-dynamic";
+
+export default async function ParametrosPage() {
+  const [initialRecords, initialStats, chartData, filterOptions] = await Promise.all([
+    getAllParameterRecords(),
+    getParameterSummaryStats(),
+    getParameterChartData(),
+    getParameterFilterOptions(),
+  ]);
+
+  const { estaciones, campanas, fechas } = filterOptions;
 
   return (
     <ParametersView

@@ -3,7 +3,6 @@
  * Fechas centralizadas en @/utils.
  */
 
-import { CLIMA_OPTIONS, COLOR_APARENTE_OPTIONS } from "@/constants/sampling";
 import { classifyMeasurement } from "@/lib/eca/classifier";
 import type { ParametrosFisicoquimicos } from "@/models/monitoring";
 import type {

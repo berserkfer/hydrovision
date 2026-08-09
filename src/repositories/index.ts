@@ -7,3 +7,4 @@ export * from "./station.repository";
 export * from "./parameter.repository";
 export * from "./report.repository";
 export * from "./environmental-evaluation.repository";
+export * from "./geospatial.repository";

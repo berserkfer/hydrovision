@@ -24,6 +24,7 @@ function createAuthStack(): {
   const envValidator = new EnvironmentValidator(geeCredentialsRepository);
   const credValidator = new CredentialValidator(geeCredentialsRepository);
 
+  // eslint-disable-next-line prefer-const -- asignación posterior por dependencia circular con tokenManager
   let service: EarthEngineAuthService;
   const tokens = new EarthEngineTokenManager(() => service.isInitialized());
   service = new EarthEngineAuthService(envValidator, credValidator, tokens);

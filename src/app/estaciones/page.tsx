@@ -3,12 +3,16 @@ import {
   getAllStationRecords,
   getStationFilterOptions,
   getStationStats,
-} from "@/lib/repositories/station.repository";
+} from "@/lib/api/stations.client";
 
-export default function EstacionesPage() {
-  const initialStations = getAllStationRecords();
-  const initialStats = getStationStats();
-  const { cuencas, rios } = getStationFilterOptions();
+export const dynamic = "force-dynamic";
+
+export default async function EstacionesPage() {
+  const [initialStations, initialStats, { cuencas, rios }] = await Promise.all([
+    getAllStationRecords(),
+    getStationStats(),
+    getStationFilterOptions(),
+  ]);
 
   return (
     <StationsView

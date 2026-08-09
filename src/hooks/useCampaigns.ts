@@ -2,10 +2,12 @@
 
 import { useCallback, useMemo, useState } from "react";
 import {
-  createCampana,
-  getAllCampanaSummaries,
-  getCampaignStats,
-} from "@/lib/repositories/campaign.repository";
+  createCampaign,
+  deleteCampaign,
+  fetchCampaignsList,
+  updateCampaign,
+} from "@/lib/api/campaigns.client";
+import { withApiToast } from "@/lib/api/notify";
 import type {
   CampanaSummary,
   CampaignFilters,
@@ -58,18 +60,49 @@ export function useCampaigns({ initialCampaigns, initialStats, pageSize = 8 }: U
     [filtered, pagination]
   );
 
-  const refreshFromStore = useCallback(() => {
-    setCampaigns(getAllCampanaSummaries());
-    setStats(getCampaignStats());
+  const refreshFromApi = useCallback(async () => {
+    const data = await fetchCampaignsList({ pageSize: 500 });
+    setCampaigns(data.items);
+    setStats(data.stats);
   }, []);
 
   const handleCreate = useCallback(
-    (input: CreateCampanaInput) => {
-      createCampana(input);
-      refreshFromStore();
-      pagination.resetPage();
+    async (input: CreateCampanaInput) => {
+      const result = await withApiToast(() => createCampaign(input), {
+        success: "Campaña registrada correctamente",
+        error: "No se pudo crear la campaña",
+      });
+      if (result) {
+        await refreshFromApi();
+        pagination.resetPage();
+      }
     },
-    [refreshFromStore, pagination.resetPage]
+    [refreshFromApi, pagination]
+  );
+
+  const handleUpdate = useCallback(
+    async (id: string, input: Partial<CreateCampanaInput>) => {
+      const result = await withApiToast(() => updateCampaign(id, input), {
+        success: "Campaña actualizada correctamente",
+        error: "No se pudo actualizar la campaña",
+      });
+      if (result) await refreshFromApi();
+    },
+    [refreshFromApi]
+  );
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const result = await withApiToast(() => deleteCampaign(id), {
+        success: "Campaña eliminada correctamente",
+        error: "No se pudo eliminar la campaña",
+      });
+      if (result) {
+        await refreshFromApi();
+        pagination.resetPage();
+      }
+    },
+    [refreshFromApi, pagination]
   );
 
   const handleFilterChange = useCallback(
@@ -77,13 +110,13 @@ export function useCampaigns({ initialCampaigns, initialStats, pageSize = 8 }: U
       setFilter(key, value);
       pagination.resetPage();
     },
-    [setFilter, pagination.resetPage]
+    [setFilter, pagination]
   );
 
   const handleResetFilters = useCallback(() => {
     resetFilters();
     pagination.resetPage();
-  }, [resetFilters, pagination.resetPage]);
+  }, [resetFilters, pagination]);
 
   return {
     campaigns: paginatedCampaigns,
@@ -94,6 +127,9 @@ export function useCampaigns({ initialCampaigns, initialStats, pageSize = 8 }: U
     resetFilters: handleResetFilters,
     hasActiveFilters,
     createCampaign: handleCreate,
+    updateCampaign: handleUpdate,
+    deleteCampaign: handleDelete,
+    refreshCampaigns: refreshFromApi,
     pagination,
     viewMode,
     setViewMode,

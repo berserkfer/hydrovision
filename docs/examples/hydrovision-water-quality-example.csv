@@ -1,0 +1,16 @@
+station_code,campaign,date,parameter,value,unit,latitude,longitude,observations
+E-01,CAMP-2025-01,2025-03-12,ph,7.42,—,-6.7041,-79.8432,Muestreo de campo — tramo medio
+E-01,CAMP-2025-01,2025-03-12,temperature,24.6,°C,-6.7041,-79.8432,Condiciones estables
+E-02,CAMP-2025-01,2025-03-12,dissolved_oxygen,6.8,mg/L,-6.7120,-79.8510,OD dentro de rango esperado
+E-02,CAMP-2025-01,2025-03-12,conductivity,420,µS/cm,-6.7120,-79.8510,Conductividad normal para época seca
+E-03,CAMP-2025-01,2025-03-13,turbidity,18.5,NTU,-6.6890,-79.8295,Ligera turbiedad post-lluvia local
+E-03,CAMP-2025-01,2025-03-13,ph,7.15,—,-6.6890,-79.8295,—
+E-04,CAMP-2025-02,2025-04-02,temperature,25.1,°C,-6.7205,-79.8602,Campaña complementaria
+E-04,CAMP-2025-02,2025-04-02,flow_rate,2.35,m³/s,-6.7205,-79.8602,Caudal estimado in situ
+E-05,CAMP-2025-02,2025-04-02,dissolved_oxygen,5.9,mg/L,-6.6988,-79.8377,Valor en zona de alerta
+E-05,CAMP-2025-02,2025-04-02,ph,7.88,—,-6.6988,-79.8377,—
+E-01,CAMP-2025-02,2025-04-03,conductivity,510,µS/cm,-6.7041,-79.8432,Incremento respecto a campaña anterior
+E-02,CAMP-2025-02,2025-04-03,temperature,26.3,°C,-6.7120,-79.8510,Temperatura elevada — posible descarga térmica menor
+E-03,CAMP-2025-02,2025-04-03,turbidity,42.0,NTU,-6.6890,-79.8295,Alta turbiedad — requiere seguimiento
+E-04,CAMP-2025-02,2025-04-04,ph,6.95,—,-6.7205,-79.8602,—
+E-05,CAMP-2025-02,2025-04-04,dissolved_oxygen,7.2,mg/L,-6.6988,-79.8377,Recuperación respecto a muestreo previo

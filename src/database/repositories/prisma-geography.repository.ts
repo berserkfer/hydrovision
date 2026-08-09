@@ -10,7 +10,7 @@ import { mapCuenca, mapDepartamento, mapRio } from "@/database/mappers/hydrovisi
 export class PrismaGeographyRepository implements IGeographyRepository {
   async findAllDepartamentos(): Promise<HydroVisionDataStore["departamentos"]> {
     const prisma = await PrismaService.getClient();
-    const rows = await prisma.departamento.findMany({
+    const rows = await prisma.department.findMany({
       orderBy: { nombre: "asc" },
     });
     return rows.map(mapDepartamento);
@@ -18,7 +18,7 @@ export class PrismaGeographyRepository implements IGeographyRepository {
 
   async findAllCuencas(): Promise<HydroVisionDataStore["cuencas"]> {
     const prisma = await PrismaService.getClient();
-    const rows = await prisma.cuenca.findMany({
+    const rows = await prisma.watershed.findMany({
       orderBy: { nombre: "asc" },
     });
     return rows.map(mapCuenca);
@@ -26,7 +26,7 @@ export class PrismaGeographyRepository implements IGeographyRepository {
 
   async findAllRios(): Promise<HydroVisionDataStore["rios"]> {
     const prisma = await PrismaService.getClient();
-    const rows = await prisma.rio.findMany({
+    const rows = await prisma.river.findMany({
       orderBy: { nombre: "asc" },
     });
     return rows.map(mapRio);

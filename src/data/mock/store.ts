@@ -228,6 +228,24 @@ function buildMockStore(): HydroVisionDataStore {
       activo: true,
       ...META,
     },
+    {
+      id: "usr-visor",
+      nombre: "Luis Consulta",
+      email: "l.consulta@hydrovision.local",
+      rol: RolUsuario.VISOR,
+      institucion: "Observador externo — cuenta ficticia",
+      activo: true,
+      ...META,
+    },
+    {
+      id: "usr-inactivo",
+      nombre: "Usuario Inactivo",
+      email: "inactivo@hydrovision.local",
+      rol: RolUsuario.INVESTIGADOR,
+      institucion: "Cuenta deshabilitada — prueba Sprint 3I",
+      activo: false,
+      ...META,
+    },
   ];
 
   const campanas = [

@@ -1,3 +1,4 @@
+/** @deprecated Reservado para integración con ruleEngine. Sin consumidores en MVP. */
 "use client";
 
 import { useMemo } from "react";

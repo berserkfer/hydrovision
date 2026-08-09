@@ -1,3 +1,4 @@
+/** @deprecated Usar MonitoringHeader. Conservado por compatibilidad. */
 import { InfoBadge } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/utils";
 import { SIMULATION_DISCLAIMER } from "@/lib/data/simulated";

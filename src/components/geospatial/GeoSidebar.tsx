@@ -1,7 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { MapPin } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { GeoStationDetail } from "@/types/geospatial-center";
 import { GEO_STATUS_COLORS } from "@/types/geospatial-center";
 
@@ -20,11 +22,14 @@ function statusColor(detail: GeoStationDetail): string {
 export function GeoSidebar({ detail, onClose }: GeoSidebarProps) {
   if (!detail) {
     return (
-      <aside className="flex h-full min-h-[20rem] flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50/80 p-6 text-center">
-        <p className="text-sm font-medium text-slate-600">Seleccione una estación en el mapa</p>
-        <p className="mt-1 text-xs text-slate-400">
-          El panel lateral mostrará la ficha ambiental completa.
-        </p>
+      <aside className="h-full">
+        <EmptyState
+          icon={MapPin}
+          variant="panel"
+          title="Seleccione una estación en el mapa"
+          description="El panel lateral mostrará la ficha ambiental completa."
+          className="h-full"
+        />
       </aside>
     );
   }

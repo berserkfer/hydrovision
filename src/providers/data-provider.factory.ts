@@ -13,8 +13,8 @@ let lazyDatabaseProvider: IDataProvider | null = null;
 function getDatabaseProvider(): IDataProvider {
   if (!lazyDatabaseProvider) {
     // Carga diferida — evita @prisma/client en modo mock
-    const { databaseDataProvider } =
-      require("./database-data.provider") as typeof import("./database-data.provider");
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- import síncrono diferido
+    const { databaseDataProvider } = require("./database-data.provider") as typeof import("./database-data.provider");
     lazyDatabaseProvider = databaseDataProvider;
   }
   return lazyDatabaseProvider;

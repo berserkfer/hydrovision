@@ -8,9 +8,8 @@ import { SampleKpiCards } from "@/components/sampling/SampleKpiCards";
 import { SampleTable } from "@/components/sampling/SampleTable";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ConfirmDeleteDialog } from "@/components/ui/ConfirmDeleteDialog";
 import { Pagination } from "@/components/ui/Pagination";
-import { SuccessToast } from "@/components/ui/SuccessToast";
 import { Card } from "@/components/ui/Card";
 import { SimulatedDataIndicator } from "@/components/ui/SimulatedDataIndicator";
 import { MOCK_LAST_UPDATE } from "@/constants/app";
@@ -37,8 +36,6 @@ export function SamplingView({ initialSamples, initialStats }: SamplingViewProps
     editSample: updateSample,
     removeSample,
     pagination,
-    toastMessage,
-    dismissToast,
   } = useSamples({ initialSamples, initialStats });
 
   const campanaOptions = [
@@ -46,11 +43,14 @@ export function SamplingView({ initialSamples, initialStats }: SamplingViewProps
     ...getCampanasForSampling(),
   ];
 
-  const handleFormSubmit = (payload: Parameters<typeof registerSample>[0], editId?: string) => {
+  const handleFormSubmit = async (
+    payload: Parameters<typeof registerSample>[0],
+    editId?: string
+  ) => {
     if (editId) {
-      updateSample(editId, payload);
+      await updateSample(editId, payload);
     } else {
-      registerSample(payload);
+      await registerSample(payload);
     }
   };
 
@@ -96,7 +96,7 @@ export function SamplingView({ initialSamples, initialStats }: SamplingViewProps
                 label="Campaña de monitoreo"
                 value={campanaId}
                 options={campanaOptions}
-                onChange={selectCampana}
+                onChange={(v) => void selectCampana(v)}
               />
             </div>
           </Card>
@@ -146,23 +146,15 @@ export function SamplingView({ initialSamples, initialStats }: SamplingViewProps
         onSubmit={handleFormSubmit}
       />
 
-      <ConfirmDialog
+      <ConfirmDeleteDialog
         open={deleteTarget !== null}
         title="Eliminar muestra"
-        message={`¿Confirma eliminar la muestra ${deleteTarget?.codigoMuestra}?`}
-        confirmLabel="Eliminar"
-        variant="danger"
+        description={`¿Confirma eliminar la muestra ${deleteTarget?.codigoMuestra}?`}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={() => {
-          if (deleteTarget) removeSample(deleteTarget.id);
+          if (deleteTarget) void removeSample(deleteTarget.id);
           setDeleteTarget(null);
         }}
-      />
-
-      <SuccessToast
-        message={toastMessage ?? ""}
-        visible={toastMessage !== null}
-        onDismiss={dismissToast}
       />
     </MainLayout>
   );

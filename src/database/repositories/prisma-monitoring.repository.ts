@@ -16,7 +16,7 @@ import {
 export class PrismaMonitoringRepository implements IMonitoringRepository {
   async findAllEstaciones(): Promise<HydroVisionDataStore["estaciones"]> {
     const prisma = await PrismaService.getClient();
-    const rows = await prisma.puntoMonitoreo.findMany({
+    const rows = await prisma.station.findMany({
       orderBy: { codigo: "asc" },
     });
     return rows.map(mapEstacion);
@@ -24,7 +24,7 @@ export class PrismaMonitoringRepository implements IMonitoringRepository {
 
   async findAllCampanas(): Promise<HydroVisionDataStore["campanas"]> {
     const prisma = await PrismaService.getClient();
-    const rows = await prisma.campana.findMany({
+    const rows = await prisma.campaign.findMany({
       orderBy: { codigo: "asc" },
     });
     return rows.map(mapCampana);
@@ -42,14 +42,14 @@ export class PrismaMonitoringRepository implements IMonitoringRepository {
     const prisma = await PrismaService.getClient();
     const [muestreos, mediciones] = await Promise.all([
       prisma.muestreo.findMany(),
-      prisma.medicion.findMany({ include: { parametro: true } }),
+      prisma.measurement.findMany({ include: { parametro: true } }),
     ]);
     return aggregateMedicionesToParametros(muestreos, mediciones);
   }
 
   async findAllClasificaciones(): Promise<HydroVisionDataStore["clasificaciones"]> {
     const prisma = await PrismaService.getClient();
-    const rows = await prisma.evaluacionAmbiental.findMany({
+    const rows = await prisma.environmentalAssessment.findMany({
       orderBy: { evaluadoEn: "desc" },
     });
     return rows.map(mapEvaluacionAmbiental);

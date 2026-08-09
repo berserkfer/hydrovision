@@ -10,7 +10,6 @@ import {
   type ExplorerMapViewport,
   type SatelliteImage,
   type SatelliteMetadata,
-  type SatellitePlatform,
   type SatelliteSearchQuery,
   type SatelliteSearchResult,
 } from "@/services/satellite-explorer";

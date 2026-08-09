@@ -96,7 +96,6 @@ function applyFilters(markers: GeoStationMarker[], filters: GeospatialFilters): 
 }
 
 function buildRiverLayers(stations: GeoStationMarker[]): GeoPolylineLayer[] {
-  const store = getDataStore();
   const byRiver = new Map<string, GeoStationMarker[]>();
   stations.forEach((s) => {
     const list = byRiver.get(s.rioId) ?? [];

@@ -10,7 +10,7 @@ import { mapIndiceSatelital, mapReporte, mapUsuario } from "@/database/mappers/h
 export class PrismaAncillaryRepository implements IAncillaryRepository {
   async findAllIndicesSatelitales(): Promise<HydroVisionDataStore["indicesSatelitales"]> {
     const prisma = await PrismaService.getClient();
-    const rows = await prisma.indiceSatelital.findMany({
+    const rows = await prisma.satelliteIndex.findMany({
       orderBy: { fechaAdquisicion: "desc" },
     });
     return rows.map(mapIndiceSatelital);

@@ -2,12 +2,12 @@
 
 import { useCallback, useMemo, useState } from "react";
 import {
-  createMuestra,
-  deleteMuestra,
-  getAllSampleSummaries,
-  getSampleStats,
-  updateMuestra,
-} from "@/lib/repositories/sample.repository";
+  createSample,
+  deleteSample,
+  fetchSamplesList,
+  updateSample,
+} from "@/lib/api/samples.client";
+import { withApiToast } from "@/lib/api/notify";
 import type { CreateMuestraPayload } from "@/types/sampling";
 import type { MuestraSummary, SampleStats } from "@/types/sampling";
 import { usePagination } from "./usePagination";
@@ -28,7 +28,6 @@ export function useSamples({
   const [samples, setSamples] = useState(initialSamples);
   const [stats, setStats] = useState(initialStats);
   const [campanaId, setCampanaId] = useState(initialCampanaId);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const pagination = usePagination({ totalItems: samples.length, pageSize });
   const paginatedSamples = useMemo(
@@ -36,67 +35,70 @@ export function useSamples({
     [samples, pagination]
   );
 
-  const refresh = useCallback(
-    (filterCampanaId?: string) => {
-      const id = filterCampanaId ?? campanaId;
-      setSamples(getAllSampleSummaries(id || undefined));
-      setStats(getSampleStats(id || undefined));
-    },
-    [campanaId]
-  );
+  const refresh = useCallback(async (filterCampanaId?: string) => {
+    const id = filterCampanaId ?? campanaId;
+    const data = await fetchSamplesList({
+      pageSize: 500,
+      ...(id ? { campanaId: id } : {}),
+    });
+    setSamples(data.items);
+    setStats(data.stats);
+  }, [campanaId]);
 
   const selectCampana = useCallback(
-    (id: string) => {
+    async (id: string) => {
       setCampanaId(id);
       pagination.resetPage();
-      setSamples(getAllSampleSummaries(id || undefined));
-      setStats(getSampleStats(id || undefined));
+      const data = await fetchSamplesList({
+        pageSize: 500,
+        ...(id ? { campanaId: id } : {}),
+      });
+      setSamples(data.items);
+      setStats(data.stats);
     },
-    [pagination.resetPage]
+    [pagination]
   );
 
-  const showToast = useCallback((message: string) => {
-    setToastMessage(message);
-  }, []);
-
-  const dismissToast = useCallback(() => setToastMessage(null), []);
-
   const registerSample = useCallback(
-    (payload: CreateMuestraPayload) => {
-      const result = createMuestra(payload);
-      if (result.success) {
-        refresh();
+    async (payload: CreateMuestraPayload) => {
+      const result = await withApiToast(() => createSample(payload), {
+        success: "Muestra registrada correctamente",
+        error: "No se pudo registrar la muestra",
+      });
+      if (result?.success) {
+        await refresh();
         pagination.resetPage();
-        showToast(result.message);
       }
       return result;
     },
-    [refresh, pagination.resetPage, showToast]
+    [refresh, pagination]
   );
 
   const editSample = useCallback(
-    (id: string, payload: CreateMuestraPayload) => {
-      const result = updateMuestra(id, payload);
-      if (result.success) {
-        refresh();
-        showToast(result.message);
-      }
+    async (id: string, payload: CreateMuestraPayload) => {
+      const result = await withApiToast(() => updateSample(id, payload), {
+        success: "Muestra actualizada correctamente",
+        error: "No se pudo actualizar la muestra",
+      });
+      if (result?.success) await refresh();
       return result;
     },
-    [refresh, showToast]
+    [refresh]
   );
 
   const removeSample = useCallback(
-    (id: string) => {
-      const result = deleteMuestra(id);
-      if (result.success) {
-        refresh();
+    async (id: string) => {
+      const result = await withApiToast(() => deleteSample(id), {
+        success: "Muestra eliminada correctamente",
+        error: "No se pudo eliminar la muestra",
+      });
+      if (result) {
+        await refresh();
         pagination.resetPage();
-        showToast(result.message);
       }
       return result;
     },
-    [refresh, pagination.resetPage, showToast]
+    [refresh, pagination]
   );
 
   return {
@@ -109,7 +111,5 @@ export function useSamples({
     editSample,
     removeSample,
     pagination,
-    toastMessage,
-    dismissToast,
   };
 }

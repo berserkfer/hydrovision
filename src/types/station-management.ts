@@ -23,7 +23,7 @@ export interface MonitoringStationRecord {
   descripcion: string;
   fechaInstalacion: string;
   ultimaActualizacion: string;
-  isSimulated: true;
+  isSimulated: boolean;
 }
 
 export interface StationFilters {

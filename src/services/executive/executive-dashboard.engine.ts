@@ -7,7 +7,6 @@ import type { DashboardStats, StationSummary } from "@/types";
 import type { RiverContext } from "@/types/geography";
 import type { ExecutiveDashboardSnapshot, ExecutiveHeaderData } from "@/types/executive";
 import {
-  EXECUTIVE_ALERT_EMOJI,
   WATERSHED_QUALITY_LABELS,
 } from "@/types/executive";
 import type { EnvironmentalRiskAssessment } from "@/types/risk";

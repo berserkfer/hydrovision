@@ -1,10 +1,12 @@
 "use client";
 
-import { LayoutGrid, Table2 } from "lucide-react";
+import { useState } from "react";
+import { LayoutGrid, Plus, Table2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
 import { StationCardGrid } from "@/components/stations/StationCard";
 import { StationFilters } from "@/components/stations/StationFilters";
+import { StationFormModal } from "@/components/stations/StationFormModal";
 import { StationKpiCards } from "@/components/stations/StationKpiCards";
 import { StationTable } from "@/components/stations/StationTable";
 import { Card } from "@/components/ui/Card";
@@ -27,6 +29,8 @@ export function StationsView({
   cuencaOptions,
   rioOptions,
 }: StationsViewProps) {
+  const [formOpen, setFormOpen] = useState(false);
+
   const {
     stations,
     allFiltered,
@@ -35,6 +39,7 @@ export function StationsView({
     setFilter,
     resetFilters,
     hasActiveFilters,
+    createStation,
     viewMode,
     setViewMode,
   } = useStations({ initialStations, initialStats });
@@ -53,7 +58,17 @@ export function StationsView({
             <p className="text-sm text-slate-600">
               Consulte, filtre y explore las estaciones de monitoreo ambiental de la plataforma.
             </p>
-            <SimulatedDataIndicator />
+            <div className="flex items-center gap-3">
+              <SimulatedDataIndicator />
+              <button
+                type="button"
+                onClick={() => setFormOpen(true)}
+                className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cyan-700"
+              >
+                <Plus className="h-4 w-4" />
+                Nueva Estación
+              </button>
+            </div>
           </div>
 
           <div className="hv-animate-fade-in">
@@ -103,6 +118,13 @@ export function StationsView({
           </div>
         </div>
       </div>
+
+      <StationFormModal
+        open={formOpen}
+        mode="create"
+        onClose={() => setFormOpen(false)}
+        onSubmit={async (input) => createStation(input)}
+      />
     </MainLayout>
   );
 }

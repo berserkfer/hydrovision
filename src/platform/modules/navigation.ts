@@ -64,6 +64,14 @@ export const PLATFORM_NAVIGATION: PlatformNavSection[] = [
             moduleId: "environmental-monitoring",
           },
           {
+            id: "data-import",
+            label: "Importación de Datos",
+            href: "/import",
+            icon: "upload",
+            status: "active",
+            moduleId: "environmental-monitoring",
+          },
+          {
             id: "environmental-assessment",
             label: "Evaluación Ambiental",
             href: "/evaluacion-ambiental",
@@ -84,6 +92,14 @@ export const PLATFORM_NAVIGATION: PlatformNavSection[] = [
             label: "Índices Satelitales",
             href: "/satelite",
             icon: "satellite",
+            status: "active",
+            moduleId: "environmental-monitoring",
+          },
+          {
+            id: "data-export",
+            label: "Exportación y Reportes",
+            href: "/reports",
+            icon: "download",
             status: "active",
             moduleId: "environmental-monitoring",
           },
@@ -271,6 +287,14 @@ export const PLATFORM_NAVIGATION: PlatformNavSection[] = [
         moduleId: "administration",
         items: [
           {
+            id: "audit",
+            label: "Auditoría",
+            href: "/audit",
+            icon: "settings",
+            status: "active",
+            moduleId: "administration",
+          },
+          {
             id: "system-status",
             label: "Estado del Sistema",
             href: "/admin/system-status",
@@ -281,11 +305,10 @@ export const PLATFORM_NAVIGATION: PlatformNavSection[] = [
           {
             id: "users",
             label: "Usuarios",
+            href: "/users",
             icon: "users",
-            status: "coming_soon",
-            badge: "Próximamente",
+            status: "active",
             moduleId: "administration",
-            phase: 5,
           },
         ],
       },

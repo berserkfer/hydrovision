@@ -1,12 +1,12 @@
 import { SamplingView } from "@/components/sampling/SamplingView";
-import {
-  getAllSampleSummaries,
-  getSampleStats,
-} from "@/lib/repositories/sample.repository";
+import { fetchSamplesList } from "@/lib/api/samples.client";
 
-export default function MuestreosPage() {
-  const initialSamples = getAllSampleSummaries();
-  const initialStats = getSampleStats();
+export const dynamic = "force-dynamic";
+
+export default async function MuestreosPage() {
+  const { items: initialSamples, stats: initialStats } = await fetchSamplesList({
+    pageSize: 500,
+  });
 
   return (
     <SamplingView initialSamples={initialSamples} initialStats={initialStats} />

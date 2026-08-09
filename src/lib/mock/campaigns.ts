@@ -305,6 +305,48 @@ export function createMockCampaign(input: CreateCampanaInput): CampanaSummary {
   return toSummary(campana);
 }
 
+export function updateMockCampaign(
+  id: string,
+  input: CreateCampanaInput
+): CampanaSummary | null {
+  const store = getDataStore();
+  const index = store.campanas.findIndex((c) => c.id === id);
+  if (index === -1) return null;
+
+  const now = MOCK_LAST_UPDATE;
+  const existing = store.campanas[index];
+  store.campanas[index] = {
+    ...existing,
+    nombre: input.nombre.trim(),
+    rioId: input.rioId,
+    cuencaId: input.cuencaId,
+    fechaInicio: input.fecha,
+    fechaFin: addMonths(input.fecha, 2),
+    responsableId: input.responsableId,
+    objetivo: input.objetivo.trim(),
+    updatedAt: now,
+  };
+
+  campaignExtendedMeta.set(id, {
+    descripcion: input.descripcion.trim() || "Campaña actualizada.",
+    observaciones: input.observaciones.trim(),
+    estacionIds:
+      input.estacionIds.length > 0
+        ? input.estacionIds
+        : store.estaciones.filter((e) => e.rioId === input.rioId).map((e) => e.id),
+  });
+
+  return toSummary(store.campanas[index]);
+}
+
+export function deleteMockCampaign(id: string): boolean {
+  const store = getDataStore();
+  const before = store.campanas.length;
+  store.campanas = store.campanas.filter((c) => c.id !== id);
+  campaignExtendedMeta.delete(id);
+  return store.campanas.length < before;
+}
+
 /** Campañas asociadas a una estación — Sprint 2C */
 export function getMockCampaignsByStation(stationId: string): StationCampaignHistoryItem[] {
   const store = getDataStore();

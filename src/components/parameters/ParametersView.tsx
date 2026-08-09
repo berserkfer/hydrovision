@@ -1,17 +1,21 @@
 "use client";
 
-import { LayoutGrid, Table2 } from "lucide-react";
+import { useState } from "react";
+import { LayoutGrid, Plus, Table2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
 import { ParameterCardGrid } from "@/components/parameters/ParameterCard";
 import { ParameterChart } from "@/components/parameters/ParameterChart";
 import { ParameterFilters } from "@/components/parameters/ParameterFilters";
+import { ParameterFormModal } from "@/components/parameters/ParameterFormModal";
 import { ParameterSummary } from "@/components/parameters/ParameterSummary";
 import { ParameterTable } from "@/components/parameters/ParameterTable";
 import { Card } from "@/components/ui/Card";
 import { SimulatedDataIndicator } from "@/components/ui/SimulatedDataIndicator";
 import { MOCK_LAST_UPDATE } from "@/constants/app";
 import { useParameters } from "@/hooks/useParameters";
+import { createParameter } from "@/lib/api/parameters.client";
+import { withApiToast } from "@/lib/api/notify";
 import { cn } from "@/lib/utils";
 import type {
   ParameterChartData,
@@ -36,6 +40,8 @@ export function ParametersView({
   campanaOptions,
   fechaOptions,
 }: ParametersViewProps) {
+  const [formOpen, setFormOpen] = useState(false);
+
   const {
     records,
     allFiltered,
@@ -62,7 +68,17 @@ export function ParametersView({
             <p className="text-sm text-slate-600">
               Monitoreo fisicoquímico y microbiológico con clasificación automática según ECA.
             </p>
-            <SimulatedDataIndicator />
+            <div className="flex items-center gap-3">
+              <SimulatedDataIndicator />
+              <button
+                type="button"
+                onClick={() => setFormOpen(true)}
+                className="inline-flex items-center gap-2 rounded-lg bg-cyan-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-cyan-700"
+              >
+                <Plus className="h-4 w-4" />
+                Nuevo Parámetro
+              </button>
+            </div>
           </div>
 
           <div className="hv-animate-fade-in">
@@ -107,6 +123,17 @@ export function ParametersView({
           </div>
         </div>
       </div>
+
+      <ParameterFormModal
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        onSubmit={async (input) => {
+          await withApiToast(() => createParameter(input), {
+            success: "Parámetro registrado correctamente",
+            error: "No se pudo crear el parámetro",
+          });
+        }}
+      />
     </MainLayout>
   );
 }

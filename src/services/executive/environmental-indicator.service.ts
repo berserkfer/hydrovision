@@ -35,7 +35,7 @@ function getMeasurementValue(
   if (summaries.length === 0) return 0;
 
   if (field === "flowRate") {
-    const values = summaries.map((s, i) => {
+    const values = summaries.map((s) => {
       const idx = mockStationIndex(s);
       return estimateFlowRate(idx);
     });

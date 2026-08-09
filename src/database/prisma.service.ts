@@ -1,72 +1,29 @@
 /**
- * PrismaService — Singleton de acceso a PostgreSQL (Fase 5.0)
- * PrismaClient se resuelve en runtime tras `prisma generate`.
+ * PrismaService — Singleton de acceso a PostgreSQL (Fase 5.0 / Sprint 3A)
+ * Delega en src/server/db para una única instancia de PrismaClient.
  */
 
 import { databaseConfig } from "@/config/database.config";
+import { disconnectPrisma, isDatabaseReachable, prisma } from "@/server/db";
 
-type PrismaClientInstance = import("@prisma/client").PrismaClient;
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __hydrovisionPrisma: PrismaClientInstance | undefined;
-}
-
-async function loadPrismaClient(): Promise<typeof import("@prisma/client").PrismaClient> {
-  const { PrismaClient } = await import("@prisma/client");
-  return PrismaClient;
-}
+type PrismaClientInstance = typeof prisma;
 
 export class PrismaService {
-  private static client: PrismaClientInstance | null = null;
-
   static async getClient(): Promise<PrismaClientInstance> {
     if (!databaseConfig.databaseUrl) {
       throw new Error("[PrismaService] DATABASE_URL no configurada.");
     }
-
-    if (process.env.NODE_ENV !== "production") {
-      if (!global.__hydrovisionPrisma) {
-        const PrismaClient = await loadPrismaClient();
-        global.__hydrovisionPrisma = new PrismaClient({
-          log: ["error", "warn"],
-        });
-      }
-      return global.__hydrovisionPrisma;
-    }
-
-    if (!this.client) {
-      const PrismaClient = await loadPrismaClient();
-      this.client = new PrismaClient({ log: ["error"] });
-    }
-    return this.client;
+    return prisma;
   }
 
   static async isConnected(): Promise<boolean> {
     if (!databaseConfig.databaseUrl) {
       return false;
     }
-
-    try {
-      const client = await this.getClient();
-      await client.$queryRaw`SELECT 1`;
-      return true;
-    } catch {
-      return false;
-    }
+    return isDatabaseReachable();
   }
 
   static async disconnect(): Promise<void> {
-    const client =
-      process.env.NODE_ENV !== "production" ? global.__hydrovisionPrisma : this.client;
-
-    if (client) {
-      await client.$disconnect();
-    }
-
-    if (process.env.NODE_ENV !== "production") {
-      global.__hydrovisionPrisma = undefined;
-    }
-    this.client = null;
+    await disconnectPrisma();
   }
 }

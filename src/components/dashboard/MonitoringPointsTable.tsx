@@ -64,6 +64,11 @@ export function MonitoringPointsTable({
                   )}
                   style={{ animationDelay: `${index * 30}ms` }}
                   role={onStationSelect ? "button" : undefined}
+                  aria-label={
+                    onStationSelect
+                      ? `Ver detalle de estación ${station.id}, ${station.name}`
+                      : undefined
+                  }
                   tabIndex={onStationSelect ? 0 : undefined}
                   onKeyDown={(e) => {
                     if (onStationSelect && (e.key === "Enter" || e.key === " ")) {

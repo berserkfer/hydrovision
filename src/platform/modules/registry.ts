@@ -25,6 +25,8 @@ export const PLATFORM_MODULES: Record<PlatformModuleId, PlatformModuleDefinition
       "/",
       "/estaciones",
       "/parametros",
+      "/import",
+      "/reports",
       "/reportes",
       "/evaluacion-ambiental",
       "/centro-geoespacial",
@@ -82,7 +84,7 @@ export const PLATFORM_MODULES: Record<PlatformModuleId, PlatformModuleDefinition
     description: "Usuarios, permisos y diagnóstico del sistema.",
     version: "0.2.0",
     implemented: true,
-    routes: ["/admin/system-status"],
+    routes: ["/admin/system-status", "/audit", "/users"],
     services: ["services/google-earth-engine"],
   },
 };

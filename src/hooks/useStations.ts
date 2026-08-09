@@ -1,11 +1,19 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import {
+  createStation,
+  deleteStation,
+  fetchStationsList,
+  updateStation,
+} from "@/lib/api/stations.client";
+import { withApiToast } from "@/lib/api/notify";
 import type {
   MonitoringStationRecord,
   StationFilters,
   StationStats,
 } from "@/types/station-management";
+import type { CreateStationInput } from "@/server/validators/schemas/crud.schemas";
 
 const DEFAULT_FILTERS: StationFilters = {
   search: "",
@@ -45,12 +53,14 @@ interface UseStationsOptions {
 }
 
 export function useStations({ initialStations, initialStats }: UseStationsOptions) {
+  const [stations, setStations] = useState(initialStations);
+  const [stats, setStats] = useState(initialStats);
   const [filters, setFilters] = useState<StationFilters>(DEFAULT_FILTERS);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
 
   const filtered = useMemo(
-    () => applyStationFilters(initialStations, filters),
-    [initialStations, filters]
+    () => applyStationFilters(stations, filters),
+    [stations, filters]
   );
 
   const hasActiveFilters = useMemo(
@@ -65,6 +75,45 @@ export function useStations({ initialStations, initialStats }: UseStationsOption
     [filters]
   );
 
+  const refreshFromApi = useCallback(async () => {
+    const data = await fetchStationsList();
+    setStations(data.stations);
+    setStats(data.stats);
+  }, []);
+
+  const handleCreate = useCallback(
+    async (input: CreateStationInput) => {
+      const result = await withApiToast(() => createStation(input), {
+        success: "Estación registrada correctamente",
+        error: "No se pudo crear la estación",
+      });
+      if (result) await refreshFromApi();
+    },
+    [refreshFromApi]
+  );
+
+  const handleUpdate = useCallback(
+    async (id: string, input: Partial<CreateStationInput>) => {
+      const result = await withApiToast(() => updateStation(id, input), {
+        success: "Estación actualizada correctamente",
+        error: "No se pudo actualizar la estación",
+      });
+      if (result) await refreshFromApi();
+    },
+    [refreshFromApi]
+  );
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const result = await withApiToast(() => deleteStation(id), {
+        success: "Estación eliminada correctamente",
+        error: "No se pudo eliminar la estación",
+      });
+      if (result) await refreshFromApi();
+    },
+    [refreshFromApi]
+  );
+
   const setFilter = useCallback(<K extends keyof StationFilters>(key: K, value: StationFilters[K]) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
   }, []);
@@ -76,11 +125,15 @@ export function useStations({ initialStations, initialStats }: UseStationsOption
   return {
     stations: filtered,
     allFiltered: filtered,
-    stats: initialStats,
+    stats,
     filters,
     setFilter,
     resetFilters,
     hasActiveFilters,
+    createStation: handleCreate,
+    updateStation: handleUpdate,
+    deleteStation: handleDelete,
+    refreshStations: refreshFromApi,
     viewMode,
     setViewMode,
   };

@@ -9,7 +9,7 @@ export interface IStatisticsService {
 }
 
 export class MockStatisticsService implements IStatisticsService {
-  async compute(query: StatisticsQuery): Promise<StatisticsResult> {
+  async compute(_query: StatisticsQuery): Promise<StatisticsResult> {
     const months = ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06"];
     return {
       labels: months,

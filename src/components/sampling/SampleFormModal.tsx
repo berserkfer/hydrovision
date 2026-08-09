@@ -1,20 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, type Resolver } from "react-hook-form";
 import { FilterSelect } from "@/components/map/filters/FilterSelect";
 import { FormField, TextArea, TextInput } from "@/components/ui/FormField";
 import { FieldError } from "@/components/ui/FieldError";
 import { Modal } from "@/components/ui/Modal";
 import { CLIMA_OPTIONS, COLOR_APARENTE_OPTIONS } from "@/constants/sampling";
+import { fetchSampleDetail } from "@/lib/api/samples.client";
 import {
   getCampanasForSampling,
   getEstacionesByCampana,
 } from "@/lib/repositories/sample.repository";
 import { getResponsablesOptions } from "@/lib/repositories/campaign.repository";
-import { parseFechaMuestreo, validateSampleForm } from "@/lib/sampling/sampling-utils";
-import { getSampleDetailById } from "@/lib/repositories/sample.repository";
-import type { CreateMuestraPayload, SampleFormErrors, SampleFormInput } from "@/types/sampling";
-import { EMPTY_SAMPLE_FORM } from "@/types/sampling";
+import { parseFechaMuestreo } from "@/lib/sampling/sampling-utils";
+import { sampleFormSchema, type SampleFormValues } from "@/lib/validators/form-schemas";
+import type { CreateMuestraPayload } from "@/types/sampling";
 
 interface SampleFormModalProps {
   open: boolean;
@@ -22,7 +24,44 @@ interface SampleFormModalProps {
   editId?: string;
   defaultCampanaId?: string;
   onClose: () => void;
-  onSubmit: (payload: CreateMuestraPayload, editId?: string) => void;
+  onSubmit: (payload: CreateMuestraPayload, editId?: string) => void | Promise<void>;
+}
+
+const EMPTY_VALUES: SampleFormValues = {
+  campanaId: "",
+  fecha: "",
+  hora: "",
+  estacionId: "",
+  responsableId: "",
+  clima: "",
+  observaciones: "",
+  colorAparente: "",
+  ph: 0,
+  temperatura: 0,
+  conductividad: 0,
+  oxigenoDisuelto: 0,
+  turbidez: 0,
+  solidosDisueltosTotales: 0,
+  caudal: 0,
+};
+
+function toPayload(values: SampleFormValues): CreateMuestraPayload {
+  return {
+    campanaId: values.campanaId,
+    fechaMuestreo: `${values.fecha}T${values.hora}:00`,
+    estacionId: values.estacionId,
+    responsableId: values.responsableId,
+    clima: values.clima,
+    colorAparente: values.colorAparente,
+    observaciones: values.observaciones,
+    ph: values.ph,
+    temperatura: values.temperatura,
+    conductividad: values.conductividad,
+    oxigenoDisuelto: values.oxigenoDisuelto,
+    turbidez: values.turbidez,
+    solidosDisueltosTotales: values.solidosDisueltosTotales,
+    caudal: values.caudal,
+  };
 }
 
 export function SampleFormModal({
@@ -33,71 +72,67 @@ export function SampleFormModal({
   onClose,
   onSubmit,
 }: SampleFormModalProps) {
-  const [form, setForm] = useState<SampleFormInput>(EMPTY_SAMPLE_FORM);
-  const [errors, setErrors] = useState<SampleFormErrors>({});
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<SampleFormValues>({
+    resolver: zodResolver(sampleFormSchema) as Resolver<SampleFormValues>,
+    defaultValues: EMPTY_VALUES,
+  });
 
-  const loadEditData = useCallback((id: string) => {
-    const detail = getSampleDetailById(id);
-    if (!detail) return;
-    const { fecha, hora } = parseFechaMuestreo(detail.fechaMuestreo);
-    setForm({
-      campanaId: detail.campanaId,
-      fecha,
-      hora,
-      estacionId: detail.estacionId,
-      responsableId: detail.responsableId,
-      clima: detail.clima,
-      observaciones: detail.observaciones,
-      colorAparente: detail.colorAparente,
-      ph: String(detail.parametros.ph),
-      temperatura: String(detail.parametros.temperatura),
-      conductividad: String(detail.parametros.conductividad),
-      oxigenoDisuelto: String(detail.parametros.oxigenoDisuelto),
-      turbidez: String(detail.parametros.turbidez),
-      solidosDisueltosTotales: String(detail.parametros.solidosDisueltosTotales),
-      caudal: String(detail.parametros.caudal),
-    });
-  }, []);
+  const campanaId = watch("campanaId");
+
+  const loadEditData = useCallback(
+    async (id: string) => {
+      const detail = await fetchSampleDetail(id);
+      const { fecha, hora } = parseFechaMuestreo(detail.fechaMuestreo);
+      reset({
+        campanaId: detail.campanaId,
+        fecha,
+        hora,
+        estacionId: detail.estacionId,
+        responsableId: detail.responsableId,
+        clima: detail.clima,
+        observaciones: detail.observaciones,
+        colorAparente: detail.colorAparente,
+        ph: detail.parametros.ph,
+        temperatura: detail.parametros.temperatura,
+        conductividad: detail.parametros.conductividad,
+        oxigenoDisuelto: detail.parametros.oxigenoDisuelto,
+        turbidez: detail.parametros.turbidez,
+        solidosDisueltosTotales: detail.parametros.solidosDisueltosTotales,
+        caudal: detail.parametros.caudal,
+      });
+    },
+    [reset]
+  );
 
   useEffect(() => {
     if (!open) return;
     if (mode === "edit" && editId) {
-      loadEditData(editId);
+      void loadEditData(editId);
     } else {
-      setForm({ ...EMPTY_SAMPLE_FORM, campanaId: defaultCampanaId });
+      reset({ ...EMPTY_VALUES, campanaId: defaultCampanaId });
     }
-    setErrors({});
-  }, [open, mode, editId, defaultCampanaId, loadEditData]);
+  }, [open, mode, editId, defaultCampanaId, loadEditData, reset]);
 
-  const estacionOptions = form.campanaId
-    ? [{ value: "", label: "Seleccionar estación…" }, ...getEstacionesByCampana(form.campanaId)]
+  const estacionOptions = campanaId
+    ? [{ value: "", label: "Seleccionar estación…" }, ...getEstacionesByCampana(campanaId)]
     : [{ value: "", label: "Seleccione una campaña primero" }];
 
   const resetAndClose = () => {
-    setForm(EMPTY_SAMPLE_FORM);
-    setErrors({});
+    reset(EMPTY_VALUES);
     onClose();
   };
 
-  const setField = <K extends keyof SampleFormInput>(key: K, value: SampleFormInput[K]) => {
-    setForm((prev) => {
-      const next = { ...prev, [key]: value };
-      if (key === "campanaId") next.estacionId = "";
-      return next;
-    });
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: undefined }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const result = validateSampleForm(form);
-    if (!result.ok) {
-      setErrors(result.errors);
-      return;
-    }
-    onSubmit(result.payload, mode === "edit" ? editId : undefined);
+  const submit = handleSubmit(async (values) => {
+    await onSubmit(toPayload(values), mode === "edit" ? editId : undefined);
     resetAndClose();
-  };
+  });
 
   return (
     <Modal
@@ -107,28 +142,31 @@ export function SampleFormModal({
       description="Complete todos los campos. Los parámetros se clasificarán automáticamente según ECA."
       className="max-w-2xl"
     >
-      <form onSubmit={handleSubmit} className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4">
+      <form onSubmit={submit} className="max-h-[70vh] space-y-4 overflow-y-auto px-5 py-4">
         <FormField id="sf-campana" label="Campaña" required>
           <FilterSelect
             id="sf-campana"
             label="Campaña"
             hideLabel
-            value={form.campanaId}
+            value={campanaId}
             options={[{ value: "", label: "Seleccionar campaña…" }, ...getCampanasForSampling()]}
-            onChange={(v) => setField("campanaId", v)}
+            onChange={(v) => {
+              setValue("campanaId", v, { shouldValidate: true });
+              setValue("estacionId", "");
+            }}
             disabled={mode === "edit"}
           />
-          {errors.campanaId && <FieldError message={errors.campanaId} />}
+          {errors.campanaId && <FieldError message={errors.campanaId.message} />}
         </FormField>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField id="sf-fecha" label="Fecha" required>
-            <TextInput id="sf-fecha" type="date" value={form.fecha} onChange={(e) => setField("fecha", e.target.value)} />
-            {errors.fecha && <FieldError message={errors.fecha} />}
+            <TextInput id="sf-fecha" type="date" {...register("fecha")} />
+            {errors.fecha && <FieldError message={errors.fecha.message} />}
           </FormField>
           <FormField id="sf-hora" label="Hora" required>
-            <TextInput id="sf-hora" type="time" value={form.hora} onChange={(e) => setField("hora", e.target.value)} />
-            {errors.hora && <FieldError message={errors.hora} />}
+            <TextInput id="sf-hora" type="time" {...register("hora")} />
+            {errors.hora && <FieldError message={errors.hora.message} />}
           </FormField>
         </div>
 
@@ -138,23 +176,23 @@ export function SampleFormModal({
               id="sf-estacion"
               label="Estación"
               hideLabel
-              value={form.estacionId}
+              value={watch("estacionId")}
               options={estacionOptions}
-              onChange={(v) => setField("estacionId", v)}
-              disabled={!form.campanaId}
+              onChange={(v) => setValue("estacionId", v, { shouldValidate: true })}
+              disabled={!campanaId}
             />
-            {errors.estacionId && <FieldError message={errors.estacionId} />}
+            {errors.estacionId && <FieldError message={errors.estacionId.message} />}
           </FormField>
           <FormField id="sf-responsable" label="Responsable" required>
             <FilterSelect
               id="sf-responsable"
               label="Responsable"
               hideLabel
-              value={form.responsableId}
+              value={watch("responsableId")}
               options={[{ value: "", label: "Seleccionar…" }, ...getResponsablesOptions()]}
-              onChange={(v) => setField("responsableId", v)}
+              onChange={(v) => setValue("responsableId", v, { shouldValidate: true })}
             />
-            {errors.responsableId && <FieldError message={errors.responsableId} />}
+            {errors.responsableId && <FieldError message={errors.responsableId.message} />}
           </FormField>
         </div>
 
@@ -164,33 +202,28 @@ export function SampleFormModal({
               id="sf-clima"
               label="Clima"
               hideLabel
-              value={form.clima}
+              value={watch("clima")}
               options={[{ value: "", label: "Seleccionar clima…" }, ...CLIMA_OPTIONS]}
-              onChange={(v) => setField("clima", v)}
+              onChange={(v) => setValue("clima", v, { shouldValidate: true })}
             />
-            {errors.clima && <FieldError message={errors.clima} />}
+            {errors.clima && <FieldError message={errors.clima.message} />}
           </FormField>
           <FormField id="sf-color" label="Color aparente" required>
             <FilterSelect
               id="sf-color"
               label="Color"
               hideLabel
-              value={form.colorAparente}
+              value={watch("colorAparente")}
               options={[{ value: "", label: "Seleccionar color…" }, ...COLOR_APARENTE_OPTIONS]}
-              onChange={(v) => setField("colorAparente", v)}
+              onChange={(v) => setValue("colorAparente", v, { shouldValidate: true })}
             />
-            {errors.colorAparente && <FieldError message={errors.colorAparente} />}
+            {errors.colorAparente && <FieldError message={errors.colorAparente.message} />}
           </FormField>
         </div>
 
         <FormField id="sf-obs" label="Observaciones" required>
-          <TextArea
-            id="sf-obs"
-            value={form.observaciones}
-            onChange={(e) => setField("observaciones", e.target.value)}
-            placeholder="Condiciones de campo, anomalías, etc."
-          />
-          {errors.observaciones && <FieldError message={errors.observaciones} />}
+          <TextArea id="sf-obs" {...register("observaciones")} placeholder="Condiciones de campo, anomalías, etc." />
+          {errors.observaciones && <FieldError message={errors.observaciones.message} />}
         </FormField>
 
         <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4">
@@ -198,13 +231,13 @@ export function SampleFormModal({
             Parámetros fisicoquímicos
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <ParamField id="sf-ph" label="pH" unit="—" value={form.ph} error={errors.ph} onChange={(v) => setField("ph", v)} />
-            <ParamField id="sf-temp" label="Temperatura" unit="°C" value={form.temperatura} error={errors.temperatura} onChange={(v) => setField("temperatura", v)} />
-            <ParamField id="sf-cond" label="Conductividad" unit="µS/cm" value={form.conductividad} error={errors.conductividad} onChange={(v) => setField("conductividad", v)} />
-            <ParamField id="sf-od" label="Oxígeno disuelto" unit="mg/L" value={form.oxigenoDisuelto} error={errors.oxigenoDisuelto} onChange={(v) => setField("oxigenoDisuelto", v)} />
-            <ParamField id="sf-turb" label="Turbidez" unit="NTU" value={form.turbidez} error={errors.turbidez} onChange={(v) => setField("turbidez", v)} />
-            <ParamField id="sf-std" label="Sólidos disueltos" unit="mg/L" value={form.solidosDisueltosTotales} error={errors.solidosDisueltosTotales} onChange={(v) => setField("solidosDisueltosTotales", v)} />
-            <ParamField id="sf-caudal" label="Caudal" unit="m³/s" value={form.caudal} error={errors.caudal} onChange={(v) => setField("caudal", v)} />
+            <ParamField id="sf-ph" label="pH" unit="—" error={errors.ph?.message} {...register("ph")} />
+            <ParamField id="sf-temp" label="Temperatura" unit="°C" error={errors.temperatura?.message} {...register("temperatura")} />
+            <ParamField id="sf-cond" label="Conductividad" unit="µS/cm" error={errors.conductividad?.message} {...register("conductividad")} />
+            <ParamField id="sf-od" label="Oxígeno disuelto" unit="mg/L" error={errors.oxigenoDisuelto?.message} {...register("oxigenoDisuelto")} />
+            <ParamField id="sf-turb" label="Turbidez" unit="NTU" error={errors.turbidez?.message} {...register("turbidez")} />
+            <ParamField id="sf-std" label="Sólidos disueltos" unit="mg/L" error={errors.solidosDisueltosTotales?.message} {...register("solidosDisueltosTotales")} />
+            <ParamField id="sf-caudal" label="Caudal" unit="m³/s" error={errors.caudal?.message} {...register("caudal")} />
           </div>
         </div>
 
@@ -225,20 +258,17 @@ function ParamField({
   id,
   label,
   unit,
-  value,
   error,
-  onChange,
+  ...inputProps
 }: {
   id: string;
   label: string;
   unit: string;
-  value: string;
   error?: string;
-  onChange: (v: string) => void;
-}) {
+} & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <FormField id={id} label={`${label} (${unit})`} required>
-      <TextInput id={id} type="number" step="any" min="0" value={value} onChange={(e) => onChange(e.target.value)} />
+      <TextInput id={id} type="number" step="any" min="0" {...inputProps} />
       {error && <FieldError message={error} />}
     </FormField>
   );

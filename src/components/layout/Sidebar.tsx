@@ -20,6 +20,7 @@ import {
   Satellite,
   Settings,
   TreePine,
+  Upload,
   Users,
   Waves,
 } from "lucide-react";
@@ -46,6 +47,7 @@ const icons = {
   tree: TreePine,
   image: Image,
   settings: Settings,
+  upload: Upload,
   users: Users,
 } as const;
 
@@ -83,6 +85,7 @@ function NavLinkItem({ item, pathname }: { item: PlatformNavItem; pathname: stri
     <Link
       key={item.id}
       href={item.href}
+      aria-current={active ? "page" : undefined}
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
         active
@@ -111,7 +114,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4" aria-label="Navegación principal">
         {PLATFORM_NAVIGATION.map((section) => {
           if (section.href) {
             const active = pathname === section.href;
@@ -119,6 +122,7 @@ export function Sidebar() {
               <Link
                 key={section.id}
                 href={section.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   active
@@ -152,7 +156,7 @@ export function Sidebar() {
         <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
           Proyecto de tesis
         </p>
-        <p className="mt-1 text-xs text-slate-400">Ing. Ambiental · Sprint 2B</p>
+        <p className="mt-1 text-xs text-slate-400">Ing. Ambiental · Sprint 2J · MVP</p>
       </div>
     </aside>
   );

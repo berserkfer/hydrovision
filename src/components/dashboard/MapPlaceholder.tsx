@@ -1,3 +1,4 @@
+/** @deprecated Usar MapMonitoringSection. Conservado por compatibilidad. */
 "use client";
 
 import dynamic from "next/dynamic";

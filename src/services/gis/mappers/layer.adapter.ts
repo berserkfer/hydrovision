@@ -8,7 +8,7 @@ import type {
   RasterLayer as UiRasterLayer,
   VectorLayer as UiVectorLayer,
 } from "@/types/layers";
-import type { MapLayer, RasterLayer, VectorLayer } from "../interfaces";
+import type { MapLayer, RasterLayer } from "../interfaces";
 import { GIS_LAYER_IDS } from "../config";
 
 const VECTOR_STYLES: Record<string, Pick<UiVectorLayer, "geometryType" | "strokeColor" | "fillColor">> = {

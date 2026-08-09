@@ -9,7 +9,6 @@ import { getComplianceLabel } from "@/lib/eca/classifier";
 import { resolveNombre } from "@/utils";
 import type {
   EnvironmentalReportDocument,
-  ReportChartSection,
   ReportExecutiveStats,
   ReportFilterOptions,
   ReportFilters,

@@ -1,0 +1,3 @@
+-- Sprint 3A — Modelos Prisma en inglés (Watershed, River, Station, …)
+-- Sin cambios DDL: los nombres de tablas PostgreSQL se conservan via @@map.
+-- Esta migración documenta la alineación del schema Prisma con la capa server/db.
