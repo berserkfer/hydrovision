@@ -2,6 +2,7 @@
 
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { IndicatorsGrid, IndicatorsToolbar } from "@/components/indicators/IndicatorsCenter";
 import { Card, CardContent } from "@/components/ui/Card";
 import { SimulatedDataIndicator } from "@/components/ui/SimulatedDataIndicator";
@@ -39,7 +40,7 @@ export function IndicatorsCenterView() {
         subtitle={`${riverContext.watershed.name} · Environmental Indicators Engine · HydroVision`}
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 hv-animate-fade-in">
             <p className="text-sm text-slate-600">
@@ -97,7 +98,7 @@ export function IndicatorsCenterView() {
             <IndicatorsGrid indicators={result.indicators} />
           )}
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

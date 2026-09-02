@@ -3,6 +3,7 @@
  */
 
 import { MOCK_LAST_UPDATE, SIMULATION_DISCLAIMER } from "@/constants";
+import { isMonitoringDatabaseEnabled } from "@/config/monitoring-data-source.config";
 import { getDataStore } from "@/data/store-access";
 import {
   buildLegacyStationSummary,
@@ -48,24 +49,58 @@ export function getStationSummaries(): StationSummary[] {
 
 export function getDashboardStats(): DashboardStats {
   const summaries = getStationSummaries();
+  const store = getDataStore();
+  const latestMuestra = store.muestras
+    .map((m) => m.fechaMuestreo)
+    .sort((a, b) => b.localeCompare(a))[0];
+
   return {
     totalStations: summaries.length,
     compliantCount: summaries.filter((s) => s.compliance.status === "compliant").length,
     alertCount: summaries.filter((s) => s.compliance.status === "alert").length,
     nonCompliantCount: summaries.filter((s) => s.compliance.status === "non_compliant").length,
-    lastUpdate: MOCK_LAST_UPDATE,
-    isSimulated: true,
+    lastUpdate: latestMuestra ?? MOCK_LAST_UPDATE,
+    isSimulated: !isMonitoringDatabaseEnabled(),
   };
 }
 
+function average(values: number[]): number {
+  if (values.length === 0) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+/** Serie temporal agregada desde muestreos reales del data store (mock o PostgreSQL). */
 export function getAggregatedTimeSeries(): TimeSeriesPoint[] {
-  const months = ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06"];
-  return months.map((date, i) => ({
-    date,
-    dissolvedOxygen: Number((5.8 - i * 0.15 + (i % 2) * 0.3).toFixed(2)),
-    turbidity: Number((18 + i * 2.5).toFixed(1)),
-    ph: Number((7.2 + (i % 3) * 0.1).toFixed(2)),
-  }));
+  const store = getDataStore();
+  const byMonth = new Map<
+    string,
+    { ph: number[]; turbidez: number[]; oxigenoDisuelto: number[] }
+  >();
+
+  for (const muestra of store.muestras) {
+    const parametros = store.parametros.find((p) => p.muestraId === muestra.id);
+    if (!parametros) continue;
+
+    const month = muestra.fechaMuestreo.slice(0, 7);
+    const bucket = byMonth.get(month) ?? { ph: [], turbidez: [], oxigenoDisuelto: [] };
+
+    if (parametros.ph !== undefined && parametros.ph > 0) bucket.ph.push(parametros.ph);
+    if (parametros.turbidez !== undefined && parametros.turbidez > 0)
+      bucket.turbidez.push(parametros.turbidez);
+    if (parametros.oxigenoDisuelto !== undefined && parametros.oxigenoDisuelto > 0)
+      bucket.oxigenoDisuelto.push(parametros.oxigenoDisuelto);
+
+    byMonth.set(month, bucket);
+  }
+
+  return Array.from(byMonth.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, values]) => ({
+      date,
+      ph: Number(average(values.ph).toFixed(2)),
+      turbidity: Number(average(values.turbidez).toFixed(1)),
+      dissolvedOxygen: Number(average(values.oxigenoDisuelto).toFixed(2)),
+    }));
 }
 
 export function getMuestrasByEstacion(estacionId: string) {

@@ -29,6 +29,10 @@ export const COMPLIANCE_LEGEND_ITEMS: {
 
 /** Atribución del proveedor de teselas cartográficas */
 export const MAP_TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
+/** Teselas cartográficas — siempre legibles (independientes del tema de la app) */
 export const MAP_TILE_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+/** @deprecated El mapa no hereda el tema oscuro de la app — usar MAP_TILE_URL */
+export const MAP_TILE_URL_DARK = MAP_TILE_URL;

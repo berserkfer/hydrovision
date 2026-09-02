@@ -1,5 +1,5 @@
 /**
- * ParameterService — Sprint 3E
+ * ParameterService — Sprint 3E / unificación datos Prompt 1
  */
 
 import type { ListQueryDto } from "@/server/dto/common.dto";
@@ -18,37 +18,41 @@ import {
 import { ApiError } from "@/server/api/errors";
 
 export class ParameterService {
-  list(query: ListQueryDto) {
-    let items = parameterRepository.findAll();
+  getDataSource(): "database" | "mock" {
+    return parameterRepository.getDataSource();
+  }
+
+  async list(query: ListQueryDto) {
+    let items = await parameterRepository.findAll();
     items = filterBySearch(items, query.search, ["nombre", "codigo", "unidad"]);
     items = sortArray(items, query.sortBy ?? "nombre", query.sortOrder ?? "asc");
     return paginateArray(items, query);
   }
 
-  getById(id: string) {
-    const row = parameterRepository.findById(id);
+  async getById(id: string) {
+    const row = await parameterRepository.findById(id);
     if (!row) throw ApiError.notFound("Parámetro", id);
     return parameterRepository.toWaterParameterRecord(row);
   }
 
-  create(body: unknown) {
+  async create(body: unknown) {
     const input = parseBody(createParameterSchema, body);
-    const created = parameterRepository.create(input);
+    const created = await parameterRepository.create(input);
     void auditService.recordCreate("Parameter", created.id, created, `Parámetro ${created.codigo} creado`);
     return created;
   }
 
-  update(id: string, body: unknown) {
-    const previous = parameterRepository.findById(id);
+  async update(id: string, body: unknown) {
+    const previous = await parameterRepository.findById(id);
     const input = parseBody(updateParameterSchema, { ...(body as object), id });
-    const updated = parameterRepository.update(id, input);
+    const updated = await parameterRepository.update(id, input);
     void auditService.recordUpdate("Parameter", id, previous, updated, `Parámetro ${updated.codigo} actualizado`);
     return updated;
   }
 
-  remove(id: string) {
-    const previous = parameterRepository.findById(id);
-    const ok = parameterRepository.softDelete(id);
+  async remove(id: string) {
+    const previous = await parameterRepository.findById(id);
+    const ok = await parameterRepository.softDelete(id);
     if (!ok) throw ApiError.notFound("Parámetro", id);
     void auditService.recordDelete(
       "Parameter",

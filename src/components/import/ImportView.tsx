@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { FileDown, Upload } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ColumnMapper } from "@/components/import/ColumnMapper";
@@ -118,7 +119,7 @@ export function ImportView({ initialHistory }: ImportViewProps) {
         subtitle="Carga masiva de mediciones ambientales desde CSV y Excel · HydroVision"
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <p className="text-sm text-slate-600">
@@ -212,7 +213,7 @@ export function ImportView({ initialHistory }: ImportViewProps) {
             <ImportHistory items={history} />
           </Card>
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

@@ -14,12 +14,12 @@ export function mapSummaryToRiskInput(summary: StationSummary): EnvironmentalRis
     : null;
 
   return {
-    ph: m.ph,
-    temperatura: m.temperature,
-    oxigenoDisuelto: m.dissolvedOxygen,
-    conductividad: m.conductivity,
-    turbidez: m.turbidity,
-    solidosDisueltos: params?.solidosDisueltosTotales ?? m.conductivity * 0.65,
+    ph: m.ph ?? 7,
+    temperatura: m.temperature ?? 20,
+    oxigenoDisuelto: m.dissolvedOxygen ?? 6,
+    conductividad: m.conductivity ?? 400,
+    turbidez: m.turbidity ?? 10,
+    solidosDisueltos: params?.solidosDisueltosTotales ?? (m.conductivity ?? 400) * 0.65,
     caudal: params?.caudal ?? 3.5,
   };
 }

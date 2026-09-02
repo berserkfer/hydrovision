@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { ExportFormatSelector } from "@/components/export-reports/ExportFormatSelector";
@@ -129,7 +130,7 @@ export function ExportReportsView({ initialHistory, filterOptions }: ExportRepor
         subtitle="Exporte datos ambientales filtrados para análisis científico e informes técnicos"
       />
 
-      <div className="space-y-6 p-4 md:p-6">
+      <PageContent className="space-y-6">
         <Card className="p-4 md:p-6">
           <h2 className="mb-4 text-sm font-semibold text-slate-900">Filtros de exportación</h2>
           <ReportFilters
@@ -192,7 +193,7 @@ export function ExportReportsView({ initialHistory, filterOptions }: ExportRepor
         </Card>
 
         <ExportHistory items={history} />
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

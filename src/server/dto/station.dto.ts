@@ -66,11 +66,11 @@ export interface StationCampaignHistoryDto {
 export interface StationMeasurementDto {
   id: string;
   fecha: string;
-  ph: number;
-  turbidez: number;
-  conductividad: number;
-  oxigenoDisuelto: number;
-  temperatura: number;
+  ph?: number;
+  turbidez?: number;
+  conductividad?: number;
+  oxigenoDisuelto?: number;
+  temperatura?: number;
   clasificacionEca: ComplianceStatus;
 }
 

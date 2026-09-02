@@ -20,10 +20,11 @@ interface FilteredMonitoringMapProps {
   riverKey: string;
   selectedStationId?: string | null;
   onStationSelect?: (stationId: string) => void;
+  heightClass?: string;
 }
 
 /**
- * Mapa Leaflet con soporte de filtros geográficos (Fase 2.2).
+ * Mapa Leaflet — basemap cartográfico legible (OSM), independiente del tema de la app.
  */
 export function FilteredMonitoringMap({
   summaries,
@@ -33,6 +34,7 @@ export function FilteredMonitoringMap({
   riverKey,
   selectedStationId,
   onStationSelect,
+  heightClass = "h-72",
 }: FilteredMonitoringMapProps) {
   const center: [number, number] = [mapView.latitude, mapView.longitude];
 
@@ -49,7 +51,7 @@ export function FilteredMonitoringMap({
   return (
     <div
       key={riverKey}
-      className="hv-animate-fade-in relative h-72 w-full overflow-hidden rounded-lg border border-slate-200 shadow-inner transition-shadow duration-300 hover:shadow-md"
+      className={`hv-map-frame hv-animate-fade-in relative ${heightClass} w-full overflow-hidden rounded-lg border border-[var(--hv-border)] shadow-inner transition-shadow duration-300`}
     >
       <MapContainer
         center={center}

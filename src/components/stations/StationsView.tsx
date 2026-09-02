@@ -4,6 +4,7 @@ import { useState } from "react";
 import { LayoutGrid, Plus, Table2 } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { StationCardGrid } from "@/components/stations/StationCard";
 import { StationFilters } from "@/components/stations/StationFilters";
 import { StationFormModal } from "@/components/stations/StationFormModal";
@@ -52,7 +53,7 @@ export function StationsView({
         subtitle="Gestión profesional de puntos de monitoreo · HydroVision"
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 hv-animate-fade-in">
             <p className="text-sm text-slate-600">
@@ -117,7 +118,7 @@ export function StationsView({
             )}
           </div>
         </div>
-      </div>
+      </PageContent>
 
       <StationFormModal
         open={formOpen}

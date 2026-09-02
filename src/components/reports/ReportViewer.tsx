@@ -85,7 +85,7 @@ export function ReportViewer({
               <h2 className="mt-1 text-xl font-bold text-white">{activeSection.title}</h2>
               <p className="mt-1 text-sm text-slate-300">{report.titulo}</p>
             </div>
-            <SimulatedDataIndicator variant="dark" />
+            <SimulatedDataIndicator />
           </div>
           <div className="mt-4 flex flex-wrap gap-6 text-xs text-slate-300">
             <MetaItem label="Generado" value={formatDate(activeSection.generatedAt)} />

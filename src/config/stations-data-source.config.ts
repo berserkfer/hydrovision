@@ -1,5 +1,5 @@
 import type { DataSourceType } from "@/types/data-provider";
-import { dataSourceConfig } from "./data-source.config";
+import { getMonitoringDataSource, isMonitoringDatabaseEnabled } from "./monitoring-data-source.config";
 
 const VALID_SOURCES: DataSourceType[] = ["mock", "database"];
 
@@ -23,17 +23,14 @@ function resolveStationsDataSource(): DataSourceType {
     return "database";
   }
 
-  return dataSourceConfig.source === "database" ? "database" : "mock";
+  return getMonitoringDataSource();
 }
 
-/** Origen de datos del módulo Estaciones — Sprint 3B */
+/** Origen de datos del módulo Estaciones — alineado con DATA_SOURCE global */
 export const stationsDataSourceConfig = {
   source: resolveStationsDataSource(),
 } as const;
 
 export function isStationsDatabaseEnabled(): boolean {
-  return (
-    stationsDataSourceConfig.source === "database" &&
-    Boolean(process.env.DATABASE_URL?.trim())
-  );
+  return stationsDataSourceConfig.source === "database" && isMonitoringDatabaseEnabled();
 }

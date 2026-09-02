@@ -36,7 +36,9 @@ export class MockGeeImageService implements GEEImageService {
 
     return MOCK_IMAGES.filter(
       (image) =>
-        image.collection === query.collection && image.cloudCover <= cloudMax
+        image.collection === query.collection &&
+        image.cloudCover !== null &&
+        image.cloudCover <= cloudMax
     );
   }
 

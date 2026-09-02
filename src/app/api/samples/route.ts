@@ -18,8 +18,8 @@ export async function GET(request: Request) {
       ...parseListQuery(params),
       campanaId: params.get("campanaId") ?? undefined,
     };
-    const data = sampleService.list(query);
-    return jsonSuccess(data, "mock");
+    const data = await sampleService.list(query);
+    return jsonSuccess(data, sampleService.getDataSource());
   });
 }
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   return runRouteHandler(async () => {
     await requirePermission(request, "MEASUREMENTS_CREATE");
     const body = await request.json();
-    const data = sampleService.create(body);
-    return jsonSuccess(data, "mock", 201);
+    const data = await sampleService.create(body);
+    return jsonSuccess(data, sampleService.getDataSource(), 201);
   });
 }

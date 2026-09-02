@@ -3,6 +3,7 @@
  */
 
 import { isStationsDatabaseEnabled } from "@/config/stations-data-source.config";
+import { invalidateMonitoringDataStoreCache } from "@/server/lib/invalidate-data-store-cache";
 import type { StationFilterOptionsDto, StationSummaryDto } from "@/server/dto/station.dto";
 import { prisma } from "@/server/db";
 import {
@@ -122,6 +123,7 @@ export class StationRepository implements IStationRepository {
         },
         include: stationListInclude,
       });
+      await invalidateMonitoringDataStoreCache();
       return mapStationRowToDto(row as StationListRow, false);
     }
 
@@ -166,6 +168,7 @@ export class StationRepository implements IStationRepository {
         },
         include: stationListInclude,
       });
+      await invalidateMonitoringDataStoreCache();
       return mapStationRowToDto(row as StationListRow, false);
     }
 
@@ -183,6 +186,7 @@ export class StationRepository implements IStationRepository {
         data: { estadoRegistro: "inactive", ultimaActualizacion: new Date() },
       });
       markSoftDeleted(STATION_ENTITY, id);
+      await invalidateMonitoringDataStoreCache();
       return true;
     }
 

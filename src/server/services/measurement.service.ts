@@ -1,5 +1,5 @@
 /**
- * MeasurementService — Sprint 3E
+ * MeasurementService — Sprint 3E / unificación datos Prompt 1
  */
 
 import type { ListQueryDto, PaginatedResultDto } from "@/server/dto/common.dto";
@@ -18,8 +18,17 @@ import {
 import { ApiError } from "@/server/api/errors";
 
 export class MeasurementService {
-  list(query: ListQueryDto): PaginatedResultDto<ReturnType<typeof measurementRepository.findAll>[number]> {
-    let items = measurementRepository.findAll();
+  getDataSource(): "database" | "mock" {
+    return measurementRepository.getDataSource();
+  }
+
+  async list(
+    query: ListQueryDto & { muestreoId?: string; parametroCodigo?: string }
+  ): Promise<PaginatedResultDto<Awaited<ReturnType<typeof measurementRepository.findAll>>[number]>> {
+    let items = await measurementRepository.findAll({
+      muestreoId: query.muestreoId,
+      parametroCodigo: query.parametroCodigo,
+    });
     items = filterBySearch(items, query.search, [
       "parametroNombre",
       "parametroCodigo",
@@ -30,15 +39,15 @@ export class MeasurementService {
     return paginateArray(items, query);
   }
 
-  getById(id: string) {
-    const row = measurementRepository.findById(id);
+  async getById(id: string) {
+    const row = await measurementRepository.findById(id);
     if (!row) throw ApiError.notFound("Medición", id);
     return row;
   }
 
-  create(body: unknown) {
+  async create(body: unknown) {
     const input = parseBody(createMeasurementSchema, body);
-    const created = measurementRepository.create(input);
+    const created = await measurementRepository.create(input);
     void auditService.recordCreate("Measurement", created.id, created, `Medición ${created.parametroCodigo} creada`);
     void auditService.recordEnvironmentalAssessmentForStation(
       created.estacionId,
@@ -47,10 +56,10 @@ export class MeasurementService {
     return created;
   }
 
-  update(id: string, body: unknown) {
-    const previous = measurementRepository.findById(id);
+  async update(id: string, body: unknown) {
+    const previous = await measurementRepository.findById(id);
     const input = parseBody(updateMeasurementSchema, { ...(body as object), id });
-    const updated = measurementRepository.update(id, input);
+    const updated = await measurementRepository.update(id, input);
     void auditService.recordUpdate("Measurement", id, previous, updated, `Medición ${updated.parametroCodigo} actualizada`);
     void auditService.recordEnvironmentalAssessmentForStation(
       updated.estacionId,
@@ -59,9 +68,9 @@ export class MeasurementService {
     return updated;
   }
 
-  remove(id: string) {
-    const previous = measurementRepository.findById(id);
-    const ok = measurementRepository.softDelete(id);
+  async remove(id: string) {
+    const previous = await measurementRepository.findById(id);
+    const ok = await measurementRepository.softDelete(id);
     if (!ok) throw ApiError.notFound("Medición", id);
     void auditService.recordDelete("Measurement", id, previous, `Medición ${id} eliminada (soft delete)`);
     if (previous?.estacionId) {

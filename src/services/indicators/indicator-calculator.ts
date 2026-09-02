@@ -80,10 +80,10 @@ function computeWaterQualityScore(summaries: StationSummary[]): number {
   const avg = summaries.reduce((acc, s) => {
     const m = s.latestMeasurement;
     let partial = 0;
-    if (m.ph >= 6.5 && m.ph <= 8.5) partial += 25;
-    if (m.dissolvedOxygen >= 5) partial += 25;
-    if (m.turbidity <= 35) partial += 25;
-    if (m.conductivity <= 900) partial += 25;
+    if (m.ph !== undefined && m.ph >= 6.5 && m.ph <= 8.5) partial += 25;
+    if (m.dissolvedOxygen !== undefined && m.dissolvedOxygen >= 5) partial += 25;
+    if (m.turbidity !== undefined && m.turbidity <= 35) partial += 25;
+    if (m.conductivity !== undefined && m.conductivity <= 900) partial += 25;
     return acc + partial;
   }, 0);
   return avg / summaries.length;

@@ -97,8 +97,10 @@ export function CampaignDetail({ campaign }: CampaignDetailProps) {
 
         <Card>
           <CardHeader className="border-b border-slate-100 bg-slate-50/30">
-            <CardTitle>Estaciones asociadas</CardTitle>
-            <CardDescription>{campaign.estacionCount} estación(es) en el {campaign.rioNombre}</CardDescription>
+            <CardTitle>Estaciones con muestreos</CardTitle>
+            <CardDescription>
+              {campaign.estacionCount} estación(es) con muestreos registrados en la campaña
+            </CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
             {campaign.estaciones.length === 0 ? (

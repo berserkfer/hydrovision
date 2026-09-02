@@ -14,8 +14,8 @@ export async function GET(request: Request) {
   return runRouteHandler(async () => {
     await requirePermission(request, "CAMPAIGNS_VIEW");
     const query = parseListQuery(new URL(request.url).searchParams);
-    const data = campaignService.list(query);
-    return jsonSuccess(data, "mock");
+    const data = await campaignService.list(query);
+    return jsonSuccess(data, campaignService.getDataSource());
   });
 }
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   return runRouteHandler(async () => {
     await requirePermission(request, "CAMPAIGNS_CREATE");
     const body = await request.json();
-    const data = campaignService.create(body);
-    return jsonSuccess(data, "mock", 201);
+    const data = await campaignService.create(body);
+    return jsonSuccess(data, campaignService.getDataSource(), 201);
   });
 }

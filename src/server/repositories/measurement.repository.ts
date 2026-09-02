@@ -1,11 +1,16 @@
 /**
- * Measurement repository — Sprint 3E
+ * Measurement repository — mock wide-row fallback + Prisma normalizado
  */
 
 import { getDataStore } from "@/data/store-access";
+import { getMonitoringDataSource } from "@/config/monitoring-data-source.config";
 import { filterActive, markSoftDeleted } from "@/server/lib/soft-delete";
 import { ApiError } from "@/server/api/errors";
 import type { CreateMeasurementInput } from "@/server/validators/schemas/crud.schemas";
+import {
+  measurementPrismaRepository,
+  type MeasurementListFilters,
+} from "./prisma/measurement.prisma-repository";
 
 const ENTITY = "measurement";
 
@@ -41,10 +46,17 @@ function fromStore(): MeasurementRow[] {
       ["conductivity", "Conductividad", param.conductividad, "µS/cm"],
       ["dissolved_oxygen", "Oxígeno disuelto", param.oxigenoDisuelto, "mg/L"],
       ["temperature", "Temperatura", param.temperatura, "°C"],
+      ["bod5", "DBO5", param.dbo5, "mg/L"],
+      ["cod", "DQO", param.dqo, "mg/L"],
+      ["coliforms", "Coliformes", param.coliformes, "NMP/100mL"],
+      ["nitrates", "Nitratos", param.nitratos, "mg/L"],
+      ["phosphates", "Fosfatos", param.fosfatos, "mg/L"],
+      ["total_dissolved_solids", "Sólidos disueltos", param.solidosDisueltosTotales, "mg/L"],
+      ["flow_rate", "Caudal", param.caudal, "m³/s"],
     ];
 
     for (const [codigo, nombre, valor, unidad] of defs) {
-      if (valor == null) continue;
+      if (valor == null || valor === 0) continue;
       rows.push({
         id: `meas-${param.muestraId}-${codigo}`,
         muestraId: param.muestraId,
@@ -64,7 +76,7 @@ function fromStore(): MeasurementRow[] {
   return rows;
 }
 
-function allRows(): MeasurementRow[] {
+function allMockRows(): MeasurementRow[] {
   const merged = [...fromStore(), ...Array.from(customMeasurements.values())];
   const byId = new Map<string, MeasurementRow>();
   merged.forEach((row) => byId.set(row.id, row));
@@ -72,31 +84,57 @@ function allRows(): MeasurementRow[] {
 }
 
 export class MeasurementRepository {
-  findAll(): MeasurementRow[] {
-    return allRows();
+  getDataSource(): "database" | "mock" {
+    return getMonitoringDataSource();
   }
 
-  findById(id: string): MeasurementRow | null {
-    return allRows().find((m) => m.id === id) ?? null;
+  async findAll(filters?: MeasurementListFilters): Promise<MeasurementRow[]> {
+    if (this.getDataSource() === "database") {
+      return measurementPrismaRepository.findAll(filters);
+    }
+    let rows = allMockRows();
+    if (filters?.muestreoId) {
+      rows = rows.filter((r) => r.muestraId === filters.muestreoId);
+    }
+    if (filters?.parametroCodigo) {
+      rows = rows.filter((r) => r.parametroCodigo === filters.parametroCodigo);
+    }
+    return rows;
   }
 
-  create(input: CreateMeasurementInput): MeasurementRow {
+  async findById(id: string): Promise<MeasurementRow | null> {
+    if (this.getDataSource() === "database") {
+      return measurementPrismaRepository.findById(id);
+    }
+    return allMockRows().find((m) => m.id === id) ?? null;
+  }
+
+  async create(input: CreateMeasurementInput): Promise<MeasurementRow> {
+    if (this.getDataSource() === "database") {
+      return measurementPrismaRepository.create(input);
+    }
     const id = `meas-custom-${Date.now()}`;
     const row: MeasurementRow = { id, ...input };
     customMeasurements.set(id, row);
     return row;
   }
 
-  update(id: string, input: Partial<CreateMeasurementInput>): MeasurementRow {
-    const current = this.findById(id);
+  async update(id: string, input: Partial<CreateMeasurementInput>): Promise<MeasurementRow> {
+    if (this.getDataSource() === "database") {
+      return measurementPrismaRepository.update(id, input);
+    }
+    const current = await this.findById(id);
     if (!current) throw ApiError.notFound("Medición", id);
     const next = { ...current, ...input, id };
     customMeasurements.set(id, next);
     return next;
   }
 
-  softDelete(id: string): boolean {
-    if (!this.findById(id)) return false;
+  async softDelete(id: string): Promise<boolean> {
+    if (this.getDataSource() === "database") {
+      return measurementPrismaRepository.softDelete(id);
+    }
+    if (!(await this.findById(id))) return false;
     markSoftDeleted(ENTITY, id);
     customMeasurements.delete(id);
     return true;

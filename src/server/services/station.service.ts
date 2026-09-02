@@ -19,12 +19,7 @@ import {
 } from "@/server/validators/schemas/crud.schemas";
 import type { ListQueryDto } from "@/server/dto/common.dto";
 import { filterBySearch, sortArray } from "@/server/dto/common.dto";
-import { getMockCampaignsByStation } from "@/lib/mock/campaigns";
-import {
-  getMockEcaDetailByStation,
-  getMockMeasurementsByStation,
-  getMockSatelliteIndicesByStation,
-} from "@/lib/mock/measurements";
+import { getStationDetailEnrichment } from "@/server/repositories/station-detail.repository";
 
 function computeStats(stations: StationSummaryDto[]): StationStatsDto {
   return {
@@ -106,15 +101,15 @@ export class StationService {
       throw ApiError.notFound("Estación", stationId);
     }
 
-    const eca = getMockEcaDetailByStation(stationId);
+    const enrichment = await getStationDetailEnrichment(stationId);
 
     return {
       station,
-      campanas: getMockCampaignsByStation(stationId),
-      mediciones: getMockMeasurementsByStation(stationId),
-      indicesSatelitales: getMockSatelliteIndicesByStation(stationId),
-      parametrosViolados: eca.parametrosViolados,
-      parametrosEnAlerta: eca.parametrosEnAlerta,
+      campanas: enrichment.campanas,
+      mediciones: enrichment.mediciones,
+      indicesSatelitales: enrichment.indicesSatelitales,
+      parametrosViolados: enrichment.parametrosViolados,
+      parametrosEnAlerta: enrichment.parametrosEnAlerta,
     };
   }
 }

@@ -89,7 +89,7 @@ export function parametrosToFieldMeasurement(
     bod5: params.dbo5,
     cod: params.dqo,
     coliforms: params.coliformes,
-    isSimulated: true,
+    isSimulated: params.isSimulated,
   };
 }
 
@@ -106,7 +106,7 @@ export function indicesToLegacy(indices: IndicesSatelitales): SatelliteIndices {
     mndwi: indices.mndwi,
     ndti: indices.ndti,
     cloudCover: indices.coberturaNubosa,
-    isSimulated: true,
+    isSimulated: indices.isSimulated,
   };
 }
 

@@ -2,6 +2,7 @@
 
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { ExportChartButton, ExportToast } from "@/components/temporal/ExportChartButton";
 import { TemporalComparisonChart } from "@/components/temporal/TemporalComparisonChart";
 import { TemporalFiltersBar } from "@/components/temporal/TemporalFiltersBar";
@@ -38,7 +39,7 @@ export function TemporalAnalysisView({ stations }: TemporalAnalysisViewProps) {
         subtitle="Evolución de la calidad del agua · HydroVision"
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 hv-animate-fade-in">
             <div>
@@ -72,7 +73,7 @@ export function TemporalAnalysisView({ stations }: TemporalAnalysisViewProps) {
             </>
           )}
         </div>
-      </div>
+      </PageContent>
 
       <ExportToast visible={exportToast} onDismiss={dismissExportToast} />
     </MainLayout>

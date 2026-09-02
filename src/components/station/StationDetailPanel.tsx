@@ -36,7 +36,7 @@ export function StationDetailPanel({ detail, onClose }: StationDetailPanelProps)
 
   return (
     <aside className="hv-animate-fade-in h-fit w-full shrink-0">
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+      <div className="hv-card overflow-hidden rounded-xl shadow-lg">
         {/* Cabecera */}
         <div className="border-b border-slate-700/10 bg-gradient-to-r from-slate-800 to-slate-700 px-4 py-4">
           <div className="flex items-start justify-between gap-2">
@@ -69,12 +69,11 @@ export function StationDetailPanel({ detail, onClose }: StationDetailPanelProps)
               <Radio className="h-3 w-3" />
               {OPERATIONAL_STATUS_LABELS[entity.operationalStatus]}
             </span>
-            <SimulatedDataIndicator variant="dark" />
+            <SimulatedDataIndicator />
           </div>
         </div>
 
         <div className="max-h-[calc(100vh-12rem)] space-y-4 overflow-y-auto p-4">
-          {/* Información general */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Información general</CardTitle>
@@ -92,7 +91,7 @@ export function StationDetailPanel({ detail, onClose }: StationDetailPanelProps)
 
           {/* Parámetros */}
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--hv-foreground-muted)]">
               Parámetros fisicoquímicos
             </p>
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
@@ -105,7 +104,7 @@ export function StationDetailPanel({ detail, onClose }: StationDetailPanelProps)
           {/* Clasificación ECA */}
           <Card className="border-l-4 border-l-cyan-500">
             <CardContent className="py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--hv-foreground-muted)]">
                 Clasificación ECA
               </p>
               <div className="mt-2 flex items-center gap-2">
@@ -113,17 +112,17 @@ export function StationDetailPanel({ detail, onClose }: StationDetailPanelProps)
                   status={compliance.status}
                   label={getComplianceLabel(compliance.status)}
                 />
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-[var(--hv-foreground-muted)]">
                   Última medición: {formatDate(measurement.sampledAt)}
                 </span>
               </div>
               {compliance.violatedParameters.length > 0 && (
-                <p className="mt-2 text-xs text-red-600">
+                <p className="mt-2 text-xs text-red-500 dark:text-red-400">
                   Parámetros fuera de norma: {compliance.violatedParameters.join(", ")}
                 </p>
               )}
               {compliance.alertParameters.length > 0 && (
-                <p className="mt-1 text-xs text-amber-600">
+                <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
                   En alerta: {compliance.alertParameters.join(", ")}
                 </p>
               )}
@@ -148,10 +147,10 @@ function InfoRow({
   value: string;
 }) {
   return (
-    <div className="flex items-start gap-2 text-slate-600">
-      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-      <span className="font-medium text-slate-500">{label}:</span>
-      <span className="text-slate-800">{value}</span>
+    <div className="flex items-start gap-2 text-xs text-[var(--hv-foreground-muted)]">
+      <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--hv-foreground-dim)]" aria-hidden="true" />
+      <span className="font-medium">{label}:</span>
+      <span className="text-[var(--hv-foreground)]">{value}</span>
     </div>
   );
 }

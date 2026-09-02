@@ -1,6 +1,7 @@
 import { StationDetail } from "@/components/stations/StationDetail";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { MOCK_LAST_UPDATE } from "@/constants/app";
 import type { StationDetailRecord } from "@/types/station-management";
 
@@ -16,11 +17,11 @@ export function StationDetailView({ detail }: StationDetailViewProps) {
         title={`Estación ${detail.station.codigo}`}
         subtitle={`${detail.station.nombre} · ${detail.station.rioNombre}`}
       />
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl">
           <StationDetail detail={detail} />
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

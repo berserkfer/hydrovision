@@ -5,7 +5,7 @@ interface MapLegendProps {
 }
 
 /**
- * Leyenda flotante que explica el código de colores ECA en el mapa.
+ * Leyenda flotante — estilo claro sobre el basemap cartográfico.
  */
 export function MapLegend({ className = "" }: MapLegendProps) {
   return (

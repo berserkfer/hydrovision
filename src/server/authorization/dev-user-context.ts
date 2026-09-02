@@ -4,7 +4,7 @@
  */
 
 import { getDataStore } from "@/data/store-access";
-import { isDatabaseConfigured } from "@/config/database.config";
+import { isMonitoringDatabaseEnabled } from "@/config/monitoring-data-source.config";
 import { prisma } from "@/server/db";
 import { RolUsuario } from "@/constants/enums";
 import { toAppRole, type AppRole } from "./roles";
@@ -64,7 +64,7 @@ export function resolveDevUserId(request?: Request): string {
 
 export async function getSimulatedUserContext(request?: Request): Promise<AuthUserContext> {
   const userId = resolveDevUserId(request);
-  const fromDb = isDatabaseConfigured() ? await fromDatabase(userId) : null;
+  const fromDb = isMonitoringDatabaseEnabled() ? await fromDatabase(userId) : null;
   const user = fromDb ?? fromMock(userId) ?? fromMock(DEFAULT_DEV_USER_ID);
   if (!user) {
     return {

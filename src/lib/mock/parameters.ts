@@ -32,9 +32,9 @@ function resolveValue(
     const coliformes = paramRow.coliformes ?? 200;
     switch (def.code) {
       case "nitrates":
-        return Number((paramRow.dqo * 0.08 + (seed % 5)).toFixed(2));
+        return Number(((paramRow.dqo ?? 0) * 0.08 + (seed % 5)).toFixed(2));
       case "phosphates":
-        return Number((paramRow.turbidez * 0.012 + (seed % 3) * 0.02).toFixed(3));
+        return Number(((paramRow.turbidez ?? 0) * 0.012 + (seed % 3) * 0.02).toFixed(3));
       case "coliformThermotolerant":
         return Math.round(coliformes * (0.3 + (seed % 4) * 0.02));
       case "eColi":

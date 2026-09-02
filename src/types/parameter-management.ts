@@ -35,7 +35,7 @@ export interface WaterParameterRecord {
   campanaId: string;
   campanaCodigo: string;
   campanaNombre: string;
-  isSimulated: true;
+  isSimulated: boolean;
 }
 
 export interface ParameterFilters {

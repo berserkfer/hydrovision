@@ -2,9 +2,9 @@ import type { ComplianceStatus } from "@/types";
 import { cn } from "@/lib/utils";
 
 const variants: Record<ComplianceStatus, string> = {
-  compliant: "bg-emerald-500/15 text-emerald-700 ring-emerald-500/30",
-  alert: "bg-amber-500/15 text-amber-800 ring-amber-500/30",
-  non_compliant: "bg-red-500/15 text-red-700 ring-red-500/30",
+  compliant: "bg-emerald-500/15 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300",
+  alert: "bg-amber-500/15 text-amber-800 ring-amber-500/30 dark:text-amber-300",
+  non_compliant: "bg-red-500/15 text-red-700 ring-red-500/30 dark:text-red-300",
 };
 
 interface BadgeProps {
@@ -35,9 +35,11 @@ interface InfoBadgeProps {
 
 export function InfoBadge({ children, variant = "default", className }: InfoBadgeProps) {
   const styles = {
-    default: "bg-slate-500/10 text-slate-600 ring-slate-500/20",
-    warning: "bg-amber-500/10 text-amber-700 ring-amber-500/20",
-    info: "bg-sky-500/10 text-sky-700 ring-sky-500/20",
+    default:
+      "bg-[var(--hv-surface-secondary)] text-[var(--hv-foreground-muted)] ring-[var(--hv-border)]",
+    warning:
+      "bg-[var(--hv-disclaimer-bg)] text-[var(--hv-disclaimer-text)] ring-[var(--hv-disclaimer-border)]",
+    info: "bg-cyan-500/10 text-cyan-700 ring-cyan-500/20 dark:text-cyan-300",
   };
 
   return (

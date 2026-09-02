@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   return runRouteHandler(async () => {
     await requirePermission(request, "MANAGE_USERS");
-    const data = userService.list();
+    const data = await userService.list();
     return jsonSuccess(data, "mock");
   });
 }

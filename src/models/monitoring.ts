@@ -43,16 +43,16 @@ export interface ParametrosFisicoquimicos extends EntityMeta {
   id: string;
   muestraId: string;
   estacionId: string;
-  ph: number;
-  turbidez: number;
-  conductividad: number;
-  oxigenoDisuelto: number;
-  temperatura: number;
-  dbo5: number;
-  dqo: number;
+  ph?: number;
+  turbidez?: number;
+  conductividad?: number;
+  oxigenoDisuelto?: number;
+  temperatura?: number;
+  dbo5?: number;
+  dqo?: number;
   coliformes?: number;
   nitratos?: number;
   fosfatos?: number;
-  solidosDisueltosTotales: number;
-  caudal: number;
+  solidosDisueltosTotales?: number;
+  caudal?: number;
 }

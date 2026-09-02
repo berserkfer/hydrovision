@@ -8,6 +8,7 @@ import { SampleKpiCards } from "@/components/sampling/SampleKpiCards";
 import { SampleTable } from "@/components/sampling/SampleTable";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { ConfirmDeleteDialog } from "@/components/ui/ConfirmDeleteDialog";
 import { Pagination } from "@/components/ui/Pagination";
 import { Card } from "@/components/ui/Card";
@@ -62,7 +63,7 @@ export function SamplingView({ initialSamples, initialStats }: SamplingViewProps
         subtitle="Campañas · Estaciones · Muestras ambientales"
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 hv-animate-fade-in">
             <div className="flex items-center gap-3">
@@ -132,7 +133,7 @@ export function SamplingView({ initialSamples, initialStats }: SamplingViewProps
             />
           </Card>
         </div>
-      </div>
+      </PageContent>
 
       <SampleFormModal
         open={formOpen}

@@ -2,6 +2,7 @@
 
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { ReportFilters } from "@/components/reports/ReportFilters";
 import { ReportSummary } from "@/components/reports/ReportSummary";
 import { ReportViewer } from "@/components/reports/ReportViewer";
@@ -41,7 +42,7 @@ export function ReportsView({ initialReport, initialStats }: ReportsViewProps) {
         subtitle="Generación de informes científicos · HydroVision"
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 print:overflow-visible print:p-0">
+      <PageContent className=" print:overflow-visible print:p-0">
         <div className="mx-auto max-w-7xl space-y-6 print:max-w-none">
           <div className="flex flex-wrap items-center justify-between gap-4 hv-animate-fade-in print:hidden">
             <p className="text-sm text-slate-600">
@@ -79,7 +80,7 @@ export function ReportsView({ initialReport, initialStats }: ReportsViewProps) {
             />
           </div>
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

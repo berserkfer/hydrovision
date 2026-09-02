@@ -59,7 +59,7 @@ export interface GeeImageSummary {
   id: string;
   collection: GeeImageQuery["collection"];
   acquiredAt: string;
-  cloudCover: number;
+  cloudCover: number | null;
 }
 
 export interface GeeExportTask {

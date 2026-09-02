@@ -308,18 +308,6 @@ export function aggregateMedicionesToParametros(
       id: `param-${muestreo.id}`,
       muestraId: muestreo.id,
       estacionId: muestreo.puntoMonitoreoId,
-      ph: 0,
-      turbidez: 0,
-      conductividad: 0,
-      oxigenoDisuelto: 0,
-      temperatura: 0,
-      dbo5: 0,
-      dqo: 0,
-      coliformes: undefined,
-      nitratos: undefined,
-      fosfatos: undefined,
-      solidosDisueltosTotales: 0,
-      caudal: 0,
       ...mapEntityMeta(muestreo.createdAt, muestreo.updatedAt),
     };
 

@@ -17,7 +17,8 @@ export async function GET(request: Request, context: RouteContext) {
   return runRouteHandler(async () => {
     await requirePermission(request, "MEASUREMENTS_VIEW");
     const { id } = await context.params;
-    return jsonSuccess(measurementService.getById(id), "mock");
+    const data = await measurementService.getById(id);
+    return jsonSuccess(data, measurementService.getDataSource());
   });
 }
 
@@ -26,7 +27,8 @@ export async function PUT(request: Request, context: RouteContext) {
     await requirePermission(request, "MEASUREMENTS_UPDATE");
     const { id } = await context.params;
     const body = await request.json();
-    return jsonSuccess(measurementService.update(id, body), "mock");
+    const data = await measurementService.update(id, body);
+    return jsonSuccess(data, measurementService.getDataSource());
   });
 }
 
@@ -34,6 +36,7 @@ export async function DELETE(request: Request, context: RouteContext) {
   return runRouteHandler(async () => {
     await requirePermission(request, "MEASUREMENTS_DELETE");
     const { id } = await context.params;
-    return jsonSuccess(measurementService.remove(id), "mock");
+    const data = await measurementService.remove(id);
+    return jsonSuccess(data, measurementService.getDataSource());
   });
 }

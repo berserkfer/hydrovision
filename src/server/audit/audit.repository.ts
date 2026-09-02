@@ -3,7 +3,7 @@
  * Los registros son append-only (solo lectura desde la UI).
  */
 
-import { isDatabaseConfigured } from "@/config/database.config";
+import { isMonitoringDatabaseEnabled } from "@/config/monitoring-data-source.config";
 import { prisma } from "@/server/db";
 import type { Prisma } from "@prisma/client";
 import type {
@@ -93,7 +93,7 @@ export async function appendAuditLog(input: AuditLogInput & { id: string; respon
     responsableId: input.responsableId,
   };
 
-  if (isDatabaseConfigured()) {
+  if (isMonitoringDatabaseEnabled()) {
     try {
       const created = await prisma.auditLog.create({
         data: {
@@ -120,7 +120,7 @@ export async function appendAuditLog(input: AuditLogInput & { id: string; respon
 }
 
 export async function listAuditLogs(filters: AuditFilters = {}): Promise<AuditLogRecord[]> {
-  if (isDatabaseConfigured()) {
+  if (isMonitoringDatabaseEnabled()) {
     try {
       const where: Record<string, unknown> = {};
       if (filters.entityType) where.entityType = filters.entityType;
@@ -156,7 +156,7 @@ export async function listAuditLogs(filters: AuditFilters = {}): Promise<AuditLo
 }
 
 export async function findAuditLogById(id: string): Promise<AuditLogRecord | null> {
-  if (isDatabaseConfigured()) {
+  if (isMonitoringDatabaseEnabled()) {
     try {
       const row = await prisma.auditLog.findUnique({ where: { id } });
       return row ? mapRow(row) : null;

@@ -67,66 +67,73 @@ export function buildStationHistory(
 export function buildParameterConfigs(
   measurement: StationDetail["measurement"]
 ): ParameterDisplayConfig[] {
+  const ph = measurement.ph ?? 0;
+  const temperature = measurement.temperature ?? 0;
+  const conductivity = measurement.conductivity ?? 0;
+  const dissolvedOxygen = measurement.dissolvedOxygen ?? 0;
+  const turbidity = measurement.turbidity ?? 0;
+  const totalDissolvedSolids = measurement.totalDissolvedSolids ?? 0;
+
   return [
     {
       key: "ph",
       label: "pH",
       unit: "—",
-      value: measurement.ph,
+      value: ph,
       min: 6,
       max: 9,
       icon: "ph",
-      trend: buildSparklineTrend(measurement.ph, 0.15),
+      trend: buildSparklineTrend(ph, 0.15),
     },
     {
       key: "temperature",
       label: "Temperatura",
       unit: "°C",
-      value: measurement.temperature,
+      value: temperature,
       min: 18,
       max: 32,
       icon: "temperature",
-      trend: buildSparklineTrend(measurement.temperature, 0.8),
+      trend: buildSparklineTrend(temperature, 0.8),
     },
     {
       key: "conductivity",
       label: "Conductividad",
       unit: "µS/cm",
-      value: measurement.conductivity,
+      value: conductivity,
       min: 0,
       max: 1500,
       icon: "conductivity",
-      trend: buildSparklineTrend(measurement.conductivity, 40),
+      trend: buildSparklineTrend(conductivity, 40),
     },
     {
       key: "dissolvedOxygen",
       label: "Oxígeno disuelto",
       unit: "mg/L",
-      value: measurement.dissolvedOxygen,
+      value: dissolvedOxygen,
       min: 0,
       max: 10,
       icon: "oxygen",
-      trend: buildSparklineTrend(measurement.dissolvedOxygen, 0.5),
+      trend: buildSparklineTrend(dissolvedOxygen, 0.5),
     },
     {
       key: "turbidity",
       label: "Turbidez",
       unit: "NTU",
-      value: measurement.turbidity,
+      value: turbidity,
       min: 0,
       max: 60,
       icon: "turbidity",
-      trend: buildSparklineTrend(measurement.turbidity, 3),
+      trend: buildSparklineTrend(turbidity, 3),
     },
     {
       key: "tds",
       label: "Sólidos totales disueltos",
       unit: "mg/L",
-      value: measurement.totalDissolvedSolids,
+      value: totalDissolvedSolids,
       min: 0,
       max: 1000,
       icon: "tds",
-      trend: buildSparklineTrend(measurement.totalDissolvedSolids, 25),
+      trend: buildSparklineTrend(totalDissolvedSolids, 25),
     },
     {
       key: "flowRate",
@@ -154,7 +161,8 @@ export function buildStationDetail(
     conductivity: m.conductivity,
     dissolvedOxygen: m.dissolvedOxygen,
     turbidity: m.turbidity,
-    totalDissolvedSolids: estimateTDS(m.conductivity),
+    totalDissolvedSolids:
+      m.conductivity !== undefined ? estimateTDS(m.conductivity) : undefined,
     flowRate: estimateFlowRate(stationIndex),
     sampledAt: m.sampledAt,
     isSimulated: true as const,

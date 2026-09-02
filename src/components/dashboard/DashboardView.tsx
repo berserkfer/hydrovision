@@ -2,26 +2,19 @@
 
 import type { DashboardStats, StationSummary, TimeSeriesPoint } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { KpiCards } from "@/components/dashboard/KpiCards";
-import { EnvironmentalRiskCard } from "@/components/dashboard/EnvironmentalRiskCard";
-import { ModuleStatusPanel } from "@/components/dashboard/ModuleStatusPanel";
-import { MonitoringPointsTable } from "@/components/dashboard/MonitoringPointsTable";
-import { SatelliteIndicesPreview } from "@/components/dashboard/SatelliteIndicesPreview";
-import { SatelliteIndicesSection } from "@/components/dashboard/SatelliteIndicesSection";
-import { TemporalChart } from "@/components/dashboard/TemporalChart";
-import { EnvironmentalAlertsSection } from "@/components/dashboard/executive/EnvironmentalAlertsSection";
-import { EnvironmentalIndicatorsGrid } from "@/components/dashboard/executive/EnvironmentalIndicatorsGrid";
-import { ExecutiveHeader } from "@/components/dashboard/executive/ExecutiveHeader";
-import { ExecutiveKpiPanel } from "@/components/dashboard/executive/ExecutiveKpiPanel";
-import { ExecutiveSummaryPanel } from "@/components/dashboard/executive/ExecutiveSummaryPanel";
-import { RecommendedActionsSection } from "@/components/dashboard/executive/RecommendedActionsSection";
-import { MapMonitoringSection } from "@/components/map/MapMonitoringSection";
+import { PageContent } from "@/components/layout/PageContent";
+import { ControlCenterHeader } from "@/components/dashboard/control-center/ControlCenterHeader";
+import { ControlCenterKpiCards } from "@/components/dashboard/control-center/ControlCenterKpiCards";
+import { DashboardOverviewMap } from "@/components/dashboard/control-center/DashboardOverviewMap";
+import { WaterResourceStatusCard } from "@/components/dashboard/control-center/WaterResourceStatusCard";
+import { WaterQualityTrendChart } from "@/components/dashboard/control-center/WaterQualityTrendChart";
+import { RecentAlertsPanel } from "@/components/dashboard/control-center/RecentAlertsPanel";
+import { DataFreshnessBar } from "@/components/dashboard/control-center/DataFreshnessBar";
 import { StationDetailPanel } from "@/components/station/StationDetailPanel";
 import { StationDetailEmpty } from "@/components/station/StationDetailEmpty";
 import { useMapFilters } from "@/hooks/useMapFilters";
 import { useEnvironmentalRisk } from "@/hooks/useEnvironmentalRisk";
 import { useExecutiveDashboard } from "@/hooks/useExecutiveDashboard";
-import { useSatelliteIndexEngine } from "@/hooks/useSatelliteIndexEngine";
 
 interface DashboardViewProps {
   stats: DashboardStats;
@@ -29,13 +22,8 @@ interface DashboardViewProps {
   timeSeries: TimeSeriesPoint[];
 }
 
-/**
- * Vista principal del dashboard — Fase 4.2 Dashboard Ejecutivo.
- * Conserva todos los componentes previos e integra capa ejecutiva.
- */
-export function DashboardView({ stats: _stats, summaries, timeSeries }: DashboardViewProps) {
+export function DashboardView({ stats: _stats, summaries: _summaries, timeSeries }: DashboardViewProps) {
   const {
-    filters,
     riverContext,
     summaries: filteredSummaries,
     filteredStats,
@@ -44,15 +32,11 @@ export function DashboardView({ stats: _stats, summaries, timeSeries }: Dashboar
     isTransitioning,
     stationDetail,
     selectedStationId,
-    setFilter,
     selectStation,
     clearStationSelection,
-    resetFilters,
-    recenterMap,
   } = useMapFilters();
 
-  const { assessment: riskAssessment, indicator: riskIndicator } =
-    useEnvironmentalRisk(filteredSummaries);
+  const { assessment: riskAssessment } = useEnvironmentalRisk(filteredSummaries);
 
   const executive = useExecutiveDashboard({
     stats: filteredStats,
@@ -61,95 +45,70 @@ export function DashboardView({ stats: _stats, summaries, timeSeries }: Dashboar
     riskAssessment,
   });
 
-  const satelliteIndexSnapshot = useSatelliteIndexEngine(
-    riverContext.river.id,
-    selectedStationId
-  );
-
-  const stationCount = riverContext.river.stations.length;
+  const activeAlertsCount = filteredStats.alertCount + filteredStats.nonCompliantCount;
 
   const stationPanel = stationDetail ? (
     <StationDetailPanel detail={stationDetail} onClose={clearStationSelection} />
   ) : (
-    <StationDetailEmpty />
+    <StationDetailEmpty compact />
   );
+
+  const waterStatusDescription = executive?.summary.watershedStatus;
 
   return (
     <MainLayout>
-      {executive && <ExecutiveHeader data={executive.header} />}
+      {executive && (
+        <ControlCenterHeader data={executive.header} evaluatedAt={executive.evaluatedAt} />
+      )}
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="mx-auto max-w-7xl space-y-6">
+      <PageContent>
+        <div className="mx-auto max-w-[1600px] space-y-8">
           {executive && (
-            <>
-              <ExecutiveKpiPanel kpis={executive.kpis} />
-              <EnvironmentalIndicatorsGrid cards={executive.parameterCards} />
-
-              <div className="grid gap-6 xl:grid-cols-2">
-                <EnvironmentalAlertsSection alerts={executive.alerts} />
-                <RecommendedActionsSection actions={executive.actions} />
-              </div>
-            </>
-          )}
-
-          <div className="hv-animate-fade-in transition-opacity duration-300">
-            <KpiCards stats={filteredStats} />
-          </div>
-
-          {riskIndicator && (
-            <div className="hv-animate-fade-in">
-              <EnvironmentalRiskCard
-                indicator={riskIndicator}
-                stationCount={filteredSummaries.length}
-                riverName={riverContext.river.name}
-              />
-            </div>
+            <ControlCenterKpiCards
+              stats={filteredStats}
+              kpis={executive.kpis}
+              riskAssessment={riskAssessment}
+              activeAlertsCount={activeAlertsCount}
+            />
           )}
 
           {stationDetail && <div className="xl:hidden">{stationPanel}</div>}
 
-          <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-            <div className="min-w-0 space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                <MapMonitoringSection
-                  filters={filters}
-                  riverContext={riverContext}
-                  summaries={filteredSummaries}
-                  mapView={mapView}
-                  recenterToken={recenterToken}
-                  isTransitioning={isTransitioning}
-                  selectedStationId={selectedStationId}
-                  onStationSelect={selectStation}
-                  onFilterChange={setFilter}
-                  onReset={resetFilters}
-                  onRecenter={recenterMap}
-                />
-                <TemporalChart data={timeSeries} />
-              </div>
-
-              <MonitoringPointsTable
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0 space-y-8">
+              <DashboardOverviewMap
+                riverContext={riverContext}
                 summaries={filteredSummaries}
-                title={`Estaciones — ${riverContext.river.name}`}
-                description={`${stationCount} puntos de monitoreo · ${riverContext.watershed.name} · Datos simulados`}
-                contentKey={riverContext.river.id}
+                mapView={mapView}
+                recenterToken={recenterToken}
+                isTransitioning={isTransitioning}
                 selectedStationId={selectedStationId}
                 onStationSelect={selectStation}
               />
-              <SatelliteIndicesSection
-                items={satelliteIndexSnapshot.items}
-                riverName={riverContext.river.name}
-              />
-              <SatelliteIndicesPreview summaries={summaries} />
-              <ModuleStatusPanel summaries={summaries} />
+              <WaterQualityTrendChart data={timeSeries} />
             </div>
 
-            <div className="hidden space-y-6 xl:block">
-              {executive && <ExecutiveSummaryPanel summary={executive.summary} />}
-              {stationPanel}
-            </div>
+            <aside className="space-y-6">
+              {executive && (
+                <>
+                  <WaterResourceStatusCard
+                    qualityStatus={executive.header.qualityStatus}
+                    description={waterStatusDescription ?? ""}
+                    riverName={riverContext.river.name}
+                  />
+                  <RecentAlertsPanel alerts={executive.alerts} />
+                </>
+              )}
+              <div className="xl:sticky xl:top-6">{stationPanel}</div>
+            </aside>
           </div>
+
+          <DataFreshnessBar
+            lastUpdate={filteredStats.lastUpdate}
+            source="Campo / Sentinel-2 / Sistema (simulado)"
+          />
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

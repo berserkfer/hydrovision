@@ -13,7 +13,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   return runRouteHandler(async () => {
     await requirePermission(request, "MANAGE_USERS");
     const { id } = await context.params;
-    const data = userService.getById(id);
+    const data = await userService.getById(id);
     return jsonSuccess(data, "mock");
   });
 }

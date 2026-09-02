@@ -10,13 +10,13 @@ import { createUserSchema, updateUserSchema } from "@/server/validators/schemas/
 import { parseBody } from "@/server/validators/schemas/crud.schemas";
 
 export class UserService {
-  list(): UserListResponseDto {
-    const users = userRepository.findAll();
+  async list(): Promise<UserListResponseDto> {
+    const users = await userRepository.findAll();
     return { users, total: users.length };
   }
 
-  getById(id: string): UserDto {
-    const user = userRepository.findById(id);
+  async getById(id: string): Promise<UserDto> {
+    const user = await userRepository.findById(id);
     if (!user) throw ApiError.notFound("Usuario", id);
     return user;
   }
@@ -29,7 +29,7 @@ export class UserService {
   }
 
   async update(id: string, body: unknown): Promise<UserDto> {
-    const previous = userRepository.findById(id);
+    const previous = await userRepository.findById(id);
     if (!previous) throw ApiError.notFound("Usuario", id);
 
     const input = parseBody(updateUserSchema, body) as UpdateUserInput;
@@ -67,7 +67,7 @@ export class UserService {
   }
 
   async remove(id: string): Promise<{ id: string; deleted: true }> {
-    const previous = userRepository.findById(id);
+    const previous = await userRepository.findById(id);
     if (!previous) throw ApiError.notFound("Usuario", id);
     await userRepository.softDelete(id);
     void auditService.recordDelete("User", id, previous, `Usuario ${previous.email} desactivado (eliminación lógica)`);

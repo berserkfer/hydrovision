@@ -53,7 +53,7 @@ export function ExecutiveHeader({ data }: ExecutiveHeaderProps) {
             <span className="inline-flex items-center rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-slate-200 ring-1 ring-inset ring-white/20">
               Último monitoreo: {formatDate(data.lastMonitoringDate)}
             </span>
-            <SimulatedDataIndicator variant="dark" />
+            <SimulatedDataIndicator />
           </div>
         </div>
 

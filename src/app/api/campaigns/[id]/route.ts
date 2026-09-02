@@ -17,8 +17,8 @@ export async function GET(request: Request, context: RouteContext) {
   return runRouteHandler(async () => {
     await requirePermission(request, "CAMPAIGNS_VIEW");
     const { id } = await context.params;
-    const data = campaignService.getById(id);
-    return jsonSuccess(data, "mock");
+    const data = await campaignService.getById(id);
+    return jsonSuccess(data, campaignService.getDataSource());
   });
 }
 
@@ -27,8 +27,8 @@ export async function PUT(request: Request, context: RouteContext) {
     await requirePermission(request, "CAMPAIGNS_UPDATE");
     const { id } = await context.params;
     const body = await request.json();
-    const data = campaignService.update(id, body);
-    return jsonSuccess(data, "mock");
+    const data = await campaignService.update(id, body);
+    return jsonSuccess(data, campaignService.getDataSource());
   });
 }
 
@@ -36,7 +36,7 @@ export async function DELETE(request: Request, context: RouteContext) {
   return runRouteHandler(async () => {
     await requirePermission(request, "CAMPAIGNS_DELETE");
     const { id } = await context.params;
-    const data = campaignService.remove(id);
-    return jsonSuccess(data, "mock");
+    const data = await campaignService.remove(id);
+    return jsonSuccess(data, campaignService.getDataSource());
   });
 }

@@ -1,4 +1,5 @@
 import { MainLayout } from "@/components/layout/MainLayout";
+import { PageContent } from "@/components/layout/PageContent";
 import { SystemStatusPanel } from "@/components/admin/SystemStatusPanel";
 
 export const metadata = {
@@ -9,11 +10,11 @@ export const metadata = {
 export default function SystemStatusPage() {
   return (
     <MainLayout>
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-6xl">
           <SystemStatusPanel />
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

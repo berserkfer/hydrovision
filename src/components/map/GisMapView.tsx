@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { MapControlPanel } from "@/components/map/filters/MapControlPanel";
 import { SimulatedDataIndicator } from "@/components/ui/SimulatedDataIndicator";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -51,7 +52,7 @@ export function GisMapView() {
         subtitle={`${riverContext.watershed.name} · Gestor de capas geoespaciales · HydroVision`}
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 hv-animate-fade-in">
             <p className="text-sm text-slate-600">
@@ -94,7 +95,7 @@ export function GisMapView() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

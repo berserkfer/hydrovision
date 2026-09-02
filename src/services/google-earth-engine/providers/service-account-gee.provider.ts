@@ -11,13 +11,15 @@ import {
   MockGeeImageService,
   MockGeeIndexService,
 } from "../services";
+import { RealGeeImageService } from "../services/real-gee-image.service";
 import { ServiceAccountGeeAuthentication } from "./service-account-gee-authentication";
+import { isGeeIntegrationEnabled } from "@/config/gee-integration.config";
 
 export class ServiceAccountGeeProvider implements IGEEProvider {
   readonly id = "hydrovision-service-account-gee";
   readonly mode: GeeProviderMode = "service_account";
   readonly authentication: GEEAuthentication;
-  readonly images = new MockGeeImageService();
+  readonly images: RealGeeImageService | MockGeeImageService;
   readonly indices = new MockGeeIndexService();
   readonly exports = new MockGeeExportService();
 
@@ -26,6 +28,9 @@ export class ServiceAccountGeeProvider implements IGEEProvider {
     private readonly authService: EarthEngineAuthService
   ) {
     this.authentication = new ServiceAccountGeeAuthentication(authService, configRepository);
+    this.images = isGeeIntegrationEnabled()
+      ? new RealGeeImageService()
+      : new MockGeeImageService();
   }
 
   isAvailable(): boolean {

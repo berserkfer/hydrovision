@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { ClipboardList } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { Card } from "@/components/ui/Card";
 import { AuditDetail } from "@/components/audit/AuditDetail";
 import { AuditFilters } from "@/components/audit/AuditFilters";
@@ -85,7 +86,7 @@ export function AuditView({ initialItems, initialSummary }: AuditViewProps) {
         subtitle="Trazabilidad de cambios sobre la información ambiental · HydroVision"
       />
 
-      <div className="space-y-6 p-4 md:p-6">
+      <PageContent className="space-y-6">
         <Card className="p-4 md:p-6">
           <div className="mb-4 flex items-center gap-2">
             <ClipboardList className="h-4 w-4 text-cyan-600" />
@@ -114,7 +115,7 @@ export function AuditView({ initialItems, initialSummary }: AuditViewProps) {
             <AuditDetail detail={detail} loading={detailLoading} />
           </div>
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

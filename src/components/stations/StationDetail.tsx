@@ -89,7 +89,10 @@ export function StationDetail({ detail }: StationDetailProps) {
         conductivity: ultimaMedicion.conductividad,
         dissolvedOxygen: ultimaMedicion.oxigenoDisuelto,
         turbidity: ultimaMedicion.turbidez,
-        totalDissolvedSolids: Number((ultimaMedicion.conductividad * 0.65).toFixed(1)),
+        totalDissolvedSolids:
+          ultimaMedicion.conductividad !== undefined
+            ? Number((ultimaMedicion.conductividad * 0.65).toFixed(1))
+            : undefined,
         flowRate: 3.5,
         sampledAt: `${ultimaMedicion.fecha}T10:00:00-05:00`,
         isSimulated: true as const,
@@ -234,19 +237,28 @@ export function StationDetail({ detail }: StationDetailProps) {
             title="pH"
             unit="—"
             color="#0891b2"
-            data={mediciones.map((m) => ({ fecha: m.fecha, value: m.ph }))}
+            data={mediciones
+              .filter((m): m is typeof m & { ph: number } => m.ph !== undefined)
+              .map((m) => ({ fecha: m.fecha, value: m.ph }))}
           />
           <HistoricalChart
             title="Oxígeno disuelto"
             unit="mg/L"
             color="#059669"
-            data={mediciones.map((m) => ({ fecha: m.fecha, value: m.oxigenoDisuelto }))}
+            data={mediciones
+              .filter(
+                (m): m is typeof m & { oxigenoDisuelto: number } =>
+                  m.oxigenoDisuelto !== undefined
+              )
+              .map((m) => ({ fecha: m.fecha, value: m.oxigenoDisuelto }))}
           />
           <HistoricalChart
             title="Turbidez"
             unit="NTU"
             color="#d97706"
-            data={mediciones.map((m) => ({ fecha: m.fecha, value: m.turbidez }))}
+            data={mediciones
+              .filter((m): m is typeof m & { turbidez: number } => m.turbidez !== undefined)
+              .map((m) => ({ fecha: m.fecha, value: m.turbidez }))}
           />
         </div>
       </div>

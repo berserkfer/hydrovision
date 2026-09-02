@@ -1,5 +1,5 @@
 /**
- * CampaignService — Sprint 3E
+ * CampaignService — Sprint 3E / unificación datos Prompt 1
  */
 
 import { ApiError } from "@/server/api/errors";
@@ -19,8 +19,14 @@ import { campaignRepository } from "@/server/repositories/campaign.repository";
 import type { CampanaSummary, CampaignStats, CreateCampanaInput } from "@/types/campaign";
 
 export class CampaignService {
-  list(query: ListQueryDto): PaginatedResultDto<CampanaSummary> & { stats: CampaignStats } {
-    let items = campaignRepository.findAll();
+  getDataSource(): "database" | "mock" {
+    return campaignRepository.getDataSource();
+  }
+
+  async list(
+    query: ListQueryDto
+  ): Promise<PaginatedResultDto<CampanaSummary> & { stats: CampaignStats }> {
+    let items = await campaignRepository.findAll();
     items = filterBySearch(items, query.search, [
       "nombre",
       "codigo",
@@ -30,16 +36,16 @@ export class CampaignService {
     ]);
     items = sortArray(items, query.sortBy ?? "fechaInicio", query.sortOrder ?? "desc");
     const page = paginateArray(items, query);
-    return { ...page, stats: campaignRepository.getStats() };
+    return { ...page, stats: await campaignRepository.getStats() };
   }
 
-  getById(id: string) {
-    const detail = campaignRepository.findDetailById(id);
+  async getById(id: string) {
+    const detail = await campaignRepository.findDetailById(id);
     if (!detail) throw ApiError.notFound("Campaña", id);
     return detail;
   }
 
-  create(body: unknown) {
+  async create(body: unknown) {
     const parsed = parseBody(createCampaignSchema, body);
     const input: CreateCampanaInput = {
       nombre: parsed.nombre,
@@ -52,23 +58,26 @@ export class CampaignService {
       estacionIds: parsed.estacionIds ?? [],
       observaciones: parsed.observaciones ?? "",
     };
-    const created = campaignRepository.create(input);
+    const created = await campaignRepository.create(input);
     void auditService.recordCreate("Campaign", created.id, created, `Campaña ${created.codigo} creada`);
     return created;
   }
 
-  update(id: string, body: unknown) {
-    const previous = campaignRepository.findDetailById(id);
+  async update(id: string, body: unknown) {
+    const previous = await campaignRepository.findDetailById(id);
     const input = parseBody(updateCampaignSchema, { ...(body as object), id });
-    const updated = campaignRepository.update(id, input as Parameters<typeof campaignRepository.update>[1]);
+    const updated = await campaignRepository.update(
+      id,
+      input as Parameters<typeof campaignRepository.update>[1]
+    );
     if (!updated) throw ApiError.notFound("Campaña", id);
     void auditService.recordUpdate("Campaign", id, previous, updated, `Campaña ${updated.codigo} actualizada`);
     return updated;
   }
 
-  remove(id: string) {
-    const previous = campaignRepository.findDetailById(id);
-    const ok = campaignRepository.softDelete(id);
+  async remove(id: string) {
+    const previous = await campaignRepository.findDetailById(id);
+    const ok = await campaignRepository.softDelete(id);
     if (!ok) throw ApiError.notFound("Campaña", id);
     void auditService.recordDelete(
       "Campaign",

@@ -1,7 +1,9 @@
 /**
- * EarthEngineTokenManager — gestión de tokens OAuth (simulado Sprint 2)
+ * EarthEngineTokenManager — OAuth2 Service Account real cuando hay credenciales.
  */
 
+import { isGeeConfigured } from "@/config/gee.config";
+import { fetchGoogleAccessToken } from "@/server/gee/google-oauth.client";
 import type { ITokenProvider } from "../interfaces";
 import type { GeeAccessToken } from "../types/auth.types";
 
@@ -31,8 +33,24 @@ export class EarthEngineTokenManager implements ITokenProvider {
       throw new Error("No se puede refrescar token: servicio de autenticación no inicializado.");
     }
 
-    const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
+    if (isGeeConfigured()) {
+      try {
+        const response = await fetchGoogleAccessToken();
+        const expiresAt = new Date(Date.now() + response.expires_in * 1000).toISOString();
 
+        this.cachedToken = {
+          value: response.access_token,
+          expiresAt,
+          source: "google_oauth",
+        };
+
+        return this.cachedToken;
+      } catch (error) {
+        console.warn("[EarthEngineTokenManager] OAuth real falló, usando token simulado:", error);
+      }
+    }
+
+    const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
     this.cachedToken = {
       value: `simulated-gee-token-${Date.now()}`,
       expiresAt,
@@ -49,5 +67,9 @@ export class EarthEngineTokenManager implements ITokenProvider {
 
   revokeToken(): void {
     this.cachedToken = null;
+  }
+
+  getCachedTokenSource(): GeeAccessToken["source"] | null {
+    return this.cachedToken?.source ?? null;
   }
 }

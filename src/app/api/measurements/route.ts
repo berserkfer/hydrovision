@@ -13,8 +13,14 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   return runRouteHandler(async () => {
     await requirePermission(request, "MEASUREMENTS_VIEW");
-    const data = measurementService.list(parseListQuery(new URL(request.url).searchParams));
-    return jsonSuccess(data, "mock");
+    const params = new URL(request.url).searchParams;
+    const query = {
+      ...parseListQuery(params),
+      muestreoId: params.get("muestreoId") ?? undefined,
+      parametroCodigo: params.get("parametroCodigo") ?? undefined,
+    };
+    const data = await measurementService.list(query);
+    return jsonSuccess(data, measurementService.getDataSource());
   });
 }
 
@@ -22,6 +28,7 @@ export async function POST(request: Request) {
   return runRouteHandler(async () => {
     await requirePermission(request, "MEASUREMENTS_CREATE");
     const body = await request.json();
-    return jsonSuccess(measurementService.create(body), "mock", 201);
+    const data = await measurementService.create(body);
+    return jsonSuccess(data, measurementService.getDataSource(), 201);
   });
 }

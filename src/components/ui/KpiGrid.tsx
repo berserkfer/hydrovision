@@ -30,8 +30,8 @@ export function KpiGrid<T>({ data, items, columns = "4" }: KpiGridProps<T>) {
               <Icon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900">{getValue(data)}</p>
-              <p className="text-sm text-slate-500">{label}</p>
+              <p className="text-2xl font-bold text-[var(--hv-foreground)]">{getValue(data)}</p>
+              <p className="text-sm text-[var(--hv-foreground-muted)]">{label}</p>
             </div>
           </CardContent>
         </Card>

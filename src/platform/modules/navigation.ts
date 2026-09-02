@@ -105,7 +105,7 @@ export const PLATFORM_NAVIGATION: PlatformNavSection[] = [
           },
           {
             id: "reports",
-            label: "Reportes",
+            label: "Reportes (legacy)",
             href: "/reportes",
             icon: "file",
             status: "active",

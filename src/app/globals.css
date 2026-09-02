@@ -1,7 +1,87 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+/* ─── HydroVision — tokens de tema (claro por defecto en :root) ─── */
+:root {
+  --hv-background: #f1f5f9;
+  --hv-foreground: #0f172a;
+  --hv-foreground-muted: #475569;
+  --hv-foreground-dim: #64748b;
+
+  --hv-surface: #ffffff;
+  --hv-surface-secondary: #f8fafc;
+  --hv-surface-elevated: #ffffff;
+
+  --hv-border: #e2e8f0;
+  --hv-border-subtle: #cbd5e1;
+
+  --hv-primary: #0891b2;
+  --hv-primary-foreground: #ffffff;
+  --hv-primary-muted: #06b6d4;
+
+  --hv-sidebar-bg: #f8fafc;
+  --hv-sidebar-border: #e2e8f0;
+  --hv-sidebar-text: #334155;
+  --hv-sidebar-text-muted: #64748b;
+  --hv-sidebar-active-bg: rgba(8, 145, 178, 0.12);
+  --hv-sidebar-active-text: #0e7490;
+
+  --hv-header-bg: #ffffff;
+  --hv-header-border: #e2e8f0;
+
+  --hv-success: #10b981;
+  --hv-warning: #f59e0b;
+  --hv-danger: #ef4444;
+
+  --hv-disclaimer-bg: #fffbeb;
+  --hv-disclaimer-border: #fde68a;
+  --hv-disclaimer-text: #92400e;
+
+  --hv-map-frame-bg: #e2e8f0;
+  --hv-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --hv-shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+/* ─── Modo oscuro — azul profundo (NO negro puro) ─── */
+.dark {
+  --hv-background: #07111f;
+  --hv-foreground: #eef4fb;
+  --hv-foreground-muted: #94a8be;
+  --hv-foreground-dim: #6b8299;
+
+  --hv-surface: #0f1b2d;
+  --hv-surface-secondary: #14243a;
+  --hv-surface-elevated: #111f33;
+
+  --hv-border: #1e3350;
+  --hv-border-subtle: #243b5c;
+
+  --hv-primary: #22d3ee;
+  --hv-primary-foreground: #07111f;
+  --hv-primary-muted: #06b6d4;
+
+  --hv-sidebar-bg: #060e1a;
+  --hv-sidebar-border: #152238;
+  --hv-sidebar-text: #c8d8ea;
+  --hv-sidebar-text-muted: #7c8fa8;
+  --hv-sidebar-active-bg: rgba(34, 211, 238, 0.12);
+  --hv-sidebar-active-text: #22d3ee;
+
+  --hv-header-bg: #0b1424;
+  --hv-header-border: #152238;
+
+  --hv-disclaimer-bg: rgba(245, 158, 11, 0.1);
+  --hv-disclaimer-border: rgba(245, 158, 11, 0.28);
+  --hv-disclaimer-text: #fcd34d;
+
+  --hv-map-frame-bg: #1a2940;
+  --hv-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --hv-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
 }
 
 html,
@@ -11,17 +91,17 @@ body {
 
 body {
   font-family: var(--font-sans);
+  background-color: var(--hv-background);
+  color: var(--hv-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Leaflet: resetea estilos por defecto de DivIcon en marcadores personalizados */
 .hydrovision-station-marker {
   background: transparent;
   border: none;
 }
 
-/* Animaciones HydroVision — Fase 2.2 */
 @keyframes hv-fade-in {
   from {
     opacity: 0;
@@ -43,10 +123,96 @@ body {
   }
 }
 
+@keyframes hv-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.28);
+  }
+}
+
 .hv-animate-fade-in {
   animation: hv-fade-in 0.35s ease-out both;
 }
 
 .hv-animate-pulse-soft {
   animation: hv-pulse-soft 1.5s ease-in-out infinite;
+}
+
+.hv-glow-cyan {
+  animation: hv-glow-pulse 3s ease-in-out infinite;
+}
+
+.hv-card {
+  border: 1px solid var(--hv-border);
+  background: var(--hv-surface);
+  box-shadow: var(--hv-shadow);
+}
+
+.hv-card-header {
+  border-bottom: 1px solid var(--hv-border);
+  background: var(--hv-surface-secondary);
+}
+
+.hv-map-frame {
+  background: var(--hv-map-frame-bg);
+}
+
+.hv-map-frame .leaflet-container {
+  background: #dbeafe;
+}
+
+.dark .hv-map-frame .leaflet-container {
+  background: #c5d4e8;
+}
+
+.hv-map-frame .leaflet-control-zoom a {
+  background: var(--hv-surface);
+  color: var(--hv-foreground);
+  border-color: var(--hv-border);
+}
+
+.hv-map-frame .leaflet-control-zoom a:hover {
+  background: var(--hv-surface-secondary);
+}
+
+/* Texto utilitario para módulos legacy con clases slate */
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: var(--hv-foreground);
+}
+
+.dark .text-slate-600,
+.dark .text-slate-500 {
+  color: var(--hv-foreground-muted);
+}
+
+.dark .text-slate-400 {
+  color: var(--hv-foreground-dim);
+}
+
+.dark .border-slate-200,
+.dark .border-slate-100 {
+  border-color: var(--hv-border);
+}
+
+.dark .bg-white {
+  background-color: var(--hv-surface);
+}
+
+.dark .bg-slate-50,
+.dark .bg-slate-50\/80,
+.dark .bg-slate-50\/60 {
+  background-color: var(--hv-surface-secondary);
+}
+
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--hv-border);
+}
+
+.dark .hover\:bg-slate-50\/60:hover {
+  background-color: var(--hv-surface-secondary);
 }

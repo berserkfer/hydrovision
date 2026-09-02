@@ -2,7 +2,7 @@
  * ImportRepository — persistencia e historial — Sprint 3F
  */
 
-import { isDatabaseConfigured } from "@/config/database.config";
+import { isMonitoringDatabaseEnabled } from "@/config/monitoring-data-source.config";
 import { prisma } from "@/server/db";
 import { ApiError } from "@/server/api/errors";
 import type { ColumnMapping, ImportHistoryRecord, NormalizedImportRow } from "./import.types";
@@ -14,7 +14,7 @@ const mockHistory: ImportHistoryRecord[] = [];
 const DEFAULT_RESPONSABLE_ID = "usr-investigador";
 
 export async function loadReferenceData(): Promise<ImportReferenceData> {
-  if (isDatabaseConfigured()) {
+  if (isMonitoringDatabaseEnabled()) {
     try {
       const [stations, campaigns, parameters] = await Promise.all([
         prisma.station.findMany({
@@ -71,7 +71,7 @@ export async function loadReferenceData(): Promise<ImportReferenceData> {
 }
 
 export async function resolveDefaultResponsable(): Promise<{ id: string; nombre: string }> {
-  if (isDatabaseConfigured()) {
+  if (isMonitoringDatabaseEnabled()) {
     try {
       const user = await prisma.usuario.findFirst({
         where: { activo: true, estado: "active" },
@@ -91,7 +91,7 @@ export async function resolveDefaultResponsable(): Promise<{ id: string; nombre:
 }
 
 export async function listImportHistory(): Promise<ImportHistoryRecord[]> {
-  if (isDatabaseConfigured()) {
+  if (isMonitoringDatabaseEnabled()) {
     try {
       const rows = await prisma.dataImport.findMany({
         orderBy: { startedAt: "desc" },
@@ -154,7 +154,7 @@ export async function executeImportTransaction(input: ExecuteImportInput) {
   const responsable = await resolveDefaultResponsable();
   const importId = `import-${Date.now()}`;
 
-  if (isDatabaseConfigured()) {
+  if (isMonitoringDatabaseEnabled()) {
     try {
       return await prisma.$transaction(async (tx) => {
         const record = await tx.dataImport.create({

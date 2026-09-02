@@ -9,7 +9,12 @@ interface DataTableProps {
 
 export function DataTable({ children, className }: DataTableProps) {
   return (
-    <div className={cn("overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm", className)}>
+    <div
+      className={cn(
+        "hv-card overflow-hidden rounded-xl",
+        className
+      )}
+    >
       <div className="overflow-x-auto">{children}</div>
     </div>
   );
@@ -17,7 +22,7 @@ export function DataTable({ children, className }: DataTableProps) {
 
 export function DataTableHead({ children }: { children: React.ReactNode }) {
   return (
-    <thead className="border-b border-slate-100 bg-slate-50/80">
+    <thead className="border-b border-[var(--hv-border)] bg-[var(--hv-surface-secondary)]">
       <tr>{children}</tr>
     </thead>
   );
@@ -33,7 +38,7 @@ export function DataTableHeaderCell({
   return (
     <th
       className={cn(
-        "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500",
+        "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[var(--hv-foreground-muted)]",
         className
       )}
     >
@@ -43,11 +48,15 @@ export function DataTableHeaderCell({
 }
 
 export function DataTableBody({ children }: { children: React.ReactNode }) {
-  return <tbody className="divide-y divide-slate-100">{children}</tbody>;
+  return (
+    <tbody className="divide-y divide-[var(--hv-border)]">{children}</tbody>
+  );
 }
 
 export function DataTableRow({ children }: { children: React.ReactNode }) {
-  return <tr className="transition-colors hover:bg-slate-50/60">{children}</tr>;
+  return (
+    <tr className="transition-colors hover:bg-[var(--hv-surface-secondary)]">{children}</tr>
+  );
 }
 
 export function DataTableCell({
@@ -57,5 +66,7 @@ export function DataTableCell({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <td className={cn("px-4 py-3 text-sm text-slate-700", className)}>{children}</td>;
+  return (
+    <td className={cn("px-4 py-3 text-sm text-[var(--hv-foreground)]", className)}>{children}</td>
+  );
 }

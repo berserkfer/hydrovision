@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { SatelliteExplorerFilters } from "@/components/satellite/SatelliteExplorerFilters";
 import { SatelliteImageResultsList } from "@/components/satellite/SatelliteImageResultsList";
 import { SatelliteInfoPanel } from "@/components/satellite/SatelliteInfoPanel";
@@ -34,7 +35,7 @@ export function SatelliteExplorerView() {
         subtitle="Sentinel-2 · Cuenca del Río Reque · Consulta simulada preparada para Google Earth Engine"
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl space-y-6">
           <SatelliteExplorerFilters explorer={explorer} />
 
@@ -67,7 +68,7 @@ export function SatelliteExplorerView() {
             isSearching={explorer.isSearching}
           />
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

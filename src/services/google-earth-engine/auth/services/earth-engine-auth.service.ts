@@ -69,11 +69,15 @@ export class EarthEngineAuthService implements IEarthEngineAuth {
       configurationMessage = "✅ Configuración válida";
     }
 
+    const cachedSource = this.tokenManager.getCachedTokenSource?.();
+    const authMode: EarthEngineAuthStatus["authMode"] =
+      cachedSource === "google_oauth" ? "service_account" : "simulated";
+
     return {
       isInitialized: this.initialized,
       isConfigured,
       configurationMessage,
-      authMode: "simulated",
+      authMode,
       lastCheckedAt: this.lastCheckedAt,
     };
   }
@@ -86,20 +90,20 @@ export class EarthEngineAuthService implements IEarthEngineAuth {
         await this.initialize();
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 400));
-
       const token = await this.tokenManager.getAccessToken();
+    const isRealToken = token.source === "google_oauth";
 
-      this.lastCheckedAt = testedAt;
+    this.lastCheckedAt = testedAt;
 
-      return {
-        success: true,
-        simulated: true,
-        message:
-          "✅ Configuración válida. Conexión simulada exitosa — listo para OAuth2 real (Sprint 3).",
-        testedAt,
-        tokenPreview: `${token.value.slice(0, 24)}…`,
-      };
+    return {
+      success: true,
+      simulated: !isRealToken,
+      message: isRealToken
+        ? "✅ Conexión OAuth2 real con Google Earth Engine establecida."
+        : "✅ Configuración válida. Token simulado — OAuth real no disponible (revise credenciales o red).",
+      testedAt,
+      tokenPreview: `${token.value.slice(0, 24)}…`,
+    };
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Error desconocido al probar conexión GEE.";

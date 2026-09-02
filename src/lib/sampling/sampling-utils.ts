@@ -88,7 +88,7 @@ export function parametrosToECAMeasurement(
     bod5: params.dbo5,
     cod: params.dqo,
     coliforms: params.coliformes,
-    isSimulated: true,
+    isSimulated: params.isSimulated,
   };
 }
 

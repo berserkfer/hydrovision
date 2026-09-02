@@ -2,14 +2,14 @@
  * UserRepository — persistencia de usuarios (User = Usuario) — Sprint 3I
  */
 
-import { isDatabaseConfigured } from "@/config/database.config";
 import { MOCK_LAST_UPDATE } from "@/config";
+import { isMonitoringDatabaseEnabled } from "@/config/monitoring-data-source.config";
 import { getDataStore } from "@/data/store-access";
+import { RolUsuario } from "@/constants/enums";
 import { prisma } from "@/server/db";
 import { ApiError } from "@/server/api/errors";
 import type { CreateUserInput, UpdateUserInput, UserDto, UserStatus } from "@/server/dto/user.dto";
 import { toAppRole, toRolUsuario } from "@/server/authorization/roles";
-import { RolUsuario } from "@/constants/enums";
 
 const mockOverlay = new Map<string, UserDto>();
 const mockDeleted = new Set<string>();
@@ -40,6 +40,28 @@ function fromStoreUser(u: {
   };
 }
 
+function fromDbUser(u: {
+  id: string;
+  nombre: string;
+  email: string;
+  rol: string;
+  institucion: string;
+  activo: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}): UserDto {
+  return {
+    id: u.id,
+    name: u.nombre,
+    email: u.email,
+    role: toAppRole(u.rol as RolUsuario),
+    status: u.activo ? "active" : "inactive",
+    institution: u.institucion,
+    createdAt: u.createdAt.toISOString(),
+    updatedAt: u.updatedAt.toISOString(),
+  };
+}
+
 function allMockUsers(): UserDto[] {
   const base = getDataStore()
     .usuarios.filter((u) => !mockDeleted.has(u.id))
@@ -52,22 +74,54 @@ function allMockUsers(): UserDto[] {
   return Array.from(merged.values());
 }
 
+async function allDatabaseUsers(): Promise<UserDto[]> {
+  const rows = await prisma.usuario.findMany({
+    where: { estado: "active" },
+    orderBy: { nombre: "asc" },
+  });
+  const dbUsers = rows.map(fromDbUser);
+  mockOverlay.forEach((u, id) => {
+    if (!mockDeleted.has(id)) {
+      const index = dbUsers.findIndex((row) => row.id === id);
+      if (index >= 0) dbUsers[index] = u;
+      else dbUsers.push(u);
+    }
+  });
+  return dbUsers.filter((u) => !mockDeleted.has(u.id));
+}
+
 export class UserRepository {
-  findAll(): UserDto[] {
+  async findAll(): Promise<UserDto[]> {
+    if (isMonitoringDatabaseEnabled()) {
+      try {
+        return await allDatabaseUsers();
+      } catch {
+        // fallback mock
+      }
+    }
     return allMockUsers().sort((a, b) => a.name.localeCompare(b.name));
   }
 
-  findById(id: string): UserDto | null {
+  async findById(id: string): Promise<UserDto | null> {
+    if (isMonitoringDatabaseEnabled()) {
+      try {
+        const row = await prisma.usuario.findUnique({ where: { id } });
+        if (row && !mockDeleted.has(id)) return fromDbUser(row);
+      } catch {
+        // fallback
+      }
+    }
     return allMockUsers().find((u) => u.id === id) ?? null;
   }
 
-  findByEmail(email: string): UserDto | null {
+  async findByEmail(email: string): Promise<UserDto | null> {
     const normalized = email.toLowerCase();
-    return allMockUsers().find((u) => u.email.toLowerCase() === normalized) ?? null;
+    const users = isMonitoringDatabaseEnabled() ? await this.findAll() : allMockUsers();
+    return users.find((u) => u.email.toLowerCase() === normalized) ?? null;
   }
 
   async create(input: CreateUserInput): Promise<UserDto> {
-    if (this.findByEmail(input.email)) {
+    if (await this.findByEmail(input.email)) {
       throw ApiError.duplicate("Ya existe un usuario con ese email");
     }
 
@@ -84,7 +138,7 @@ export class UserRepository {
       updatedAt: now,
     };
 
-    if (isDatabaseConfigured()) {
+    if (isMonitoringDatabaseEnabled()) {
       try {
         const dbStatus = mapStatusToDb(user.status);
         await prisma.usuario.create({
@@ -110,10 +164,10 @@ export class UserRepository {
   }
 
   async update(id: string, input: UpdateUserInput): Promise<UserDto> {
-    const current = this.findById(id);
+    const current = await this.findById(id);
     if (!current) throw ApiError.notFound("Usuario", id);
 
-    if (input.email && input.email !== current.email && this.findByEmail(input.email)) {
+    if (input.email && input.email !== current.email && (await this.findByEmail(input.email))) {
       throw ApiError.duplicate("Ya existe un usuario con ese email");
     }
 
@@ -127,7 +181,7 @@ export class UserRepository {
       updatedAt: new Date().toISOString(),
     };
 
-    if (isDatabaseConfigured()) {
+    if (isMonitoringDatabaseEnabled()) {
       try {
         const dbStatus = mapStatusToDb(updated.status);
         await prisma.usuario.update({
@@ -152,13 +206,13 @@ export class UserRepository {
   }
 
   async softDelete(id: string): Promise<UserDto> {
-    const current = this.findById(id);
+    const current = await this.findById(id);
     if (!current) throw ApiError.notFound("Usuario", id);
 
     const updated = await this.update(id, { status: "inactive" });
     mockDeleted.add(id);
 
-    if (isDatabaseConfigured()) {
+    if (isMonitoringDatabaseEnabled()) {
       try {
         await prisma.usuario.update({
           where: { id },

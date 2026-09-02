@@ -22,12 +22,12 @@ export interface StationEntity {
 
 /** Medición extendida con parámetros adicionales simulados */
 export interface ExtendedMeasurement {
-  ph: number;
-  temperature: number;
-  conductivity: number;
-  dissolvedOxygen: number;
-  turbidity: number;
-  totalDissolvedSolids: number;
+  ph?: number;
+  temperature?: number;
+  conductivity?: number;
+  dissolvedOxygen?: number;
+  turbidity?: number;
+  totalDissolvedSolids?: number;
   flowRate: number;
   sampledAt: string;
   isSimulated: true;

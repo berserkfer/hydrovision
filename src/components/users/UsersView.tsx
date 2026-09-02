@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Shield, UserPlus, Users } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { Card } from "@/components/ui/Card";
 import { PermissionMatrix } from "@/components/users/PermissionMatrix";
 import { UserForm, userToFormValues, type UserFormValues } from "@/components/users/UserForm";
@@ -83,7 +84,7 @@ export function UsersView({ initialUsers, permissionMatrix, devUserId }: UsersVi
         subtitle="Gestión de cuentas ficticias de desarrollo — HydroVision Sprint 3I"
       />
 
-      <div className="space-y-6 p-4 md:p-6">
+      <PageContent className="space-y-6">
         <Card className="border-amber-200 bg-amber-50/60 p-4">
           <div className="flex flex-wrap items-center gap-3 text-sm text-amber-900">
             <Shield className="h-4 w-4 shrink-0" />
@@ -157,7 +158,7 @@ export function UsersView({ initialUsers, permissionMatrix, devUserId }: UsersVi
         </Card>
 
         <PermissionMatrix matrix={permissionMatrix} />
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

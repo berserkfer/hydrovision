@@ -52,17 +52,17 @@ function getBaseValue(stationId: string, parameter: TemporalParameterKey): numbe
 
   switch (parameter) {
     case "ph":
-      return params.ph;
+      return params.ph ?? 0;
     case "temperatura":
-      return params.temperatura;
+      return params.temperatura ?? 0;
     case "conductividad":
-      return params.conductividad;
+      return params.conductividad ?? 0;
     case "oxigenoDisuelto":
-      return params.oxigenoDisuelto;
+      return params.oxigenoDisuelto ?? 0;
     case "turbidez":
-      return params.turbidez;
+      return params.turbidez ?? 0;
     case "solidosDisueltos":
-      return params.solidosDisueltosTotales;
+      return params.solidosDisueltosTotales ?? 0;
     case "caudal":
       return params.caudal ?? Number((2.5 + stationIndex * 1.8).toFixed(2));
     default:

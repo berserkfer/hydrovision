@@ -12,6 +12,7 @@ import {
 import { ComplianceBadge } from "@/components/ui/Badge";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { SimulatedDataIndicator } from "@/components/ui/SimulatedDataIndicator";
 import { CLIMA_LABELS, COLOR_APARENTE_LABELS } from "@/constants/sampling";
@@ -58,7 +59,7 @@ export function SampleDetailView({ sample }: SampleDetailViewProps) {
         subtitle={`${sample.estacionCodigo} · ${sample.campanaNombre}`}
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl space-y-6">
           <Link
             href="/muestreos"
@@ -177,7 +178,7 @@ export function SampleDetailView({ sample }: SampleDetailViewProps) {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

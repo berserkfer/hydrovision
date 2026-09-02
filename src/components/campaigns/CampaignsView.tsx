@@ -9,6 +9,7 @@ import { CampaignKpiCards } from "@/components/campaigns/CampaignKpiCards";
 import { CampaignTable } from "@/components/campaigns/CampaignTable";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { Pagination } from "@/components/ui/Pagination";
 import { Card } from "@/components/ui/Card";
 import { SimulatedDataIndicator } from "@/components/ui/SimulatedDataIndicator";
@@ -47,7 +48,7 @@ export function CampaignsView({ initialCampaigns, initialStats }: CampaignsViewP
         subtitle="Gestión profesional de campañas ambientales · HydroVision"
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-7xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 hv-animate-fade-in">
             <p className="text-sm text-slate-600">
@@ -126,7 +127,7 @@ export function CampaignsView({ initialCampaigns, initialStats }: CampaignsViewP
             />
           </Card>
         </div>
-      </div>
+      </PageContent>
 
       <CampaignForm
         open={formOpen}

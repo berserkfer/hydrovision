@@ -1,20 +1,31 @@
+"use client";
+
+import { createContext } from "react";
 import { cn } from "@/lib/utils";
+
+type CardVariant = "default" | "elevated";
+
+const CardVariantContext = createContext<CardVariant>("default");
 
 interface CardProps {
   children: React.ReactNode;
   className?: string;
+  variant?: CardVariant;
 }
 
-export function Card({ children, className }: CardProps) {
+export function Card({ children, className, variant = "default" }: CardProps) {
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-slate-200/80 bg-white shadow-sm shadow-slate-900/5",
-        className
-      )}
-    >
-      {children}
-    </div>
+    <CardVariantContext.Provider value={variant}>
+      <div
+        className={cn(
+          "hv-card rounded-xl",
+          variant === "elevated" && "bg-[var(--hv-surface-elevated)]",
+          className
+        )}
+      >
+        {children}
+      </div>
+    </CardVariantContext.Provider>
   );
 }
 
@@ -25,9 +36,7 @@ export function CardHeader({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <div className={cn("border-b border-slate-100 px-5 py-4", className)}>{children}</div>
-  );
+  return <div className={cn("hv-card-header px-5 py-4", className)}>{children}</div>;
 }
 
 export function CardTitle({
@@ -37,7 +46,11 @@ export function CardTitle({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <h3 className={cn("text-sm font-semibold text-slate-900", className)}>{children}</h3>;
+  return (
+    <h3 className={cn("text-sm font-semibold text-[var(--hv-foreground)]", className)}>
+      {children}
+    </h3>
+  );
 }
 
 export function CardDescription({
@@ -47,7 +60,9 @@ export function CardDescription({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <p className={cn("mt-1 text-xs text-slate-500", className)}>{children}</p>;
+  return (
+    <p className={cn("mt-1 text-xs text-[var(--hv-foreground-muted)]", className)}>{children}</p>
+  );
 }
 
 export function CardContent({

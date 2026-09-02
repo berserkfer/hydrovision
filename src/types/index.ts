@@ -23,15 +23,15 @@ export interface FieldMeasurement {
   id: string;
   stationId: string;
   sampledAt: string;
-  ph: number;
-  turbidity: number;
-  conductivity: number;
-  dissolvedOxygen: number;
-  temperature: number;
-  bod5: number;
-  cod: number;
+  ph?: number;
+  turbidity?: number;
+  conductivity?: number;
+  dissolvedOxygen?: number;
+  temperature?: number;
+  bod5?: number;
+  cod?: number;
   coliforms?: number;
-  isSimulated: true;
+  isSimulated: boolean;
 }
 
 export interface SatelliteIndices {
@@ -43,7 +43,7 @@ export interface SatelliteIndices {
   mndwi: number;
   ndti: number;
   cloudCover: number;
-  isSimulated: true;
+  isSimulated: boolean;
 }
 
 export interface ComplianceResult {
@@ -65,7 +65,7 @@ export interface DashboardStats {
   alertCount: number;
   nonCompliantCount: number;
   lastUpdate: string;
-  isSimulated: true;
+  isSimulated: boolean;
 }
 
 export interface TimeSeriesPoint {
@@ -103,7 +103,7 @@ export interface AIRiskAssessment {
   riskScore: number;
   riskCategory: "low" | "medium" | "high";
   modelVersion: string;
-  isSimulated: true;
+  isSimulated: boolean;
 }
 
 export * from "./campaign";

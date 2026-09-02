@@ -21,13 +21,13 @@ export interface MuestraSummary {
 
 /** Parámetros fisicoquímicos para UI */
 export interface MuestraParametros {
-  ph: number;
-  temperatura: number;
-  conductividad: number;
-  oxigenoDisuelto: number;
-  turbidez: number;
-  solidosDisueltosTotales: number;
-  caudal: number;
+  ph?: number;
+  temperatura?: number;
+  conductividad?: number;
+  oxigenoDisuelto?: number;
+  turbidez?: number;
+  solidosDisueltosTotales?: number;
+  caudal?: number;
   colorAparente: string;
 }
 

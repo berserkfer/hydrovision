@@ -6,6 +6,7 @@
 import { PrismaClient } from "@prisma/client";
 import { CATALOG_IDS, seedCatalogs } from "./seed/catalogs";
 import { seedAuthorization } from "./seed/authorization";
+import { seedMonitoringDemo } from "./seed/monitoring";
 
 const prisma = new PrismaClient();
 
@@ -296,11 +297,13 @@ async function main(): Promise<void> {
   await seedWatersheds();
   await seedRivers();
   await seedStations();
+  await seedMonitoringDemo(prisma);
 
   console.log(`✅ ${CUENCAS.length} cuencas`);
   console.log(`✅ ${RIOS.length} ríos`);
   console.log(`✅ ${STATIONS.length} estaciones`);
   console.log("✅ roles, permisos y usuarios ficticios (Sprint 3I)");
+  console.log("✅ campañas, muestreos, parámetros y mediciones demostrativas (Prompt 1)");
   console.log("🎉 Seed completado.");
 }
 

@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/Card";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { PageContent } from "@/components/layout/PageContent";
 import { SimulatedDataIndicator } from "@/components/ui/SimulatedDataIndicator";
 import { GeoFilters } from "@/components/geospatial/GeoFilters";
 import { GeoLegend } from "@/components/geospatial/GeoLegend";
@@ -48,7 +49,7 @@ export function GeospatialCenterView() {
         subtitle="Vista unificada de información ambiental · HydroVision"
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <PageContent className="">
         <div className="mx-auto max-w-[1600px] space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4 hv-animate-fade-in">
             <p className="text-sm text-slate-600">
@@ -106,7 +107,7 @@ export function GeospatialCenterView() {
             </div>
           </div>
         </div>
-      </div>
+      </PageContent>
     </MainLayout>
   );
 }

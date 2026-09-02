@@ -132,7 +132,7 @@ function buildWaterQualitySection(filters: ReportFilters, responsable: string): 
                 id: "ph",
                 cells: [
                   "pH",
-                  String((params.reduce((s, p) => s + p.ph, 0) / params.length).toFixed(2)),
+                  String((params.reduce((s, p) => s + (p.ph ?? 0), 0) / params.length).toFixed(2)),
                   "—",
                   "Cumple",
                 ],
@@ -141,7 +141,7 @@ function buildWaterQualitySection(filters: ReportFilters, responsable: string): 
                 id: "od",
                 cells: [
                   "Oxígeno disuelto",
-                  String((params.reduce((s, p) => s + p.oxigenoDisuelto, 0) / params.length).toFixed(2)),
+                  String((params.reduce((s, p) => s + (p.oxigenoDisuelto ?? 0), 0) / params.length).toFixed(2)),
                   "mg/L",
                   "Cumple",
                 ],
@@ -150,7 +150,7 @@ function buildWaterQualitySection(filters: ReportFilters, responsable: string): 
                 id: "turb",
                 cells: [
                   "Turbidez",
-                  String((params.reduce((s, p) => s + p.turbidez, 0) / params.length).toFixed(1)),
+                  String((params.reduce((s, p) => s + (p.turbidez ?? 0), 0) / params.length).toFixed(1)),
                   "NTU",
                   "Alerta",
                 ],

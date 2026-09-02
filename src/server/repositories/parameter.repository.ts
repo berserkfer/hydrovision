@@ -1,25 +1,22 @@
 /**
- * Parameter catalog repository — Sprint 3E
+ * Parameter catalog repository — mock overlay + Prisma catálogo persistente
  */
 
 import { MOCK_LAST_UPDATE } from "@/config";
+import { getMonitoringDataSource } from "@/config/monitoring-data-source.config";
 import { WATER_PARAMETER_CATALOG } from "@/lib/parameters/catalog";
 import type { WaterParameterRecord } from "@/types/parameter-management";
 import { filterActive, markSoftDeleted } from "@/server/lib/soft-delete";
 import { ApiError } from "@/server/api/errors";
 import type { CreateParameterInput } from "@/server/validators/schemas/crud.schemas";
+import {
+  parameterPrismaRepository,
+} from "./prisma/parameter.prisma-repository";
+import type { ParameterCatalogRow } from "./prisma/monitoring.mappers";
 
 const ENTITY = "parameter";
 
-type CatalogRow = {
-  id: string;
-  codigo: string;
-  nombre: string;
-  unidad: string;
-  descripcion?: string;
-  limiteEcaMin?: number;
-  limiteEcaMax?: number;
-};
+type CatalogRow = ParameterCatalogRow;
 
 const overlay = new Map<string, CatalogRow>();
 
@@ -35,7 +32,7 @@ function seedFromCatalog(): CatalogRow[] {
   }));
 }
 
-function allRows(): CatalogRow[] {
+function allMockRows(): CatalogRow[] {
   const base = seedFromCatalog().map((row) => overlay.get(row.id) ?? row);
   const extras = Array.from(overlay.values()).filter(
     (row) => !base.some((b) => b.id === row.id)
@@ -44,20 +41,36 @@ function allRows(): CatalogRow[] {
 }
 
 export class ParameterRepository {
-  findAll(): CatalogRow[] {
-    return allRows();
+  getDataSource(): "database" | "mock" {
+    return getMonitoringDataSource();
   }
 
-  findById(id: string): CatalogRow | null {
-    return allRows().find((p) => p.id === id) ?? null;
+  async findAll(): Promise<CatalogRow[]> {
+    if (this.getDataSource() === "database") {
+      return parameterPrismaRepository.findAll();
+    }
+    return allMockRows();
   }
 
-  findByCodigo(codigo: string): CatalogRow | null {
-    return allRows().find((p) => p.codigo === codigo) ?? null;
+  async findById(id: string): Promise<CatalogRow | null> {
+    if (this.getDataSource() === "database") {
+      return parameterPrismaRepository.findById(id);
+    }
+    return allMockRows().find((p) => p.id === id) ?? null;
   }
 
-  create(input: CreateParameterInput): CatalogRow {
-    if (allRows().some((p) => p.codigo === input.codigo)) {
+  async findByCodigo(codigo: string): Promise<CatalogRow | null> {
+    if (this.getDataSource() === "database") {
+      return parameterPrismaRepository.findByCodigo(codigo);
+    }
+    return allMockRows().find((p) => p.codigo === codigo) ?? null;
+  }
+
+  async create(input: CreateParameterInput): Promise<CatalogRow> {
+    if (this.getDataSource() === "database") {
+      return parameterPrismaRepository.create(input);
+    }
+    if ((await this.findAll()).some((p) => p.codigo === input.codigo)) {
       throw ApiError.duplicate("Ya existe un parámetro con ese código");
     }
     const row: CatalogRow = {
@@ -68,21 +81,30 @@ export class ParameterRepository {
     return row;
   }
 
-  update(id: string, input: Partial<CreateParameterInput>): CatalogRow {
-    const current = this.findById(id);
+  async update(id: string, input: Partial<CreateParameterInput>): Promise<CatalogRow> {
+    if (this.getDataSource() === "database") {
+      return parameterPrismaRepository.update(id, input);
+    }
+    const current = await this.findById(id);
     if (!current) throw ApiError.notFound("Parámetro", id);
     const next = { ...current, ...input, id };
     overlay.set(id, next);
     return next;
   }
 
-  softDelete(id: string): boolean {
-    if (!this.findById(id)) return false;
+  async softDelete(id: string): Promise<boolean> {
+    if (this.getDataSource() === "database") {
+      return parameterPrismaRepository.softDelete(id);
+    }
+    if (!(await this.findById(id))) return false;
     markSoftDeleted(ENTITY, id);
     return true;
   }
 
   toWaterParameterRecord(row: CatalogRow): WaterParameterRecord {
+    if (this.getDataSource() === "database") {
+      return parameterPrismaRepository.toWaterParameterRecord(row);
+    }
     return {
       id: row.id,
       parameterCode: row.codigo as WaterParameterRecord["parameterCode"],

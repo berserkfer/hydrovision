@@ -45,7 +45,7 @@ export function MapControlPanel({
             <p className="text-sm font-semibold text-white">Panel de control</p>
             <p className="text-[11px] text-slate-400">Filtros geográficos del monitoreo</p>
           </div>
-          <SimulatedDataIndicator variant="dark" />
+            <SimulatedDataIndicator />
         </div>
         <MapFilterActions onReset={onReset} onRecenter={onRecenter} />
       </div>

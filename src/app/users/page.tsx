@@ -5,7 +5,7 @@ import { userService } from "@/server/services/user.service";
 export const dynamic = "force-dynamic";
 
 export default async function UsersPage() {
-  const { users } = userService.list();
+  const { users } = await userService.list();
   const matrix = permissionService.matrix();
 
   return (

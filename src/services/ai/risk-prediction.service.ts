@@ -22,8 +22,8 @@ export class MockRiskPredictionService implements IRiskPredictionService {
     indices: SatelliteIndices
   ): Promise<AIRiskAssessment> {
     await new Promise((r) => setTimeout(r, 50));
-    const turbidityFactor = Math.min(measurement.turbidity / 50, 1);
-    const doFactor = Math.max(0, (4 - measurement.dissolvedOxygen) / 4);
+    const turbidityFactor = Math.min((measurement.turbidity ?? 0) / 50, 1);
+    const doFactor = Math.max(0, (4 - (measurement.dissolvedOxygen ?? 4)) / 4);
     const ndtiFactor = Math.max(0, indices.ndti);
     const riskScore = Number(
       Math.min(1, turbidityFactor * 0.4 + doFactor * 0.35 + ndtiFactor * 0.25).toFixed(3)

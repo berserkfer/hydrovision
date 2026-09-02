@@ -62,19 +62,12 @@ function NavLinkItem({ item, pathname }: { item: PlatformNavItem; pathname: stri
     return (
       <div
         key={item.id}
-        className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-slate-600"
+        className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-[var(--hv-sidebar-text-muted)]"
         title={item.phase ? `Disponible en Fase ${item.phase}` : badge}
       >
         <Icon className="h-4 w-4 shrink-0 opacity-50" />
         <span className="text-sm opacity-50">{item.label}</span>
-        <span
-          className={cn(
-            "ml-auto rounded px-1.5 py-0.5 text-[10px]",
-            item.status === "in_development"
-              ? "bg-amber-500/15 text-amber-500"
-              : "bg-slate-800 text-slate-500"
-          )}
-        >
+        <span className="ml-auto rounded bg-[var(--hv-surface-secondary)] px-1.5 py-0.5 text-[10px] text-[var(--hv-sidebar-text-muted)]">
           {badge}
         </span>
       </div>
@@ -89,8 +82,8 @@ function NavLinkItem({ item, pathname }: { item: PlatformNavItem; pathname: stri
       className={cn(
         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
         active
-          ? "bg-cyan-500/15 text-cyan-300"
-          : "text-slate-300 hover:bg-slate-800 hover:text-white"
+          ? "bg-[var(--hv-sidebar-active-bg)] text-[var(--hv-sidebar-active-text)] ring-1 ring-[var(--hv-primary)]/20"
+          : "text-[var(--hv-sidebar-text)] hover:bg-[var(--hv-surface-secondary)] hover:text-[var(--hv-foreground)]"
       )}
     >
       <Icon className="h-4 w-4 shrink-0" />
@@ -103,14 +96,14 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-slate-200 bg-slate-950 text-slate-100">
-      <div className="flex items-center gap-3 border-b border-slate-800 px-5 py-5">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-400">
+    <aside className="flex h-full w-64 flex-col border-r border-[var(--hv-sidebar-border)] bg-[var(--hv-sidebar-bg)]">
+      <div className="flex items-center gap-3 border-b border-[var(--hv-sidebar-border)] px-5 py-5">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--hv-sidebar-active-bg)] text-[var(--hv-primary)]">
           <Droplets className="h-5 w-5" />
         </div>
         <div>
-          <p className="text-sm font-bold tracking-wide text-white">HydroVision</p>
-          <p className="text-[11px] text-slate-400">Plataforma Modular · Perú</p>
+          <p className="text-sm font-bold tracking-wide text-[var(--hv-foreground)]">HydroVision</p>
+          <p className="text-[11px] text-[var(--hv-sidebar-text-muted)]">Plataforma Modular · Perú</p>
         </div>
       </div>
 
@@ -126,8 +119,8 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   active
-                    ? "bg-cyan-500/15 text-cyan-300"
-                    : "text-slate-200 hover:bg-slate-800 hover:text-white"
+                    ? "bg-[var(--hv-sidebar-active-bg)] text-[var(--hv-sidebar-active-text)]"
+                    : "text-[var(--hv-sidebar-text)] hover:bg-[var(--hv-surface-secondary)]"
                 )}
               >
                 <span aria-hidden>{section.emoji}</span>
@@ -138,7 +131,7 @@ export function Sidebar() {
 
           return (
             <div key={section.id} className="space-y-1">
-              <p className="flex items-center gap-2 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <p className="flex items-center gap-2 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--hv-sidebar-text-muted)]">
                 <span aria-hidden>{section.emoji}</span>
                 {section.label}
               </p>
@@ -152,11 +145,20 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t border-slate-800 p-4">
-        <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+      <div className="space-y-3 border-t border-[var(--hv-sidebar-border)] p-4">
+        <p className="text-[10px] font-medium uppercase tracking-wider text-[var(--hv-sidebar-text-muted)]">
           Proyecto de tesis
         </p>
-        <p className="mt-1 text-xs text-slate-400">Ing. Ambiental · Sprint 2J · MVP</p>
+        <p className="text-xs text-[var(--hv-sidebar-text-muted)]">Ing. Ambiental · MVP</p>
+        <div className="flex items-center gap-3 rounded-xl border border-[var(--hv-border)] bg-[var(--hv-surface-secondary)] px-3 py-2.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-teal-600 text-xs font-bold text-white">
+            FC
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-[var(--hv-foreground)]">Fernando Chumpen</p>
+            <p className="text-[11px] text-[var(--hv-sidebar-text-muted)]">Investigador</p>
+          </div>
+        </div>
       </div>
     </aside>
   );
