@@ -46,6 +46,12 @@ export function useMapFilters(): UseMapFiltersResult {
   const [filters, setFilters] = useState<MapFilterState>(DEFAULT_MAP_FILTERS);
   const [recenterToken, setRecenterToken] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  // Estación "elegida" para ver su detalle (click en marcador o chip) — INDEPENDIENTE de
+  // filters.stationId. Antes ambas cosas compartían el mismo campo: elegir una estación
+  // reescribía el filtro y hacía que getFilteredSummaries() devolviera solo esa estación,
+  // borrando el resto de marcadores/chips del mapa. filters.stationId sigue siendo el filtro
+  // explícito de /mapa (selector "Estación" en MapControlPanel) — eso no cambia aquí.
+  const [pickedStationId, setPickedStationId] = useState<string | null>(null);
 
   const riverContext = useMemo(() => {
     return findRiverContext(filters) ?? findRiverContext(DEFAULT_MAP_FILTERS)!;
@@ -70,9 +76,11 @@ export function useMapFilters(): UseMapFiltersResult {
     [statsSource]
   );
 
+  // Si hay una estación "elegida" (click en marcador/chip), el mapa se recentra en ella; si no,
+  // sigue el filtro explícito de /mapa (filters.stationId) como antes.
   const mapView = useMemo(
-    () => resolveMapView(riverContext.river, filters.stationId),
-    [riverContext.river, filters.stationId]
+    () => resolveMapView(riverContext.river, pickedStationId ?? filters.stationId),
+    [riverContext.river, pickedStationId, filters.stationId]
   );
 
   const dashboardTitle = useMemo(
@@ -80,8 +88,7 @@ export function useMapFilters(): UseMapFiltersResult {
     [riverContext.river.name]
   );
 
-  const selectedStationId =
-    filters.stationId === ALL_STATIONS_VALUE ? null : filters.stationId;
+  const selectedStationId = pickedStationId;
 
   const stationDetail = useMemo(() => {
     if (!selectedStationId) return null;
@@ -102,18 +109,17 @@ export function useMapFilters(): UseMapFiltersResult {
     [triggerTransition]
   );
 
-  const selectStation = useCallback(
-    (stationId: string) => {
-      setFilters((current) => cascadeFilterChange(current, "stationId", stationId));
-      triggerTransition();
-    },
-    [triggerTransition]
-  );
+  const selectStation = useCallback((stationId: string) => {
+    // Solo marca cuál está "elegida" (detalle + resaltado + recentrado) — nunca toca
+    // filters.stationId, así summaries/markers/chips del mapa siguen mostrando TODAS las
+    // estaciones del río, sin importar cuál esté seleccionada.
+    setPickedStationId(stationId);
+    setRecenterToken((t) => t + 1);
+  }, []);
 
   const clearStationSelection = useCallback(() => {
-    setFilters((current) => cascadeFilterChange(current, "stationId", ALL_STATIONS_VALUE));
-    triggerTransition();
-  }, [triggerTransition]);
+    setPickedStationId(null);
+  }, []);
 
   const resetFilters = useCallback(() => {
     setFilters(DEFAULT_MAP_FILTERS);

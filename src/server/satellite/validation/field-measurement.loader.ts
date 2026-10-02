@@ -63,10 +63,18 @@ function extractParametersFromDomain(
   return rows;
 }
 
+/**
+ * Modo mock — pero "mock" ya no implica automáticamente "simulado" por registro.
+ * La mayoría de los ríos de demostración SÍ son sintéticos (isSimulated: true en su
+ * `muestra`/`parametros`), pero el store puede contener también mediciones reales
+ * publicadas (ej. Dren 4000 2014, ver src/data/mock/store.ts) marcadas isSimulated: false
+ * explícitamente. Cada registro decide su propio flag; el agregado de la consulta es
+ * "simulado" solo si TODOS los parámetros devueltos lo son.
+ */
 function loadFromMockStore(query: FieldSampleQuery): {
   samples: MatchableFieldSample[];
   parameters: FieldParameterValue[];
-  isSimulated: true;
+  isSimulated: boolean;
 } {
   const store = getDataStore();
   const station = store.estaciones.find((e) => e.id === query.stationId);
@@ -91,19 +99,22 @@ function loadFromMockStore(query: FieldSampleQuery): {
   for (const muestra of muestras) {
     const parametros = store.parametros.find((p) => p.muestraId === muestra.id);
     if (!parametros) continue;
+    const recordIsSimulated = (parametros as { isSimulated?: boolean }).isSimulated ?? true;
     parameters.push(
       ...extractParametersFromDomain(
         muestra.id,
         muestra.estacionId,
         muestra.fechaMuestreo,
         parametros as unknown as Record<string, number | undefined>,
-        true,
+        recordIsSimulated,
         coords
       )
     );
   }
 
-  return { samples, parameters, isSimulated: true };
+  const isSimulated = parameters.length === 0 || parameters.every((p) => p.isSimulated);
+
+  return { samples, parameters, isSimulated };
 }
 
 async function loadFromDatabase(query: FieldSampleQuery): Promise<{
@@ -166,6 +177,8 @@ async function loadFromDatabase(query: FieldSampleQuery): Promise<{
             dbo5: parametros.dbo5,
             dqo: parametros.dqo,
             coliformes: parametros.coliformes,
+            // TODO: coliformesTermotolerantes/solidosSuspendidosTotales aún no están mapeados
+            // desde Prisma (aggregateMedicionesToParametros) — pendiente cuando se ingiera vía DB real.
             nitratos: parametros.nitratos,
             fosfatos: parametros.fosfatos,
             solidosDisueltosTotales: parametros.solidosDisueltosTotales,

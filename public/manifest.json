@@ -1,0 +1,26 @@
+{
+  "name": "HydroVision — Predicción Satelital Dren 4000",
+  "short_name": "HydroVision",
+  "description": "Monitoreo y predicción de calidad de agua del Dren 4000 — incluye el módulo de foto, utilizable sin conexión.",
+  "start_url": "/foto",
+  "id": "/foto",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b1424",
+  "theme_color": "#0891b2",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

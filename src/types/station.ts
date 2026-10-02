@@ -17,10 +17,11 @@ export interface StationEntity {
   operationalStatus: OperationalStatus;
   lastUpdatedAt: string;
   description: string;
-  isSimulated: true;
+  /** true = dato simulado/demo; false = medición real publicada (ver dren-4000-real-data.ts) */
+  isSimulated: boolean;
 }
 
-/** Medición extendida con parámetros adicionales simulados */
+/** Medición extendida — parámetros reales cuando existen, simulados solo para ríos de demo */
 export interface ExtendedMeasurement {
   ph?: number;
   temperature?: number;
@@ -28,12 +29,20 @@ export interface ExtendedMeasurement {
   dissolvedOxygen?: number;
   turbidity?: number;
   totalDissolvedSolids?: number;
-  flowRate: number;
+  totalSuspendedSolids?: number;
+  bod5?: number;
+  cod?: number;
+  coliforms?: number;
+  thermotolerantColiforms?: number;
+  nitrates?: number;
+  phosphates?: number;
+  /** No disponible para estaciones sin medición real de caudal (ej. Dren 4000) */
+  flowRate?: number;
   sampledAt: string;
-  isSimulated: true;
+  isSimulated: boolean;
 }
 
-/** Entrada del historial reciente simulado */
+/** Entrada del historial de la estación — real cuando isSimulated=false */
 export interface StationHistoryEntry {
   date: string;
   status: ComplianceStatus;
@@ -48,7 +57,18 @@ export interface ParameterDisplayConfig {
   value: number;
   min: number;
   max: number;
-  icon: "ph" | "temperature" | "conductivity" | "oxygen" | "turbidity" | "tds" | "flow";
+  icon:
+    | "ph"
+    | "temperature"
+    | "conductivity"
+    | "oxygen"
+    | "turbidity"
+    | "tds"
+    | "flow"
+    | "bod5"
+    | "coliforms"
+    | "nutrients"
+    | "suspendedSolids";
   trend: number[];
 }
 
@@ -60,6 +80,8 @@ export interface StationDetail {
   parameters: ParameterDisplayConfig[];
   history: StationHistoryEntry[];
   latestIndices?: StationSummary["latestIndices"];
+  /** id de dominio (ej. "dren-4000-p5") — presente para consultar predicción satelital real */
+  domainId?: string;
 }
 
 export const OPERATIONAL_STATUS_LABELS: Record<OperationalStatus, string> = {

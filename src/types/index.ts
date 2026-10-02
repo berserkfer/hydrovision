@@ -31,6 +31,11 @@ export interface FieldMeasurement {
   bod5?: number;
   cod?: number;
   coliforms?: number;
+  thermotolerantColiforms?: number;
+  nitrates?: number;
+  phosphates?: number;
+  totalDissolvedSolids?: number;
+  totalSuspendedSolids?: number;
   isSimulated: boolean;
 }
 

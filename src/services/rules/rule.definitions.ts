@@ -219,7 +219,7 @@ export const DEFAULT_ENVIRONMENTAL_RULES: Rule[] = [
     alerta: "Inspeccionar posibles descargas de sólidos en suspensión.",
     critico: "Realizar nueva campaña — incremento crítico de turbidez.",
   }),
-  ...maxRules("solidosDisueltos", "Sólidos Totales Disueltos", "mg/L", 500, 800, 1200, {
+  ...maxRules("solidosDisueltos", "Sólidos Disueltos Totales (STD)", "mg/L", 500, 800, 1200, {
     atencion: "Continuar monitoreo de sólidos disueltos.",
     alerta: "Incrementar frecuencia de monitoreo — posible incremento de sales.",
     critico: "Inspeccionar posibles descargas minero-industriales.",

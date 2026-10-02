@@ -265,11 +265,14 @@ export function separateReflectanceAndScl(raw: Record<string, number>): {
 }
 
 /**
- * Valida reflectancias GEE sin inventar conversiones.
+ * Valida reflectancias de superficie Sentinel-2 sin inventar conversiones.
  * Valores fuera de [0, 1+tolerance] → out_of_range (no se calculan índices).
+ * `mapBands` es sustituible para reutilizar esta validación desde otros proveedores
+ * (ej. CopernicusAdapter, cuyas claves de banda ya vienen en formato HydroVision) sin duplicar la lógica.
  */
 export function processGeeSurfaceReflectances(
-  raw: Record<string, number>
+  raw: Record<string, number>,
+  mapBands: (raw: Record<string, number>) => Sentinel2ReflectanceMap = mapGeeReflectances
 ): ProcessedGeeReflectance {
   const scaleEvidence = interpretReflectanceScale(raw);
 
@@ -321,7 +324,7 @@ export function processGeeSurfaceReflectances(
   }
 
   return {
-    reflectances: mapGeeReflectances(raw),
+    reflectances: mapBands(raw),
     semanticStatus: "valid",
     rawBandValues: raw,
     scaleEvidence,

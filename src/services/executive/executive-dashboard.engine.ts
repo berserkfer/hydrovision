@@ -35,6 +35,11 @@ export class ExecutiveDashboardEngine {
   build(input: ExecutiveDashboardInput): ExecutiveDashboardSnapshot {
     const { stats, summaries, riverContext, riskAssessment } = input;
     const qualityStatus = resolveQualityStatus(stats);
+    // Mismo criterio que DashboardOverviewMap: el río mostrado es "simulado" solo si NINGUNA
+    // de sus estaciones tiene datos reales. Antes este header mostraba "Datos simulados" fijo
+    // sin importar el río — engañoso para Dren 4000, que sí tiene campañas reales (2014).
+    const isSimulated =
+      summaries.length === 0 || summaries.every((s) => s.latestMeasurement.isSimulated);
 
     const header: ExecutiveHeaderData = {
       projectName: "HydroVision",
@@ -50,6 +55,7 @@ export class ExecutiveDashboardEngine {
       riskEmoji: riskAssessment
         ? ENVIRONMENTAL_RISK_EMOJI[riskAssessment.level]
         : "⚪",
+      isSimulated,
     };
 
     return {

@@ -6,6 +6,7 @@ import type { MapCenter, RiverContext } from "@/types/geography";
 import type { StationSummary } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { SimulatedDataIndicator } from "@/components/ui/SimulatedDataIndicator";
+import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
 
 const FilteredMonitoringMap = dynamic(
@@ -40,6 +41,9 @@ export function DashboardOverviewMap({
   selectedStationId,
   onStationSelect,
 }: DashboardOverviewMapProps) {
+  const isRiverSimulated =
+    summaries.length === 0 || summaries.every((s) => s.latestMeasurement.isSimulated);
+
   return (
     <Card className="overflow-hidden">
       <CardHeader>
@@ -50,11 +54,22 @@ export function DashboardOverviewMap({
               Mapa del {riverContext.river.name}
             </CardTitle>
             <CardDescription className="mt-1">
-              {summaries.length} puntos de monitoreo · Seleccione un marcador para detalle
+              {summaries.length} puntos de monitoreo · Seleccione un punto en la lista o en el mapa
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <SimulatedDataIndicator />
+            {isRiverSimulated ? (
+              <SimulatedDataIndicator />
+            ) : (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-500/30"
+                role="status"
+                aria-label="Datos reales"
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                Datos reales
+              </span>
+            )}
             <Link
               href="/mapa"
               className="inline-flex items-center gap-1 rounded-lg border border-[var(--hv-primary)]/30 bg-[var(--hv-sidebar-active-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--hv-primary)] transition-colors hover:border-[var(--hv-primary)]/50"
@@ -66,6 +81,28 @@ export function DashboardOverviewMap({
         </div>
       </CardHeader>
       <CardContent className="space-y-4 p-5">
+        {/* Selector de puntos — alternativa fiable al clic en el marcador (útil con puntos
+            muy cercanos entre sí, como los 10 del Dren 4000, a menos de 1 km entre ellos) */}
+        {onStationSelect && summaries.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {summaries.map((s) => (
+              <button
+                key={s.station.id}
+                type="button"
+                onClick={() => onStationSelect(s.station.id)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  selectedStationId === s.station.id
+                    ? "border-cyan-500 bg-cyan-500/15 text-cyan-700"
+                    : "border-[var(--hv-border)] text-[var(--hv-foreground-muted)] hover:border-cyan-400 hover:text-cyan-700"
+                )}
+              >
+                {s.station.id}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div
           className={`transition-opacity duration-300 ${isTransitioning ? "opacity-70" : "opacity-100"}`}
         >

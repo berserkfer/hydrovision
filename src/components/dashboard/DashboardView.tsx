@@ -3,8 +3,11 @@
 import type { DashboardStats, StationSummary, TimeSeriesPoint } from "@/types";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { PageContent } from "@/components/layout/PageContent";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { ControlCenterHeader } from "@/components/dashboard/control-center/ControlCenterHeader";
 import { ControlCenterKpiCards } from "@/components/dashboard/control-center/ControlCenterKpiCards";
+import { PredictionDashboard } from "@/components/prediction/PredictionDashboard";
+import { EnvironmentalModelPanel } from "@/components/environmental-model/EnvironmentalModelPanel";
 import { DashboardOverviewMap } from "@/components/dashboard/control-center/DashboardOverviewMap";
 import { WaterResourceStatusCard } from "@/components/dashboard/control-center/WaterResourceStatusCard";
 import { WaterQualityTrendChart } from "@/components/dashboard/control-center/WaterQualityTrendChart";
@@ -12,6 +15,9 @@ import { RecentAlertsPanel } from "@/components/dashboard/control-center/RecentA
 import { DataFreshnessBar } from "@/components/dashboard/control-center/DataFreshnessBar";
 import { StationDetailPanel } from "@/components/station/StationDetailPanel";
 import { StationDetailEmpty } from "@/components/station/StationDetailEmpty";
+import { AgriculturalVegetationCard } from "@/components/vegetation/AgriculturalVegetationCard";
+import { LagoonVegetationCard } from "@/components/vegetation/LagoonVegetationCard";
+import { PhotoQualityEntryCard } from "@/components/photo-quality/PhotoQualityEntryCard";
 import { useMapFilters } from "@/hooks/useMapFilters";
 import { useEnvironmentalRisk } from "@/hooks/useEnvironmentalRisk";
 import { useExecutiveDashboard } from "@/hooks/useExecutiveDashboard";
@@ -62,51 +68,84 @@ export function DashboardView({ stats: _stats, summaries: _summaries, timeSeries
       )}
 
       <PageContent>
-        <div className="mx-auto max-w-[1600px] space-y-8">
-          {executive && (
-            <ControlCenterKpiCards
-              stats={filteredStats}
-              kpis={executive.kpis}
-              riskAssessment={riskAssessment}
-              activeAlertsCount={activeAlertsCount}
-            />
-          )}
+        <div className="mx-auto max-w-[1600px]">
+          <Tabs defaultValue="calidad-agua" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="calidad-agua">Calidad de Agua</TabsTrigger>
+              <TabsTrigger value="prediccion-satelital">Predicción Satelital</TabsTrigger>
+              <TabsTrigger value="modelo-ambiental">Modelo Ambiental</TabsTrigger>
+              <TabsTrigger value="foto-celular">Foto de Celular</TabsTrigger>
+              <TabsTrigger value="vegetacion-agricola">Vegetación Agrícola</TabsTrigger>
+              <TabsTrigger value="vegetacion-laguna">Vegetación de Laguna</TabsTrigger>
+            </TabsList>
 
-          {stationDetail && <div className="xl:hidden">{stationPanel}</div>}
-
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="min-w-0 space-y-8">
-              <DashboardOverviewMap
-                riverContext={riverContext}
-                summaries={filteredSummaries}
-                mapView={mapView}
-                recenterToken={recenterToken}
-                isTransitioning={isTransitioning}
-                selectedStationId={selectedStationId}
-                onStationSelect={selectStation}
-              />
-              <WaterQualityTrendChart data={timeSeries} />
-            </div>
-
-            <aside className="space-y-6">
+            <TabsContent value="calidad-agua" className="space-y-8">
               {executive && (
-                <>
-                  <WaterResourceStatusCard
-                    qualityStatus={executive.header.qualityStatus}
-                    description={waterStatusDescription ?? ""}
-                    riverName={riverContext.river.name}
-                  />
-                  <RecentAlertsPanel alerts={executive.alerts} />
-                </>
+                <ControlCenterKpiCards
+                  stats={filteredStats}
+                  kpis={executive.kpis}
+                  riskAssessment={riskAssessment}
+                  activeAlertsCount={activeAlertsCount}
+                />
               )}
-              <div className="xl:sticky xl:top-6">{stationPanel}</div>
-            </aside>
-          </div>
 
-          <DataFreshnessBar
-            lastUpdate={filteredStats.lastUpdate}
-            source="Campo / Sentinel-2 / Sistema (simulado)"
-          />
+              {stationDetail && <div className="xl:hidden">{stationPanel}</div>}
+
+              <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
+                <div className="min-w-0 space-y-8">
+                  <DashboardOverviewMap
+                    riverContext={riverContext}
+                    summaries={filteredSummaries}
+                    mapView={mapView}
+                    recenterToken={recenterToken}
+                    isTransitioning={isTransitioning}
+                    selectedStationId={selectedStationId}
+                    onStationSelect={selectStation}
+                  />
+                  <WaterQualityTrendChart data={timeSeries} />
+                </div>
+
+                <aside className="space-y-6">
+                  {executive && (
+                    <>
+                      <WaterResourceStatusCard
+                        qualityStatus={executive.header.qualityStatus}
+                        description={waterStatusDescription ?? ""}
+                        riverName={riverContext.river.name}
+                      />
+                      <RecentAlertsPanel alerts={executive.alerts} />
+                    </>
+                  )}
+                  <div className="xl:sticky xl:top-6">{stationPanel}</div>
+                </aside>
+              </div>
+
+              <DataFreshnessBar
+                lastUpdate={filteredStats.lastUpdate}
+                source="Campo / Sentinel-2 / Sistema (simulado)"
+              />
+            </TabsContent>
+
+            <TabsContent value="prediccion-satelital">
+              <PredictionDashboard />
+            </TabsContent>
+
+            <TabsContent value="modelo-ambiental">
+              <EnvironmentalModelPanel />
+            </TabsContent>
+
+            <TabsContent value="foto-celular">
+              <PhotoQualityEntryCard />
+            </TabsContent>
+
+            <TabsContent value="vegetacion-agricola">
+              <AgriculturalVegetationCard />
+            </TabsContent>
+
+            <TabsContent value="vegetacion-laguna">
+              <LagoonVegetationCard />
+            </TabsContent>
+          </Tabs>
         </div>
       </PageContent>
     </MainLayout>

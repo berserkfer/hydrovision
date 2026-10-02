@@ -54,6 +54,13 @@ export const CANDIDATE_RELATIONSHIPS: CandidateRelationshipDefinition[] = [
     disclaimer: `${CANDIDATE_DISCLAIMER} Turbidez (NTU) vs NDTI.`,
   },
   {
+    id: "cand-tss-ndti",
+    fieldParameterCode: "total_suspended_solids",
+    potentialExplanatoryIndices: ["NDTI", "MNDWI"],
+    relationshipKind: "candidate_relationship",
+    disclaimer: `${CANDIDATE_DISCLAIMER} Sólidos suspendidos totales (mg/L) vs NDTI — proxy óptico de turbidez/sedimentos, no medición directa de masa.`,
+  },
+  {
     id: "cand-nutrients-ndci",
     fieldParameterCode: "phosphates",
     potentialExplanatoryIndices: ["NDCI", "NDVI"],

@@ -18,9 +18,11 @@ const VALID_PARAMETERS = new Set<string>([
   "bod5",
   "cod",
   "coliforms",
+  "thermotolerant_coliforms",
   "nitrates",
   "phosphates",
   "total_dissolved_solids",
+  "total_suspended_solids",
   "flow_rate",
 ]);
 
@@ -37,6 +39,8 @@ export async function POST(request: Request) {
       fechaInicio?: string;
       fechaFin?: string;
       useGee?: boolean;
+      useCopernicus?: boolean;
+      usePlanetaryComputer?: boolean;
     };
 
     if (!body.stationId) {
@@ -70,6 +74,8 @@ export async function POST(request: Request) {
       fechaInicio: body.fechaInicio,
       fechaFin: body.fechaFin,
       useGee: body.useGee,
+      useCopernicus: body.useCopernicus,
+      usePlanetaryComputer: body.usePlanetaryComputer,
     });
 
     return NextResponse.json(data);

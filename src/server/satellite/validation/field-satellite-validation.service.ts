@@ -4,7 +4,8 @@
  */
 
 import { isMonitoringDatabaseEnabled } from "@/config/monitoring-data-source.config";
-import { isGeeIntegrationEnabled } from "@/config/gee-integration.config";
+import { isCopernicusIntegrationEnabled } from "@/config/copernicus-integration.config";
+import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
 import { MATCHING_CRITERIA_SUMMARY } from "@/satellite/config/matching.config";
 import { getCandidateRelationshipsForParameter } from "@/satellite/catalog/comparability.catalog";
 import {
@@ -21,7 +22,6 @@ import {
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import type { SatelliteObservation } from "@/satellite/types/satellite-observation.types";
 import { satelliteService } from "../satellite.service";
-import { satelliteGeeService } from "../satellite-gee.service";
 import {
   filterParametersByCode,
   loadFieldMeasurementsForMatching,
@@ -33,6 +33,8 @@ export interface ValidationQuery {
   fechaFin?: string;
   parameterCode?: ParametroCodigoDb;
   useGee?: boolean;
+  useCopernicus?: boolean;
+  usePlanetaryComputer?: boolean;
 }
 
 export interface ValidationSummary {
@@ -51,6 +53,10 @@ export interface ValidationApiMeta {
   dataSource: "database" | "mock";
   geeConnected: boolean;
   geeLive: boolean;
+  copernicusConnected: boolean;
+  copernicusLive: boolean;
+  planetaryConnected: boolean;
+  planetaryLive: boolean;
   isSimulated: boolean;
   matchingCriteria: typeof MATCHING_CRITERIA_SUMMARY;
   scientificStatus: FieldSatelliteScientificStatus;
@@ -177,26 +183,18 @@ export class FieldSatelliteValidationService {
       parameterCode: query.parameterCode,
     });
 
-    let observations: SatelliteObservation[] = [];
-    let usedGee = false;
-
-    if (query.useGee) {
-      const geeResult = await satelliteService.listObservations({
-        stationId: query.stationId,
-        fechaInicio: query.fechaInicio,
-        fechaFin: query.fechaFin,
-        useGee: true,
-      });
-      observations = geeResult.observations;
-      usedGee = true;
-    } else {
-      const stored = await satelliteService.listObservations({
-        stationId: query.stationId,
-        fechaInicio: query.fechaInicio,
-        fechaFin: query.fechaFin,
-      });
-      observations = stored.observations;
-    }
+    const observationsResult = await satelliteService.listObservations({
+      stationId: query.stationId,
+      fechaInicio: query.fechaInicio,
+      fechaFin: query.fechaFin,
+      useCopernicus: query.useCopernicus,
+      useGee: query.useGee,
+      usePlanetaryComputer: query.usePlanetaryComputer,
+    });
+    const observations = observationsResult.observations;
+    // satelliteService ya decide y reporta honestamente qué proveedor sirvió el dato
+    // (puede no coincidir con lo pedido si ese proveedor no devolvió nada — ver satellite.service.ts).
+    const satMeta = observationsResult.meta;
 
     const matchableObs = observations.map(observationToMatchable);
     const isSimulated =
@@ -233,9 +231,9 @@ export class FieldSatelliteValidationService {
       query.parameterCode
     );
 
-    const geeConnected = isGeeIntegrationEnabled();
-    const geeLive =
-      usedGee && geeConnected ? await satelliteGeeService.isLiveConnected() : false;
+    // isSimulated combina campo + satélite: si CUALQUIERA de los dos lados es simulado/ausente,
+    // el par completo se reporta como simulado (igual que antes, ahora también cubre Planetary).
+    const resolvedIsSimulated = fieldData.isSimulated || satMeta.isSimulated;
 
     return {
       matches,
@@ -248,9 +246,13 @@ export class FieldSatelliteValidationService {
       ),
       meta: {
         dataSource: isMonitoringDatabaseEnabled() ? "database" : "mock",
-        geeConnected,
-        geeLive: usedGee ? geeLive : false,
-        isSimulated: usedGee ? !geeLive : isSimulated,
+        geeConnected: satMeta.geeConnected,
+        geeLive: satMeta.geeLive ?? false,
+        copernicusConnected: satMeta.copernicusConnected ?? isCopernicusIntegrationEnabled(),
+        copernicusLive: satMeta.copernicusLive ?? false,
+        planetaryConnected: satMeta.planetaryConnected ?? isPlanetaryComputerEnabled(),
+        planetaryLive: satMeta.planetaryLive ?? false,
+        isSimulated: resolvedIsSimulated,
         matchingCriteria: MATCHING_CRITERIA_SUMMARY,
         scientificStatus: "descriptive_only",
         disclaimers: [DESCRIPTIVE_ONLY_DISCLAIMER, NO_PREDICTION_DISCLAIMER],

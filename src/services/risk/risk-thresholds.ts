@@ -76,7 +76,7 @@ export const RISK_PARAMETER_THRESHOLDS: ParameterThreshold[] = [
   },
   {
     key: "solidosDisueltos",
-    label: "Sólidos disueltos",
+    label: "Sólidos Disueltos Totales (STD)",
     unit: "mg/L",
     weight: 0.15,
     mode: "max",

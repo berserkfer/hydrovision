@@ -18,10 +18,10 @@ export const GEOGRAPHIC_HIERARCHY = buildLegacyGeographicHierarchy();
 
 export const DEFAULT_MAP_FILTERS: MapFilterState = {
   departmentId: "lambayeque",
-  provinceId: "lambayeque-prov",
-  districtId: "reque",
-  watershedId: "cuenca-reque",
-  riverId: "rio-reque",
+  provinceId: "chiclayo",
+  districtId: "santa-rosa",
+  watershedId: "cuenca-dren-4000",
+  riverId: "dren-4000",
   stationId: ALL_STATIONS_VALUE,
 };
 
@@ -74,7 +74,10 @@ export function getStationDetailById(
   const summaries = getSummariesForRiver(river);
   const summary = summaries[index];
   if (!summary) return null;
-  return buildStationDetail(summary, riverContext, index);
+  // stationId aquí es el código legible (ej. "P5"), no el id de dominio — se resuelve el
+  // id real para poder consultar el historial completo de muestras reales de la estación.
+  const domainEstacion = getEstacionByCodigo(stationId, river.id);
+  return buildStationDetail(summary, riverContext, index, domainEstacion?.id);
 }
 
 export function buildDashboardTitle(riverName: string): string {

@@ -6,6 +6,7 @@ import {
   Activity,
   BarChart3,
   Brain,
+  Camera,
   ClipboardList,
   Cloud,
   Droplets,
@@ -48,6 +49,7 @@ const icons = {
   image: Image,
   settings: Settings,
   upload: Upload,
+  camera: Camera,
   users: Users,
 } as const;
 

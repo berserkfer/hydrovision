@@ -51,8 +51,10 @@ export interface ParametrosFisicoquimicos extends EntityMeta {
   dbo5?: number;
   dqo?: number;
   coliformes?: number;
+  coliformesTermotolerantes?: number;
   nitratos?: number;
   fosfatos?: number;
   solidosDisueltosTotales?: number;
+  solidosSuspendidosTotales?: number;
   caudal?: number;
 }

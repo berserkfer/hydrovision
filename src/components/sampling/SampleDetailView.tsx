@@ -41,7 +41,7 @@ export function SampleDetailView({ sample }: SampleDetailViewProps) {
     { label: "Conductividad", value: parametros.conductividad, unit: "µS/cm", key: "conductivity" },
     { label: "Oxígeno disuelto", value: parametros.oxigenoDisuelto, unit: "mg/L", key: "dissolvedOxygen" },
     { label: "Turbidez", value: parametros.turbidez, unit: "NTU", key: "turbidity" },
-    { label: "Sólidos disueltos totales", value: parametros.solidosDisueltosTotales, unit: "mg/L", key: "tds" },
+    { label: "Sólidos Disueltos Totales (STD)", value: parametros.solidosDisueltosTotales, unit: "mg/L", key: "tds" },
     { label: "Caudal", value: parametros.caudal, unit: "m³/s", key: "flow" },
     {
       label: "Color aparente",

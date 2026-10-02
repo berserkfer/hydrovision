@@ -15,7 +15,9 @@ export type CalibrationReadinessStatus =
   | "INSUFFICIENT_TEMPORAL_COVERAGE"
   | "INSUFFICIENT_INDEX_COVERAGE"
   | "DATA_QUALITY_FAILURE"
-  | "READY_WITH_WARNINGS";
+  | "READY_WITH_WARNINGS"
+  /** Bloqueo duro — ver optically-plausible-parameters.config.ts. Nunca se evalúa readiness real. */
+  | "NOT_OPTICALLY_PLAUSIBLE";
 
 export type ModelValidationStatus =
   | "not_attempted"
@@ -155,6 +157,8 @@ export interface CalibrationAuditMeta {
   dataSource: "database" | "mock";
   isSimulated: boolean;
   geeConnected: boolean;
+  copernicusConnected?: boolean;
+  planetaryConnected?: boolean;
   readinessCriteriaDisclaimer: string;
 }
 
@@ -286,6 +290,8 @@ export interface CalibrationValidateMeta {
   isSimulated: boolean;
   dataSource: "database" | "mock";
   geeConnected: boolean;
+  copernicusConnected?: boolean;
+  planetaryConnected?: boolean;
   validationCriteriaDisclaimer: string;
 }
 

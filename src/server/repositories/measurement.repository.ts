@@ -51,7 +51,7 @@ function fromStore(): MeasurementRow[] {
       ["coliforms", "Coliformes", param.coliformes, "NMP/100mL"],
       ["nitrates", "Nitratos", param.nitratos, "mg/L"],
       ["phosphates", "Fosfatos", param.fosfatos, "mg/L"],
-      ["total_dissolved_solids", "Sólidos disueltos", param.solidosDisueltosTotales, "mg/L"],
+      ["total_dissolved_solids", "Sólidos Disueltos Totales (STD)", param.solidosDisueltosTotales, "mg/L"],
       ["flow_rate", "Caudal", param.caudal, "m³/s"],
     ];
 

@@ -11,6 +11,7 @@ import { MOCK_LAST_UPDATE } from "@/constants/app";
 import { classifyMeasurement } from "@/lib/eca/classifier";
 import type { FieldMeasurement } from "@/types";
 import type { HydroVisionDataStore } from "@/models";
+import { buildDren4000MockData, DREN_4000_CUENCA_ID, DREN_4000_RIO_ID } from "./dren-4000-real-data";
 
 const META = {
   createdAt: "2025-01-01T00:00:00-05:00",
@@ -91,6 +92,7 @@ function buildMockStore(): HydroVisionDataStore {
   const provincias = [
     { id: "lambayeque-prov", departamentoId: "lambayeque", nombre: "Lambayeque", ...META },
     { id: "ferrenafe", departamentoId: "lambayeque", nombre: "Ferreñafe", ...META },
+    { id: "chiclayo", departamentoId: "lambayeque", nombre: "Chiclayo", ...META },
     { id: "trujillo", departamentoId: "la-libertad", nombre: "Trujillo", ...META },
   ];
 
@@ -98,6 +100,8 @@ function buildMockStore(): HydroVisionDataStore {
     { id: "reque", provinciaId: "lambayeque-prov", nombre: "Reque", ...META },
     { id: "monsefu", provinciaId: "lambayeque-prov", nombre: "Monsefú", ...META },
     { id: "ferrenafe-dist", provinciaId: "ferrenafe", nombre: "Ferreñafe", ...META },
+    // Santa Rosa — confirmado por la cita fuente de los datos reales del Dren 4000
+    { id: "santa-rosa", provinciaId: "chiclayo", nombre: "Santa Rosa", ...META },
     { id: "laredo", provinciaId: "trujillo", nombre: "Laredo", ...META },
   ];
 
@@ -105,6 +109,9 @@ function buildMockStore(): HydroVisionDataStore {
     { id: "cuenca-reque", distritoId: "reque", nombre: "Cuenca Reque", areaKm2: 1250, ...META },
     { id: "cuenca-zana", distritoId: "monsefu", nombre: "Cuenca Zaña", areaKm2: 980, ...META },
     { id: "cuenca-la-leche", distritoId: "ferrenafe-dist", nombre: "Cuenca La Leche", areaKm2: 2100, ...META },
+    // Dren 4000 es un canal de drenaje artificial, no una cuenca hidrográfica — areaKm2 no aplica
+    // (0 = sin dato, no un valor real). Ver dren-4000-real-data.ts para las mediciones reales.
+    { id: DREN_4000_CUENCA_ID, distritoId: "santa-rosa", nombre: "Santa Rosa", areaKm2: 0, ...META },
     { id: "cuenca-moche", distritoId: "laredo", nombre: "Cuenca Moche", areaKm2: 3400, ...META },
   ];
 
@@ -139,6 +146,18 @@ function buildMockStore(): HydroVisionDataStore {
       nombre: "Río Moche",
       centro: { latitude: -8.0456, longitude: -79.0124, zoom: 11 },
       longitudKm: 150,
+      ...META,
+    },
+    {
+      // Centro/zoom son aproximados para el mapa — las coordenadas de CADA estación (abajo)
+      // sí son las reales georreferenciadas por la fuente citada, no aproximadas.
+      // longitudKm=14.143 según fuente pública (canal de drenaje agrícola, Lambayeque,
+      // desemboca en Santa Rosa) — no medido directamente por HydroVision.
+      id: DREN_4000_RIO_ID,
+      cuencaId: DREN_4000_CUENCA_ID,
+      nombre: "Dren 4000",
+      centro: { latitude: -6.875, longitude: -79.929, zoom: 15 },
+      longitudKm: 14.143,
       ...META,
     },
   ];
@@ -198,7 +217,12 @@ function buildMockStore(): HydroVisionDataStore {
     },
   ];
 
-  const estaciones = riverSeeds.flatMap((seed) => buildRiverData(seed).estaciones.map((e) => e.estacion));
+  const dren4000 = buildDren4000MockData();
+
+  const estaciones = [
+    ...riverSeeds.flatMap((seed) => buildRiverData(seed).estaciones.map((e) => e.estacion)),
+    ...dren4000.estaciones,
+  ];
 
   const usuarios = [
     {
@@ -314,14 +338,19 @@ function buildMockStore(): HydroVisionDataStore {
       objetivo: "Seguimiento trimestral de estaciones P1–P6.",
       ...META,
     },
+    ...dren4000.campanas,
   ];
 
-  const muestras: HydroVisionDataStore["muestras"] = [];
-  const parametros: HydroVisionDataStore["parametros"] = [];
+  const muestras: HydroVisionDataStore["muestras"] = [...dren4000.muestras];
+  const parametros: HydroVisionDataStore["parametros"] = [...dren4000.parametros];
   const clasificaciones: HydroVisionDataStore["clasificaciones"] = [];
   const indicesSatelitales: HydroVisionDataStore["indicesSatelitales"] = [];
 
+  // Dren 4000 tiene sus propias muestras/parámetros REALES (arriba) — nunca se le genera
+  // un muestreo sintético de 2025 encima, para no mezclar dato real con dato fabricado.
   estaciones.forEach((estacion, globalIndex) => {
+    if (estacion.rioId === DREN_4000_RIO_ID) return;
+
     const profile = PARAM_PROFILES[globalIndex % PARAM_PROFILES.length];
     const muestraId = `muestra-${estacion.id}-001`;
     const campanaId = estacion.rioId === "rio-reque" ? "camp-2025-01" : `camp-${estacion.rioId}`;
@@ -357,8 +386,13 @@ function buildMockStore(): HydroVisionDataStore {
     });
   });
 
-  // Clasificaciones ECA derivadas del clasificador (consistencia con UI)
+  // Clasificaciones ECA derivadas del clasificador (consistencia con UI).
+  // Dren 4000 tiene 2 muestras REALES por estación (marzo y setiembre 2014) en vez de 1
+  // sintética — se clasifica cada una por separado, abajo, y nunca se le fabrica un
+  // índice satelital (Sentinel-2 no existía en 2014; ver dren-4000-real-data.ts).
   estaciones.forEach((estacion, globalIndex) => {
+    if (estacion.rioId === DREN_4000_RIO_ID) return;
+
     const params = parametros.find((p) => p.estacionId === estacion.id)!;
     const muestra = muestras.find((m) => m.estacionId === estacion.id)!;
     const measurement: FieldMeasurement = {
@@ -400,6 +434,43 @@ function buildMockStore(): HydroVisionDataStore {
       ndti: Number((-0.05 + (globalIndex % 6) * 0.02).toFixed(3)),
       coberturaNubosa: Number((5 + (globalIndex % 6) * 3).toFixed(1)),
       ...META,
+    });
+  });
+
+  // Clasificación ECA real para las 20 muestras del Dren 4000 (2 fechas × 10 puntos) —
+  // mismo clasificador, datos reales. Sin índice satelital: Sentinel-2 no existía en 2014.
+  dren4000.muestras.forEach((muestra) => {
+    const params = dren4000.parametros.find((p) => p.muestraId === muestra.id);
+    if (!params) return;
+
+    const measurement: FieldMeasurement = {
+      id: params.id,
+      stationId: estaciones.find((e) => e.id === muestra.estacionId)?.codigo ?? muestra.estacionId,
+      sampledAt: muestra.fechaMuestreo,
+      ph: params.ph,
+      turbidity: params.turbidez,
+      conductivity: params.conductividad,
+      dissolvedOxygen: params.oxigenoDisuelto,
+      temperature: params.temperatura,
+      bod5: params.dbo5,
+      cod: params.dqo,
+      coliforms: params.coliformes,
+      isSimulated: false,
+    };
+    const result = classifyMeasurement(measurement);
+
+    clasificaciones.push({
+      id: `eca-${muestra.id}`,
+      muestraId: muestra.id,
+      estacionId: muestra.estacionId,
+      estado: result.status as EstadoECA,
+      parametrosViolados: result.violatedParameters as TipoParametro[],
+      parametrosEnAlerta: result.alertParameters as TipoParametro[],
+      evaluadoEn: MOCK_LAST_UPDATE,
+      normativaReferencia: "ECA Agua — Cuerpos receptores (referencia orientativa)",
+      createdAt: muestra.createdAt,
+      updatedAt: muestra.updatedAt,
+      isSimulated: false,
     });
   });
 

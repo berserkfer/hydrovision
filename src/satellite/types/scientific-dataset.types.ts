@@ -121,6 +121,10 @@ export interface ScientificDatasetMeta {
   dataSource: "database" | "mock";
   geeConnected: boolean;
   geeLive: boolean;
+  copernicusConnected?: boolean;
+  copernicusLive?: boolean;
+  planetaryConnected?: boolean;
+  planetaryLive?: boolean;
   includeSimulated: boolean;
   disclaimer: string;
 }

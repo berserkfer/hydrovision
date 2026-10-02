@@ -89,6 +89,11 @@ export function parametrosToFieldMeasurement(
     bod5: params.dbo5,
     cod: params.dqo,
     coliforms: params.coliformes,
+    thermotolerantColiforms: params.coliformesTermotolerantes,
+    nitrates: params.nitratos,
+    phosphates: params.fosfatos,
+    totalDissolvedSolids: params.solidosDisueltosTotales,
+    totalSuspendedSolids: params.solidosSuspendidosTotales,
     isSimulated: params.isSimulated,
   };
 }
@@ -119,11 +124,26 @@ export function clasificacionToCompliance(clasificacion: ClasificacionECA): Comp
   };
 }
 
+/**
+ * Última muestra real de una estación por fecha — no la primera encontrada en el array.
+ * Estaciones con varias campañas (ej. Dren 4000: marzo y setiembre 2014) deben mostrar
+ * la más reciente, no la que quedó primero al insertarse.
+ */
+function latestMuestraForEstacion(estacionId: string) {
+  const muestras = getDataStore().muestras.filter((m) => m.estacionId === estacionId);
+  if (muestras.length === 0) return undefined;
+  return [...muestras].sort((a, b) => b.fechaMuestreo.localeCompare(a.fechaMuestreo))[0];
+}
+
 /** Construye StationSummary legacy desde entidades de dominio */
 export function buildLegacyStationSummary(estacion: Estacion): StationSummary {
-  const muestra = getDataStore().muestras.find((m) => m.estacionId === estacion.id);
-  const params = getDataStore().parametros.find((p) => p.estacionId === estacion.id);
-  const clasificacion = getDataStore().clasificaciones.find((c) => c.estacionId === estacion.id);
+  const muestra = latestMuestraForEstacion(estacion.id);
+  const params = muestra
+    ? getDataStore().parametros.find((p) => p.muestraId === muestra.id)
+    : undefined;
+  const clasificacion = muestra
+    ? getDataStore().clasificaciones.find((c) => c.muestraId === muestra.id)
+    : undefined;
   const indices = getDataStore().indicesSatelitales.find((i) => i.estacionId === estacion.id);
 
   const measurement =

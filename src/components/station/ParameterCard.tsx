@@ -6,6 +6,9 @@ import {
   Waves,
   Wind,
   FlaskConical,
+  Bug,
+  Beaker,
+  Leaf,
 } from "lucide-react";
 import type { ParameterDisplayConfig } from "@/types/station";
 import { ParameterProgressBar } from "./ParameterProgressBar";
@@ -19,6 +22,10 @@ const ICONS = {
   turbidity: Droplets,
   tds: Waves,
   flow: Activity,
+  bod5: Beaker,
+  coliforms: Bug,
+  nutrients: Leaf,
+  suspendedSolids: Waves,
 };
 
 interface ParameterCardProps {

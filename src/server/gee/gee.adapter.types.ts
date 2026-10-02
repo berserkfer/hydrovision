@@ -19,7 +19,12 @@ export interface GeeSceneRecord {
   collection: string;
   platform: "sentinel2";
   systemTimeStart: number | null;
-  metadataSource: "gee_live" | "simulated" | "partial" | "unavailable";
+  /**
+   * "copernicus_live"/"planetary_computer_live" incluidos para reuso estructural por
+   * CopernicusAdapter/PlanetaryAdapter (mismo shape que GeeSceneRecord — ver
+   * src/server/copernicus/copernicus.adapter.types.ts y src/server/planetary/planetary.adapter.types.ts).
+   */
+  metadataSource: "gee_live" | "copernicus_live" | "planetary_computer_live" | "simulated" | "partial" | "unavailable";
   /** true si acquisitionDate deriva de system:time_start */
   acquisitionFromSystemTime: boolean;
 }

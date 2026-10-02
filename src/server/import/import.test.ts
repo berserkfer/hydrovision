@@ -7,7 +7,10 @@ import { detectColumnMapping } from "@/server/import/column-detector";
 import { parseCsvBuffer } from "@/server/import/csv-parser";
 import { assertImportFileAllowed, MAX_IMPORT_FILE_BYTES } from "@/server/import/file-security";
 import { validateImportRows, type ImportReferenceData } from "@/server/import/import-validator";
+import { executeImportTransaction } from "@/server/import/import.repository";
+import type { NormalizedImportRow } from "@/server/import/import.types";
 import { ApiError } from "@/server/api/errors";
+import { getDataStore } from "@/data/store-access";
 
 const REFS: ImportReferenceData = {
   stationCodes: new Set(["E-01", "E-02"]),
@@ -179,5 +182,163 @@ describe("Seguridad de archivos", () => {
 describe("Archivo CSV vacío", () => {
   it("lanza error de validación", () => {
     expect(() => parseCsvBuffer(Buffer.from("   ", "utf-8"))).toThrow(ApiError);
+  });
+});
+
+describe("executeImportTransaction — persistencia real en el store mock (sin BD conectada)", () => {
+  // El código "P5" por sí solo es ambiguo: existe idéntico en las 4 cuencas de demostración
+  // y en Dren 4000 (ver resolveStationForImport). Se usa el nombre completo para apuntar sin
+  // ambigüedad a la estación real de Dren 4000.
+  const DREN4000_P5_NAME = "P5 — Frente a procesamiento artesanal de pescado";
+
+  function row(overrides: Partial<NormalizedImportRow>): NormalizedImportRow {
+    return {
+      rowIndex: 1,
+      stationName: DREN4000_P5_NAME,
+      date: "2020-01-15",
+      parameter: "ph",
+      value: 8,
+      ...overrides,
+    };
+  }
+
+  it("escribe de verdad en getDataStore() — antes esta rama solo fingía éxito", async () => {
+    const store = getDataStore();
+    const muestrasBefore = store.muestras.length;
+    const parametrosBefore = store.parametros.length;
+
+    const result = await executeImportTransaction({
+      fileName: "test.csv",
+      fileSize: 100,
+      mimeType: "text/csv",
+      mapping: {},
+      rows: [row({ date: "2020-01-15", parameter: "total_suspended_solids", value: 42 })],
+      validCount: 1,
+      warningCount: 0,
+      errorCount: 0,
+      totalRows: 1,
+      rejectedCount: 0,
+    });
+
+    expect(result.status).toBe("completed");
+    expect(result.importedRows).toBe(1);
+
+    expect(store.muestras.length).toBe(muestrasBefore + 1);
+    expect(store.parametros.length).toBe(parametrosBefore + 1);
+
+    const nuevaMuestra = store.muestras.find(
+      (m) => m.estacionId === "dren-4000-p5" && m.fechaMuestreo === "2020-01-15T00:00:00-05:00"
+    );
+    expect(nuevaMuestra).toBeDefined();
+    expect(nuevaMuestra?.isSimulated).toBe(false); // dato real del usuario, no sintético
+
+    const parametros = store.parametros.find((p) => p.muestraId === nuevaMuestra?.id);
+    expect(parametros?.solidosSuspendidosTotales).toBe(42);
+    expect(parametros?.isSimulated).toBe(false);
+  });
+
+  it("una segunda fila con otro parámetro para la misma muestra reutiliza el mismo registro (no duplica)", async () => {
+    const store = getDataStore();
+
+    await executeImportTransaction({
+      fileName: "test.csv",
+      fileSize: 100,
+      mimeType: "text/csv",
+      mapping: {},
+      rows: [row({ date: "2021-06-01", parameter: "ph", value: 7.5 })],
+      validCount: 1,
+      warningCount: 0,
+      errorCount: 0,
+      totalRows: 1,
+      rejectedCount: 0,
+    });
+    const parametrosAfterFirst = store.parametros.length;
+
+    await executeImportTransaction({
+      fileName: "test.csv",
+      fileSize: 100,
+      mimeType: "text/csv",
+      mapping: {},
+      rows: [row({ date: "2021-06-01", parameter: "turbidity", value: 12 })],
+      validCount: 1,
+      warningCount: 0,
+      errorCount: 0,
+      totalRows: 1,
+      rejectedCount: 0,
+    });
+
+    // Mismo muestreo (misma estación+fecha) → mismo registro de parámetros, ahora con ambos campos.
+    expect(store.parametros.length).toBe(parametrosAfterFirst);
+    const parametros = store.parametros.find(
+      (p) =>
+        p.estacionId === "dren-4000-p5" &&
+        store.muestras.find((m) => m.id === p.muestraId)?.fechaMuestreo === "2021-06-01T00:00:00-05:00"
+    );
+    expect(parametros?.ph).toBe(7.5);
+    expect(parametros?.turbidez).toBe(12);
+  });
+
+  it("un código de estación ambiguo entre varios ríos (ej. 'P5') se rechaza en vez de adivinar", async () => {
+    const result = await executeImportTransaction({
+      fileName: "test.csv",
+      fileSize: 100,
+      mimeType: "text/csv",
+      mapping: {},
+      // "P5" a secas existe en Dren 4000 Y en las 4 cuencas de demostración — sin el nombre
+      // completo, NUNCA debe elegir una al azar.
+      rows: [row({ stationName: undefined, stationCode: "P5" })],
+      validCount: 1,
+      warningCount: 0,
+      errorCount: 0,
+      totalRows: 1,
+      rejectedCount: 0,
+    });
+
+    expect(result.status).toBe("failed");
+    expect(result.importedRows).toBe(0);
+  });
+
+  it("una estación inexistente se rechaza fila por fila, sin fabricar nada", async () => {
+    const result = await executeImportTransaction({
+      fileName: "test.csv",
+      fileSize: 100,
+      mimeType: "text/csv",
+      mapping: {},
+      rows: [row({ stationName: undefined, stationCode: "NO-EXISTE" })],
+      validCount: 1,
+      warningCount: 0,
+      errorCount: 0,
+      totalRows: 1,
+      rejectedCount: 0,
+    });
+
+    expect(result.status).toBe("failed");
+    expect(result.importedRows).toBe(0);
+    expect(result.rejectedRows).toBe(1);
+  });
+
+  it("sin campaña especificada, crea una nueva en vez de fallar (cumple la advertencia del validador)", async () => {
+    const store = getDataStore();
+    const campanasBefore = store.campanas.length;
+
+    const result = await executeImportTransaction({
+      fileName: "test.csv",
+      fileSize: 100,
+      mimeType: "text/csv",
+      mapping: {},
+      rows: [row({ date: "2022-03-03", parameter: "ph", value: 7, campaign: undefined })],
+      validCount: 1,
+      warningCount: 0,
+      errorCount: 0,
+      totalRows: 1,
+      rejectedCount: 0,
+    });
+
+    expect(result.status).toBe("completed");
+    // Dren 4000 ya tiene campañas (2014-03, 2014-09) — se reutiliza la más reciente en vez de
+    // crear una nueva, así que el conteo de campañas no necesariamente sube; lo que importa es
+    // que la fila SÍ se importó (antes: "Campaña no encontrada" bloqueaba todo).
+    expect(result.importedRows).toBe(1);
+    expect(store.campanas.length).toBeGreaterThanOrEqual(campanasBefore);
   });
 });

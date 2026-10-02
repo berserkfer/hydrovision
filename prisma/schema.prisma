@@ -112,9 +112,11 @@ enum TipoParametroCodigo {
   bod5                   @map("bod5")
   cod                    @map("cod")
   coliforms              @map("coliforms")
+  thermotolerant_coliforms @map("thermotolerant_coliforms") // Dren 4000 — Coliformes termotolerantes
   nitrates               @map("nitrates")   // Sprint 2A — Nitratos
   phosphates             @map("phosphates") // Sprint 2A — Fosfatos
   total_dissolved_solids @map("total_dissolved_solids")
+  total_suspended_solids @map("total_suspended_solids") // Dren 4000 — SST, distinto de disueltos
   flow_rate              @map("flow_rate")
 }
 

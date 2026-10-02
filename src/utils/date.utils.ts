@@ -36,7 +36,12 @@ export function formatDate(iso: string): string {
 }
 
 export function formatShortDate(iso: string): string {
-  const dateStr = iso.length === 7 ? `${iso}-01T12:00:00-05:00` : iso;
+  const dateStr =
+    iso.length === 7
+      ? `${iso}-01T12:00:00-05:00`
+      : iso.length === 10
+        ? `${iso}T12:00:00-05:00`
+        : iso;
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: appConfig.timezone,
     year: "numeric",

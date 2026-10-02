@@ -9,6 +9,10 @@ import {
   MIN_EXPLORATORY_READINESS,
   MIN_EXPLORATORY_READINESS_DISCLAIMER,
 } from "../config/calibration-readiness.config";
+import {
+  isOpticallyPlausibleTarget,
+  NON_OPTICALLY_PLAUSIBLE_DISCLAIMER,
+} from "../config/optically-plausible-parameters.config";
 import type {
   CalibrationReadinessResult,
   CalibrationReadinessStatus,
@@ -65,6 +69,17 @@ export function evaluateParameterReadiness(
   parameterCode: ParametroCodigoDb,
   predictorIndex?: SpectralIndexCode
 ): CalibrationReadinessResult {
+  // Bloqueo duro — corta ANTES de evaluar cantidad/calidad de datos.
+  // Ningún volumen de datos habilita calibración/predicción para estos parámetros.
+  if (!isOpticallyPlausibleTarget(parameterCode)) {
+    return buildResult(
+      "NOT_OPTICALLY_PLAUSIBLE",
+      [NON_OPTICALLY_PLAUSIBLE_DISCLAIMER],
+      [],
+      false
+    );
+  }
+
   const reasons: string[] = [];
   const warnings: string[] = [];
   const {

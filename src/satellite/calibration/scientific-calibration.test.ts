@@ -101,10 +101,11 @@ describe("evaluateParameterReadiness", () => {
     expect(isReadinessSufficientForCalibration(readiness.status)).toBe(true);
   });
 
-  it("3. readiness por parámetro — phosphates sin datos", () => {
+  it("3. readiness por parámetro — phosphates bloqueado (no ópticamente plausible, ver optically-plausible-parameters.config.ts)", () => {
     const pairs = makeRealDataset(35);
     const readiness = evaluateParameterReadiness(pairs, "phosphates", "NDCI");
-    expect(readiness.status).toBe("INSUFFICIENT_REAL_DATA");
+    expect(readiness.status).toBe("NOT_OPTICALLY_PLAUSIBLE");
+    expect(isReadinessSufficientForCalibration(readiness.status)).toBe(false);
   });
 
   it("13. parámetro sin predictor candidato", () => {

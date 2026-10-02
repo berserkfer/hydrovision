@@ -64,7 +64,18 @@ export function ControlCenterHeader({ data, evaluatedAt }: ControlCenterHeaderPr
           <span className="inline-flex items-center rounded-lg border border-[var(--hv-border)] bg-[var(--hv-surface-secondary)] px-3 py-1.5 text-xs text-[var(--hv-foreground-muted)]">
             Evaluado: {formatDate(evaluatedAt)}
           </span>
-          <SimulatedDataIndicator />
+          {data.isSimulated ? (
+            <SimulatedDataIndicator />
+          ) : (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300"
+              role="status"
+              aria-label="Datos reales"
+            >
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+              Datos reales
+            </span>
+          )}
           <div className="flex items-center gap-2 rounded-lg border border-[var(--hv-border)] bg-[var(--hv-surface-secondary)] px-3 py-1.5">
             <UserCircle className="h-4 w-4 text-[var(--hv-foreground-dim)]" />
             <div className="text-left">

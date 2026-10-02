@@ -21,6 +21,9 @@ export interface ExecutiveHeaderData {
   riskLevel: EnvironmentalRiskLevel | null;
   riskLevelLabel: string;
   riskEmoji: string;
+  /** true si TODAS las estaciones del río/cuenca actualmente mostrado son simuladas — ver
+   *  ControlCenterHeader.tsx. Dren 4000 tiene datos reales; otras cuencas de demostración no. */
+  isSimulated: boolean;
 }
 
 /** KPIs del panel superior ejecutivo */

@@ -57,13 +57,20 @@ export interface BuildObservationInput {
   isSimulated: boolean;
 }
 
-export function buildSatelliteObservationFromGee(
+/**
+ * Construye SatelliteObservation desde cualquier proveedor cuyos records de escena/reflectancia
+ * compartan el shape GeeSceneRecord/GeeReflectanceRecord (ver copernicus.adapter.types.ts,
+ * que reutiliza estos tipos por alias). El cálculo de índices vive en un único lugar
+ * (spectral-indices.catalog) sin importar el proveedor.
+ */
+function buildSatelliteObservationFromProvider(
+  providerIdPrefix: "gee" | "copernicus" | "planetary",
   input: BuildObservationInput
 ): SatelliteObservation {
   const { stationId, scene, reflectance, isSimulated } = input;
   const indices = computeIndicesFromReflectance(reflectance.reflectances);
   const acquisitionDate = scene.acquisitionDate.slice(0, 10);
-  const id = `gee-${stationId}-${scene.sceneId}`;
+  const id = `${providerIdPrefix}-${stationId}-${scene.sceneId}`;
 
   return {
     id,
@@ -105,6 +112,31 @@ export function buildSatelliteObservationFromGee(
     },
     createdAt: new Date().toISOString(),
   };
+}
+
+export function buildSatelliteObservationFromGee(input: BuildObservationInput): SatelliteObservation {
+  return buildSatelliteObservationFromProvider("gee", input);
+}
+
+/**
+ * Construye SatelliteObservation desde Copernicus Data Space Ecosystem.
+ * Reutiliza la misma lógica de índices que GEE — CopernicusSceneRecord/CopernicusReflectanceRecord
+ * son alias del mismo shape (ver src/server/copernicus/copernicus.adapter.types.ts).
+ */
+export function buildSatelliteObservationFromCopernicus(
+  input: BuildObservationInput
+): SatelliteObservation {
+  return buildSatelliteObservationFromProvider("copernicus", input);
+}
+
+/**
+ * Construye SatelliteObservation desde Microsoft Planetary Computer (Sentinel-2 real, público,
+ * sin credenciales). Misma lógica de índices que GEE/Copernicus — un único cálculo.
+ */
+export function buildSatelliteObservationFromPlanetary(
+  input: BuildObservationInput
+): SatelliteObservation {
+  return buildSatelliteObservationFromProvider("planetary", input);
 }
 
 /** Verifica que los índices se calculan con el catálogo HydroVision */

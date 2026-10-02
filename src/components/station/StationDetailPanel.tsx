@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { formatDate } from "@/lib/utils";
 import { ParameterCard } from "./ParameterCard";
 import { StationHistoryCard } from "./StationHistoryCard";
+import { StationPredictionCard } from "./StationPredictionCard";
 
 interface StationDetailPanelProps {
   detail: StationDetail;
@@ -32,7 +33,7 @@ const STATUS_COLORS = {
  * Panel lateral derecho con información completa de la estación seleccionada.
  */
 export function StationDetailPanel({ detail, onClose }: StationDetailPanelProps) {
-  const { entity, measurement, compliance, parameters, history } = detail;
+  const { entity, measurement, compliance, parameters, history, domainId } = detail;
 
   return (
     <aside className="hv-animate-fade-in h-fit w-full shrink-0">
@@ -69,11 +70,24 @@ export function StationDetailPanel({ detail, onClose }: StationDetailPanelProps)
               <Radio className="h-3 w-3" />
               {OPERATIONAL_STATUS_LABELS[entity.operationalStatus]}
             </span>
-            <SimulatedDataIndicator />
+            {entity.isSimulated ? (
+              <SimulatedDataIndicator />
+            ) : (
+              <span
+                className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-500/30"
+                role="status"
+                aria-label="Datos reales"
+              >
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                Dato real publicado
+              </span>
+            )}
           </div>
         </div>
 
         <div className="max-h-[calc(100vh-12rem)] space-y-4 overflow-y-auto p-4">
+          {!entity.isSimulated && domainId && <StationPredictionCard domainId={domainId} />}
+
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm">Información general</CardTitle>

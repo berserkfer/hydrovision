@@ -18,9 +18,11 @@ const VALID_PARAMETERS = new Set<string>([
   "bod5",
   "cod",
   "coliforms",
+  "thermotolerant_coliforms",
   "nitrates",
   "phosphates",
   "total_dissolved_solids",
+  "total_suspended_solids",
   "flow_rate",
 ]);
 
@@ -67,6 +69,8 @@ export async function GET(request: Request) {
       fechaInicio: searchParams.get("fechaInicio") ?? undefined,
       fechaFin: searchParams.get("fechaFin") ?? undefined,
       useGee: searchParams.get("useGee") === "true",
+      useCopernicus: searchParams.get("useCopernicus") === "true",
+      usePlanetaryComputer: searchParams.get("usePlanetaryComputer") === "true",
     });
 
     return NextResponse.json(data);

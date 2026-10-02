@@ -4,6 +4,8 @@
  */
 
 import { isGeeIntegrationEnabled } from "@/config/gee-integration.config";
+import { isCopernicusIntegrationEnabled } from "@/config/copernicus-integration.config";
+import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
 import { isMonitoringDatabaseEnabled } from "@/config/monitoring-data-source.config";
 import { getDataStore } from "@/data/store-access";
 import { CANDIDATE_RELATIONSHIPS } from "@/satellite/catalog/comparability.catalog";
@@ -52,6 +54,8 @@ export interface CalibrationQuery {
   fechaFin?: string;
   parameterCode?: ParametroCodigoDb;
   useGee?: boolean;
+  useCopernicus?: boolean;
+  usePlanetaryComputer?: boolean;
 }
 
 export class CalibrationInsufficientDataError extends Error {
@@ -136,6 +140,8 @@ export class ScientificCalibrationService {
       fechaFin: query.fechaFin,
       parameterCode: query.parameterCode,
       useGee: query.useGee,
+      useCopernicus: query.useCopernicus,
+      usePlanetaryComputer: query.usePlanetaryComputer,
     });
 
     const allPairs = buildScientificFieldSatellitePairs(validation.comparisons);
@@ -151,18 +157,29 @@ export class ScientificCalibrationService {
         dataSource: validation.meta.dataSource,
         isSimulated: validation.meta.isSimulated,
         geeConnected: isGeeIntegrationEnabled(),
+        copernicusConnected: isCopernicusIntegrationEnabled(),
+        planetaryConnected: isPlanetaryComputerEnabled(),
         readinessCriteriaDisclaimer: MIN_EXPLORATORY_READINESS_DISCLAIMER,
       },
     };
   }
 
-  async run(request: CalibrationRunRequest & { stationId: string; useGee?: boolean }) {
+  async run(
+    request: CalibrationRunRequest & {
+      stationId: string;
+      useGee?: boolean;
+      useCopernicus?: boolean;
+      usePlanetaryComputer?: boolean;
+    }
+  ) {
     const validation = await fieldSatelliteValidationService.validate({
       stationId: request.stationId,
       fechaInicio: request.fechaInicio,
       fechaFin: request.fechaFin,
       parameterCode: request.parameterCode,
       useGee: request.useGee,
+      useCopernicus: request.useCopernicus,
+      usePlanetaryComputer: request.usePlanetaryComputer,
     });
 
     const allPairs = buildScientificFieldSatellitePairs(validation.comparisons);
@@ -184,6 +201,8 @@ export class ScientificCalibrationService {
       dataSource: validation.meta.dataSource,
       isSimulated: validation.meta.isSimulated,
       geeConnected: isGeeIntegrationEnabled(),
+      copernicusConnected: isCopernicusIntegrationEnabled(),
+      planetaryConnected: isPlanetaryComputerEnabled(),
       readinessCriteriaDisclaimer: MIN_EXPLORATORY_READINESS_DISCLAIMER,
     };
 
@@ -213,7 +232,12 @@ export class ScientificCalibrationService {
   }
 
   async validate(
-    request: CalibrationRunRequest & { stationId: string; useGee?: boolean }
+    request: CalibrationRunRequest & {
+      stationId: string;
+      useGee?: boolean;
+      useCopernicus?: boolean;
+      usePlanetaryComputer?: boolean;
+    }
   ): Promise<CalibrationValidateSuccessResponse> {
     const validation = await fieldSatelliteValidationService.validate({
       stationId: request.stationId,
@@ -221,6 +245,8 @@ export class ScientificCalibrationService {
       fechaFin: request.fechaFin,
       parameterCode: request.parameterCode,
       useGee: request.useGee,
+      useCopernicus: request.useCopernicus,
+      usePlanetaryComputer: request.usePlanetaryComputer,
     });
 
     const allPairs = buildScientificFieldSatellitePairs(validation.comparisons);
@@ -230,7 +256,12 @@ export class ScientificCalibrationService {
       fechaFin: request.fechaFin,
     });
     const audit = buildScientificDatasetAuditReport(allPairs, context);
-    const isSimulatedDataset = validation.meta.isSimulated || validation.meta.dataSource === "mock";
+    // IMPORTANTE: ya NO se fuerza "simulado" solo por dataSource==="mock". El store mock puede
+    // contener datos de campo reales marcados isSimulated:false por registro (ver
+    // dren-4000-real-data.ts) emparejados con satélite real vía Planetary Computer/Copernicus/GEE
+    // en vivo — dataSource describe DÓNDE vive el registro, no si es real. La única señal de
+    // verdad es validation.meta.isSimulated, que ya agrega ambos lados (campo + satélite).
+    const isSimulatedDataset = validation.meta.isSimulated;
 
     if (isSimulatedDataset) {
       throw new CalibrationValidateInsufficientError({
@@ -287,6 +318,8 @@ export class ScientificCalibrationService {
         isSimulated: false,
         dataSource: validation.meta.dataSource,
         geeConnected: isGeeIntegrationEnabled(),
+        copernicusConnected: isCopernicusIntegrationEnabled(),
+        planetaryConnected: isPlanetaryComputerEnabled(),
         validationCriteriaDisclaimer: MIN_EXPLORATORY_VALIDATION_DISCLAIMER,
       },
       disclaimer: validationResult.disclaimer,

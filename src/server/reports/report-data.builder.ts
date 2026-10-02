@@ -37,7 +37,7 @@ const PARAMETER_DEFS: Array<{
   { code: "bod5", label: "DBO5", unit: "mg/L", category: "organico", field: "dbo5" },
   { code: "cod", label: "DQO", unit: "mg/L", category: "organico", field: "dqo" },
   { code: "coliforms", label: "Coliformes", unit: "NMP/100mL", category: "microbiologico", field: "coliformes" },
-  { code: "total_dissolved_solids", label: "Sólidos disueltos", unit: "mg/L", category: "fisicoquimico", field: "solidosDisueltosTotales" },
+  { code: "total_dissolved_solids", label: "Sólidos Disueltos Totales (STD)", unit: "mg/L", category: "fisicoquimico", field: "solidosDisueltosTotales" },
   { code: "flow_rate", label: "Caudal", unit: "m³/s", category: "hidrologico", field: "caudal" },
 ];
 

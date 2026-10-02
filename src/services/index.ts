@@ -2,7 +2,6 @@ export * from "./gee";
 export * from "./ai";
 export * from "./reports";
 export * from "./risk";
-export * from "./temporal";
 export * from "./executive";
 export * from "./layers";
 export * from "./indicators";

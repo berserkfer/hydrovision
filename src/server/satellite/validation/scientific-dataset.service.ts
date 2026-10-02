@@ -4,6 +4,8 @@
  */
 
 import { isGeeIntegrationEnabled } from "@/config/gee-integration.config";
+import { isCopernicusIntegrationEnabled } from "@/config/copernicus-integration.config";
+import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
 import { evaluateParameterReadiness } from "@/satellite/calibration/calibration-readiness";
 import {
   buildScientificDatasetQualityReport,
@@ -91,6 +93,8 @@ export class ScientificDatasetService {
       fechaFin: query.fechaFin,
       parameterCode: query.parameterCode,
       useGee: query.useGee,
+      useCopernicus: query.useCopernicus,
+      usePlanetaryComputer: query.usePlanetaryComputer,
     });
 
     const allPairs = buildScientificFieldSatellitePairs(
@@ -147,6 +151,10 @@ export class ScientificDatasetService {
         dataSource: validation.meta.dataSource,
         geeConnected: isGeeIntegrationEnabled(),
         geeLive: validation.meta.geeLive,
+        copernicusConnected: isCopernicusIntegrationEnabled(),
+        copernicusLive: validation.meta.copernicusLive,
+        planetaryConnected: isPlanetaryComputerEnabled(),
+        planetaryLive: validation.meta.planetaryLive,
         includeSimulated,
         disclaimer: SCIENTIFIC_DATASET_DISCLAIMER,
       },

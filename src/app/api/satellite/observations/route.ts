@@ -13,6 +13,8 @@ export async function GET(request: Request) {
       fechaInicio: searchParams.get("fechaInicio") ?? undefined,
       fechaFin: searchParams.get("fechaFin") ?? undefined,
       useGee: searchParams.get("useGee") === "true",
+      useCopernicus: searchParams.get("useCopernicus") === "true",
+      usePlanetaryComputer: searchParams.get("usePlanetaryComputer") === "true",
     };
     const data = await satelliteService.listObservations(filters);
     return NextResponse.json(data);
