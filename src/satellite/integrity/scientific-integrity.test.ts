@@ -271,6 +271,10 @@ describe("Hallazgo 6 — NDMI en flujo oficial", () => {
         tileId: "T18LTJ",
         collection: "COPERNICUS/S2_SR_HARMONIZED",
         platform: "sentinel2",
+        systemIndex: "S2A_ndmi",
+        systemTimeStart: Date.parse("2025-06-01"),
+        metadataSource: "gee_live",
+        acquisitionFromSystemTime: false,
       },
       reflectance: {
         sceneId: "S2A_ndmi",
@@ -280,6 +284,17 @@ describe("Hallazgo 6 — NDMI en flujo oficial", () => {
         reflectances,
         bandsUsed: ["B08", "B11"],
         reflectanceSemanticStatus: "valid",
+        scaleEvidence: {
+          interpretation: "confirmed_surface_reflectance_0_1",
+          minObserved: 0.04,
+          maxObserved: 0.35,
+          sampleCount: 2,
+          notes: [],
+        },
+        pixelQualityStatus: "water",
+        sclRawValue: null,
+        spatialRepresentativeness: "point_sampling",
+        systemTimeStart: Date.parse("2025-06-01"),
       },
     });
     expect(obs.indices.NDMI).toBe(computeSpectralIndex("NDMI", reflectances));

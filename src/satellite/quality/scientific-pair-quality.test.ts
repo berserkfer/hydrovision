@@ -36,7 +36,6 @@ function baseInput(overrides: Partial<QualityEvaluationInput> = {}): QualityEval
     cloudPercentage: 5,
     reflectanceSemanticStatus: "valid",
     pixelQualityStatus: "valid",
-    spatialRepresentativeness: "point_sampling",
     ...overrides,
   };
 }

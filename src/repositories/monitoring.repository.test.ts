@@ -87,8 +87,10 @@ describe("getAggregatedTimeSeries", () => {
   beforeEach(() => {
     resetDataProvider();
     setDataProvider({
-      ...mockDataProvider,
+      getMetadata: () => mockDataProvider.getMetadata(),
+      getSnapshot: () => mockDataProvider.getSnapshot(),
       getStore: () => buildStoreWithSamples(),
+      isAvailable: () => mockDataProvider.isAvailable(),
     });
   });
 
@@ -103,8 +105,10 @@ describe("getAggregatedTimeSeries", () => {
 
   it("devuelve arreglo vacío si no hay muestreos", () => {
     setDataProvider({
-      ...mockDataProvider,
+      getMetadata: () => mockDataProvider.getMetadata(),
+      getSnapshot: () => mockDataProvider.getSnapshot(),
       getStore: () => ({ ...mockDataProvider.getStore(), muestras: [], parametros: [] }),
+      isAvailable: () => mockDataProvider.isAvailable(),
     });
     expect(getAggregatedTimeSeries()).toEqual([]);
   });
