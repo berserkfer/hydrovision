@@ -26,20 +26,22 @@
 | D | Correcciones del documento de tesis (v2) | ✅ | `ca89931` |
 | E | README, roadmap y estado del proyecto | ✅ | `958c1ab` |
 | F | Typecheck de fixtures (`tsc --noEmit` limpio) | ✅ | `c1a4d66` |
+| G | Anexos 3 y 4 del documento de tesis | ✅ | `5361f87` |
 
 ## Verificación
 
 - `npx vitest run` → 36 archivos, **330 tests pasan**.
 - `npx tsc --noEmit` → sin errores.
 - `npm run build` → OK.
+- Revisión visual del .docx: anexos renderizados y verificados (31 páginas).
 
 ## Pendiente
 
-- Anexos 3 y 4 del documento de tesis.
-- Revisión visual final del .docx.
+- Revisión final del asesor y entrega.
+- Revisión visual del resto del documento si se desea.
 
 ## Reanudación
 
 Leer este archivo, el handoff y `git log --oneline -10`.
 
-**Último punto:** anexos 3 y 4 del documento de tesis.
+**Último punto:** revisión final del documento / CI opcional.

@@ -1,7 +1,7 @@
 # Handoff — HydroVision para Claude Code
 
 **Repositorio:** `github.com/berserkfer/hydrovision`
-**Último commit:** `c1a4d66` o posterior
+**Último commit:** `5361f87` o posterior
 **Fecha:** 20 de octubre de 2026
 **Uso:** pega este documento en el repo y pide a Claude Code ejecutar **un bloque por vez**, con tests y commit.
 
@@ -98,7 +98,7 @@ Archivo corregido: `docs/Proyecto_de_investigacion_HydroVision_UCV_corregido_v2.
 
 Correcciones aplicadas: año 2027 en problema y objetivo; autoría de Nizama (L. K. y C. F.); separación ECA/LMP por punto (P1 PTAR, P2–P5 pesca, E2 cauce, E3 mar, P8 excluido); regla `f_agua ≥ 0,5` con mínimo 3 píxeles; mínimo 30 pares en 6 fechas; ventana ±3 días; validación leave-one-date-out con métricas por fecha. Se agregaron las referencias del D.S. 003-2010-MINAM y del D.S. 010-2008-PRODUCE.
 
-Pendiente en el documento: anexos 3 y 4 (matriz de operacionalización y ficha de campo) y revisión visual final.
+Pendiente en el documento: ninguno. Los anexos 3 (matriz de operacionalización) y 4 (ficha de campo) están agregados y revisados visualmente; el documento tiene 31 páginas.
 
 Detalle de lo aplicado:
 1. **Año:** la universidad pidió **2027**. Cambiar las dos frases que aún dicen 2026 (problema y objetivo general).
