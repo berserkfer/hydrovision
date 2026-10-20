@@ -28,12 +28,14 @@
 | F | Typecheck de fixtures (`tsc --noEmit` limpio) | ✅ | `c1a4d66` |
 | G | Anexos 3 y 4 del documento de tesis | ✅ | `5361f87` |
 | H | CI de GitHub Actions y badge | ✅ | `54c1a2f` |
+| I | Planificador de campañas (`/planificador`) | ✅ | `f217b09` |
+| J | Caché STAC y rate limit satelital | ✅ | `967c525` |
 
 ## Verificación
 
-- `npx vitest run` → 36 archivos, **330 tests pasan**.
+- `npx vitest run` → 39 archivos, **345 tests pasan**.
 - `npx tsc --noEmit` → sin errores.
-- `npm run build` → OK.
+- `npm run build` → OK, incluye `/planificador`.
 - Revisión visual del .docx: anexos renderizados y verificados (31 páginas).
 
 ## Pendiente

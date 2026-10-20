@@ -1,7 +1,7 @@
 # Handoff — HydroVision para Claude Code
 
 **Repositorio:** `github.com/berserkfer/hydrovision`
-**Último commit:** `5361f87` o posterior
+**Último commit:** `967c525` o posterior
 **Fecha:** 20 de octubre de 2026
 **Uso:** pega este documento en el repo y pide a Claude Code ejecutar **un bloque por vez**, con tests y commit.
 
@@ -20,7 +20,7 @@ Datos clave:
 - Landsat 8 (desde 2013) sí podría emparejar 2014, a 30 m.
 - El Excel de la tesis tiene coliformes 2015-2016, promedios 2017 y estudios experimentales.
 
-Estado verificado: **330 tests pasan** (36 archivos) y `next build` compila.
+Estado verificado: **345 tests pasan** (39 archivos) y `next build` compila.
 
 Documentos: `docs/INFORME_COMPARATIVO_2026-10.md` (13 referentes y roadmap) y `docs/ESTADO_TRABAJO.md`.
 
@@ -63,6 +63,8 @@ Documentos: `docs/INFORME_COMPARATIVO_2026-10.md` (13 referentes y roadmap) y `d
 | `3ead7d0` | `POST /api/normative/evaluate` y selector de perfil en `/normativa` |
 | `8f8e7f3` | Bloque de agua (fracción, píxeles, suficiencia) en la vista de predicción |
 | `0010dfe` | Marco normativo aplicable en el PDF de reportes y mapeo compartido `point-types.ts` |
+| `f217b09` | Planificador de campañas: proyección de pasadas, nubosidad y ventana ±3 días (`/planificador`) |
+| `967c525` | Caché TTL de búsquedas STAC y rate limit en rutas satelitales |
 
 Valores normativos verificados (fuente en `catalog.ts`):
 
@@ -117,7 +119,7 @@ Detalle de lo aplicado:
 
 ```bash
 npm ci
-npx vitest run                 # 330 tests
+npx vitest run                 # 345 tests
 npx tsc --noEmit               # limpio
 npm run build                  # OK
 npm run dev                    # http://localhost:3000/normativa
