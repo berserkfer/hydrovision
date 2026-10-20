@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { clientKeyFromRequest, satelliteRateLimiter } from "@/server/api/rate-limit";
 import {
   DEFAULT_HORIZON_DAYS,
   getCampaignOpportunities,
@@ -8,6 +9,14 @@ const MIN_HORIZON = 3;
 const MAX_HORIZON = 16;
 
 export async function GET(request: Request) {
+  const rate = satelliteRateLimiter.check(clientKeyFromRequest(request));
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { ok: false, error: "Demasiadas peticiones. Intenta en unos segundos." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
+    );
+  }
+
   const url = new URL(request.url);
   const stationId = url.searchParams.get("stationId");
   const daysParam = Number(url.searchParams.get("days") ?? DEFAULT_HORIZON_DAYS);
