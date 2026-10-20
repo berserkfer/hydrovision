@@ -27,6 +27,7 @@
 | E | README, roadmap y estado del proyecto | ✅ | `958c1ab` |
 | F | Typecheck de fixtures (`tsc --noEmit` limpio) | ✅ | `c1a4d66` |
 | G | Anexos 3 y 4 del documento de tesis | ✅ | `5361f87` |
+| H | CI de GitHub Actions y badge | ✅ | `54c1a2f` |
 
 ## Verificación
 
