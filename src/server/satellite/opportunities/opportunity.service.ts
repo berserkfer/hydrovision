@@ -35,8 +35,8 @@ export interface CampaignOpportunitiesResult {
   disclaimer: string;
 }
 
-function isoOffset(days: number): string {
-  const d = new Date();
+function isoOffset(days: number, base = new Date()): string {
+  const d = new Date(base);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
@@ -72,7 +72,8 @@ async function fetchCloudForecast(
 
 export async function getCampaignOpportunities(
   stationId: string,
-  horizonDays: number = DEFAULT_HORIZON_DAYS
+  horizonDays: number = DEFAULT_HORIZON_DAYS,
+  todayOverride?: string
 ): Promise<CampaignOpportunitiesResult | null> {
   const store = getDataStore();
   const station =
@@ -82,8 +83,8 @@ export async function getCampaignOpportunities(
   if (!station) return null;
 
   const { latitude, longitude } = station.coordenadas;
-  const today = isoOffset(0);
-  const startDate = isoOffset(-HISTORY_DAYS);
+  const today = todayOverride ?? isoOffset(0);
+  const startDate = isoOffset(-HISTORY_DAYS, new Date(`${today}T00:00:00Z`));
 
   let historyScenes = 0;
   let acquisitionDates: string[] = [];
