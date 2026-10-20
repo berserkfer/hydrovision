@@ -24,6 +24,7 @@ export type PredictionInsufficientStatus =
   | "MODELING_TARGET_NOT_ENABLED"
   | "NO_RECENT_OBSERVATION"
   | "NO_PREDICTOR_VALUE"
+  | "NO_WATER_PIXELS"
   | "INVALID_REQUEST";
 
 export interface PredictionSampleSizeReport {

@@ -8,7 +8,8 @@
 import { interpretSclPixelQuality } from "@/satellite/quality/pixel-quality";
 import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
 import { getSentinel2ItemById, searchSentinel2Items, type StacItem } from "./pc-stac.client";
-import { readBandPixelAtPoint } from "./pc-band-reader";
+import { readBandPixelAtPoint, readBandWindowAtPoint } from "./pc-band-reader";
+import { assessWaterSufficiency, computeWaterFraction } from "@/satellite/quality/water-fraction";
 import { convertDnToReflectance, resolveBoaOffset } from "./pc-band.mapper";
 import { mapCopernicusReflectances } from "@/server/copernicus/copernicus-band.mapper";
 import { processGeeSurfaceReflectances } from "@/server/gee/gee-band.mapper";
@@ -23,6 +24,33 @@ import type {
 const REFLECTANCE_BANDS = ["B03", "B04", "B05", "B08", "B11"] as const;
 const SCL_BAND = "SCL";
 const SENTINEL2_L2A_COLLECTION = "sentinel-2-l2a" as const;
+const WATER_FRACTION_WINDOW_SIZE = 3;
+
+/**
+ * Fracción de agua en la ventana 3×3 con NDWI. Si no hay ventanas válidas
+ * devuelve "unknown" — nunca asume que el píxel es agua.
+ */
+function computeWaterMetrics(
+  greenRaw: number[] | undefined,
+  nirRaw: number[] | undefined,
+  boaOffset: number
+): { waterFraction: number | null; pixelsUsed: number; waterSufficiency: "sufficient" | "insufficient" | "unknown" } {
+  if (!greenRaw || !nirRaw || greenRaw.length === 0 || greenRaw.length !== nirRaw.length) {
+    return { waterFraction: null, pixelsUsed: 0, waterSufficiency: "unknown" };
+  }
+
+  const pixels = greenRaw.map((green, i) => ({
+    green: convertDnToReflectance(green, boaOffset),
+    nir: convertDnToReflectance(nirRaw[i], boaOffset),
+  }));
+
+  const { waterFraction, pixelsUsed } = computeWaterFraction(pixels);
+  return {
+    waterFraction,
+    pixelsUsed,
+    waterSufficiency: assessWaterSufficiency(waterFraction, pixelsUsed),
+  };
+}
 
 function tileFromSceneId(sceneId: string): string | null {
   const match = sceneId.match(/_T(\d{2}[A-Z]{3})_/);
@@ -94,12 +122,32 @@ export class PlanetaryAdapter {
       // en vez de una a una recorta drásticamente la latencia total (antes: hasta 6 lecturas
       // secuenciales por escena, cada una de varios segundos reales contra Azure Blob Storage).
       const bandsToRead = [...REFLECTANCE_BANDS, SCL_BAND] as const;
+      const waterWindows: { green?: number[]; nir?: number[] } = {};
+
       const bandReads = await Promise.all(
         bandsToRead.map(async (band) => {
           const href = resolvedItem.assets[band]?.href;
           if (!href) return null;
+
+          // B03 y B08 se leen como ventana 3×3 para estimar la fracción de agua.
+          // El valor puntual sigue siendo el píxel central de esa ventana.
+          if (band === "B03" || band === "B08") {
+            const window = await readBandWindowAtPoint(
+              href,
+              request.latitude,
+              request.longitude,
+              WATER_FRACTION_WINDOW_SIZE
+            );
+            if (!window) return null;
+            const center = window.rawValues[Math.floor(window.rawValues.length / 2)];
+            if (center === undefined || !Number.isFinite(center)) return null;
+            if (band === "B03") waterWindows.green = window.rawValues;
+            else waterWindows.nir = window.rawValues;
+            return { band, rawValue: center } as const;
+          }
+
           const pixel = await readBandPixelAtPoint(href, request.latitude, request.longitude);
-          return pixel ? ({ band, pixel } as const) : null;
+          return pixel ? ({ band, rawValue: pixel.rawValue } as const) : null;
         })
       );
 
@@ -108,8 +156,8 @@ export class PlanetaryAdapter {
         if (!read) continue;
         rawAllBands[read.band] =
           read.band === SCL_BAND
-            ? read.pixel.rawValue // SCL es una clasificación entera, sin escalar
-            : convertDnToReflectance(read.pixel.rawValue, boaOffset);
+            ? read.rawValue // SCL es una clasificación entera, sin escalar
+            : convertDnToReflectance(read.rawValue, boaOffset);
       }
 
       if (Object.keys(rawAllBands).length === 0) return null;
@@ -117,6 +165,7 @@ export class PlanetaryAdapter {
       const { [SCL_BAND]: sclRawValue, ...reflectanceBands } = rawAllBands;
       const processed = processGeeSurfaceReflectances(reflectanceBands, mapCopernicusReflectances);
       const pixelQualityStatus = interpretSclPixelQuality(sclRawValue ?? null);
+      const water = computeWaterMetrics(waterWindows.green, waterWindows.nir, boaOffset);
       const acquisitionDate = item.properties.datetime.slice(0, 10);
 
       const base: PlanetaryReflectanceRecord = {
@@ -132,6 +181,9 @@ export class PlanetaryAdapter {
         sclRawValue: sclRawValue ?? null,
         spatialRepresentativeness: "point_sampling",
         systemTimeStart: Date.parse(item.properties.datetime) || null,
+        waterFraction: water.waterFraction,
+        pixelsUsed: water.pixelsUsed,
+        waterSufficiency: water.waterSufficiency,
       };
 
       if (processed.semanticStatus !== "valid") {

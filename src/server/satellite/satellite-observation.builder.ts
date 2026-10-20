@@ -89,6 +89,9 @@ function buildSatelliteObservationFromProvider(
     sourceType: "satellite",
     isSimulated,
     spatialResolutionMeters: 10,
+    waterFraction: reflectance.waterFraction ?? null,
+    pixelsUsed: reflectance.pixelsUsed ?? 0,
+    waterSufficiency: reflectance.waterSufficiency ?? "unknown",
     quality: {
       acquisitionDate,
       processingLevel: SENTINEL2_PROCESSING_LEVEL,

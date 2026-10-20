@@ -57,6 +57,76 @@ async function attemptReadBandPixelAtPoint(
   return { rawValue, epsg, resolutionMeters: Math.abs(resX) };
 }
 
+export interface BandWindowReadResult {
+  rawValues: number[];
+  epsg: number;
+  resolutionMeters: number;
+}
+
+async function attemptReadBandWindowAtPoint(
+  assetHref: string,
+  latitude: number,
+  longitude: number,
+  windowSize: number
+): Promise<BandWindowReadResult | null> {
+  const signedHref = await signAssetHref(assetHref);
+  const tiff = await fromUrl(signedHref);
+  const image: GeoTIFFImage = await tiff.getImage();
+
+  const geoKeys = image.getGeoKeys() as { ProjectedCSTypeGeoKey?: number } | undefined;
+  const epsg = geoKeys?.ProjectedCSTypeGeoKey;
+  if (!epsg) return null;
+
+  const [x, y] = proj4(WGS84, utmProj4Def(epsg), [longitude, latitude]);
+
+  const bbox = image.getBoundingBox();
+  const [resX] = image.getResolution();
+
+  if (x < bbox[0] || x > bbox[2] || y < bbox[1] || y > bbox[3]) {
+    return null;
+  }
+
+  const col = Math.floor((x - bbox[0]) / resX);
+  const row = Math.floor((bbox[3] - y) / resX);
+
+  const half = Math.floor(windowSize / 2);
+  const col0 = Math.max(0, col - half);
+  const row0 = Math.max(0, row - half);
+  const col1 = Math.min(image.getWidth(), col + half + 1);
+  const row1 = Math.min(image.getHeight(), row + half + 1);
+
+  if (col1 <= col0 || row1 <= row0) return null;
+
+  const data = await image.readRasters({ window: [col0, row0, col1, row1] });
+  const values = Array.from(data[0] as unknown as ArrayLike<number>);
+
+  if (values.length === 0) return null;
+
+  return { rawValues: values, epsg, resolutionMeters: Math.abs(resX) };
+}
+
+/**
+ * Lee una ventana cuadrada de píxeles (por defecto 3×3) alrededor del punto.
+ * Se usa para calcular la fracción de agua: un solo píxel no permite distinguir
+ * agua pura de una mezcla con la orilla.
+ */
+export async function readBandWindowAtPoint(
+  assetHref: string,
+  latitude: number,
+  longitude: number,
+  windowSize = 3
+): Promise<BandWindowReadResult | null> {
+  for (let attempt = 1; attempt <= MAX_READ_ATTEMPTS; attempt++) {
+    try {
+      return await attemptReadBandWindowAtPoint(assetHref, latitude, longitude, windowSize);
+    } catch {
+      if (attempt === MAX_READ_ATTEMPTS) return null;
+      await sleep(RETRY_BASE_DELAY_MS * attempt);
+    }
+  }
+  return null;
+}
+
 // Deliberadamente bajo: cada intento ya implica una petición HTTP real (firma + range request
 // al COG en Azure Blob Storage) que puede tardar varios segundos por sí sola. Un tercer intento
 // multiplicaría la latencia total sin una ganancia de fiabilidad proporcional — 2 intentos
