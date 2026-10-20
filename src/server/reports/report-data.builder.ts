@@ -5,6 +5,12 @@
 import { EstadoECA } from "@/constants/enums";
 import { ESTADO_ECA_LABELS } from "@/constants/enums";
 import { getDataStore } from "@/data/store-access";
+import {
+  POINT_TYPE_LABELS,
+  pointTypeForCode,
+  resolveProfileForPointType,
+} from "@/lib/normative";
+import type { ExportNormativeProfileRow } from "./report.types";
 import { resolveNombre } from "@/utils";
 import type { ReportChartSection } from "@/types/report-management";
 import type {
@@ -368,6 +374,29 @@ export function buildExportBundle(
     "Se recomienda complementar con monitoreo continuo y validación en laboratorio acreditado.",
   ];
 
+  const normativeProfiles: ExportNormativeProfileRow[] = stations.map((station) => {
+    const pointType = pointTypeForCode(station.codigo);
+    if (!pointType) {
+      return {
+        codigo: station.codigo,
+        nombre: station.nombre,
+        tipo: "No aplica (agua de proceso)",
+        instrumento: "—",
+        perfil: "—",
+        fuente: "—",
+      };
+    }
+    const profile = resolveProfileForPointType(pointType);
+    return {
+      codigo: station.codigo,
+      nombre: station.nombre,
+      tipo: POINT_TYPE_LABELS[pointType],
+      instrumento: profile.instrument,
+      perfil: profile.label,
+      fuente: profile.source,
+    };
+  });
+
   return {
     generatedAt: new Date().toISOString(),
     responsable,
@@ -396,6 +425,7 @@ export function buildExportBundle(
     evaluations,
     charts,
     conclusions,
+    normativeProfiles,
   };
 }
 

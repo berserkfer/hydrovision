@@ -29,3 +29,5 @@ export {
   POINT_TYPE_LABELS,
   type MonitoringPointType,
 } from "./resolve";
+
+export { pointTypeForCode } from "./point-types";

@@ -62,6 +62,27 @@ describe("PDF", () => {
   });
 });
 
+describe("Marco normativo", () => {
+  it("asigna LMP a efluentes y ECA a la zona marina", () => {
+    const bundle = buildExportBundle(
+      {
+        ...DEFAULT_EXPORT_FILTERS,
+        fechaInicio: "2014-01-01",
+        fechaFin: "2014-12-31",
+        rioId: "dren-4000",
+      },
+      DEFAULT_EXPORT_SECTIONS,
+      "Test"
+    );
+
+    expect(bundle.normativeProfiles.length).toBe(bundle.stations.length);
+    const p1 = bundle.normativeProfiles.find((p) => p.codigo === "P1");
+    const p6 = bundle.normativeProfiles.find((p) => p.codigo === "P6");
+    expect(p1?.instrumento).toBe("LMP");
+    expect(p6?.instrumento).toBe("ECA");
+  });
+});
+
 describe("Fechas", () => {
   it("respeta rango de fechas en preview", () => {
     const preview = buildExportPreview({

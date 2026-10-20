@@ -135,6 +135,15 @@ export interface ExportPreviewDto {
   message?: string;
 }
 
+export interface ExportNormativeProfileRow {
+  codigo: string;
+  nombre: string;
+  tipo: string;
+  instrumento: string;
+  perfil: string;
+  fuente: string;
+}
+
 export interface ReportExportBundle {
   generatedAt: string;
   responsable: string;
@@ -149,6 +158,7 @@ export interface ReportExportBundle {
   evaluations: ExportEvaluationRow[];
   charts: ReportChartSection[];
   conclusions: string[];
+  normativeProfiles: ExportNormativeProfileRow[];
 }
 
 export interface ExportHistoryRecord {

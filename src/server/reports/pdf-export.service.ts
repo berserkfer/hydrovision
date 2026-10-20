@@ -99,6 +99,41 @@ export class PdfExportService {
       });
     }
 
+    if (bundle.normativeProfiles.length > 0) {
+      const previousY =
+        (doc as jsPDF & { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? 70;
+      const needsNewPage = previousY + 12 > 260;
+      if (needsNewPage) doc.addPage();
+      const titleY = needsNewPage ? 20 : previousY + 12;
+
+      doc.setFontSize(13);
+      doc.setTextColor(BRAND.r, BRAND.g, BRAND.b);
+      doc.text("Marco normativo aplicable", 20, titleY);
+      doc.setFontSize(8);
+      doc.setTextColor(60);
+      doc.text(
+        "ECA: cuerpo de agua (E2 cauce, E3 mar). LMP: efluente en su punto de descarga. No se mezclan instrumentos en un mismo veredicto.",
+        20,
+        titleY + 5,
+        { maxWidth: 170 }
+      );
+
+      autoTable(doc, {
+        startY: titleY + 11,
+        head: [["Punto", "Tipo", "Instrumento", "Perfil", "Fuente"]],
+        body: bundle.normativeProfiles.map((p) => [
+          p.codigo,
+          p.tipo,
+          p.instrumento,
+          p.perfil,
+          p.fuente,
+        ]),
+        styles: { fontSize: 6.5 },
+        headStyles: { fillColor: [BRAND.r, BRAND.g, BRAND.b] },
+        margin: { left: 20, right: 20 },
+      });
+    }
+
     if (bundle.sections.mediciones) {
       doc.addPage();
       doc.setFontSize(13);

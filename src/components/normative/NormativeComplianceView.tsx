@@ -7,6 +7,7 @@ import {
   POINT_TYPE_LABELS,
   evaluateNormative,
   getProfileById,
+  pointTypeForCode,
   resolveProfileForPointType,
   type MonitoringPointType,
   type NormativeEvaluation,
@@ -32,18 +33,9 @@ const STATUS_CLASS: Record<NormativeEvaluation["status"], string> = {
 };
 
 /**
- * Tipo de punto según el código del Dren 4000.
  * P8 es agua de proceso, no un punto de descarga: no se evalúa contra LMP ni ECA.
+ * El mapeo por código vive en `@/lib/normative/point-types`.
  */
-function pointTypeFor(codigo: string): MonitoringPointType | null {
-  const n = Number.parseInt(codigo.replace(/\D/g, ""), 10);
-  if (!Number.isFinite(n)) return null;
-  if (n === 1) return "efluente_ptar";
-  if (n >= 2 && n <= 5) return "efluente_pesca";
-  if (n === 8) return null;
-  if (n >= 6) return "mar";
-  return "cauce";
-}
 
 function toMeasurement(
   params: ParametrosFisicoquimicos,
@@ -99,7 +91,7 @@ function buildResults(profileOverrideId?: string): PointResult[] {
       return { station, fecha: muestra.fechaMuestreo, pointType: null, evaluation: null, reason: "Sin parámetros para la muestra." };
     }
 
-    const pointType = pointTypeFor(station.codigo);
+    const pointType = pointTypeForCode(station.codigo);
     if (!pointType) {
       return {
         station,
