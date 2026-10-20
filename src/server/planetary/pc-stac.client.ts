@@ -4,6 +4,10 @@
  */
 
 import { PLANETARY_COMPUTER_COLLECTION, PLANETARY_COMPUTER_STAC_URL } from "@/config/planetary-computer.config";
+import { TtlCache } from "@/server/cache/ttl-cache";
+
+/** Las búsquedas STAC idénticas se reutilizan durante 10 minutos. */
+const stacSearchCache = new TtlCache<StacItem[]>(10 * 60_000, 100);
 
 export interface StacSearchParams {
   latitude: number;
@@ -46,6 +50,10 @@ interface StacSearchResponse {
 }
 
 export async function searchSentinel2Items(params: StacSearchParams): Promise<StacItem[]> {
+  const cacheKey = JSON.stringify(params);
+  const cached = stacSearchCache.get(cacheKey);
+  if (cached) return cached;
+
   const cloudMax = params.cloudCoverMax ?? 30;
   const limit = params.limit ?? 10;
 
@@ -69,7 +77,9 @@ export async function searchSentinel2Items(params: StacSearchParams): Promise<St
   }
 
   const data = (await response.json()) as StacSearchResponse;
-  return data.features ?? [];
+  const items = data.features ?? [];
+  stacSearchCache.set(cacheKey, items);
+  return items;
 }
 
 export async function getSentinel2ItemById(itemId: string): Promise<StacItem | null> {

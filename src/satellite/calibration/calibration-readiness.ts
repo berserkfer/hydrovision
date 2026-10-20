@@ -3,6 +3,7 @@
  */
 
 import { getCandidateRelationshipsForParameter } from "../catalog/comparability.catalog";
+import { MATCHING_MAX_TEMPORAL_DIFFERENCE_DAYS } from "../config/matching.config";
 import type { SpectralIndexCode } from "../catalog/spectral-indices.catalog";
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import {
@@ -162,11 +163,15 @@ export function evaluateParameterReadiness(
     warnings.push("Tamaño muestral cercano al mínimo exploratorio");
   }
 
+  // Pares en el borde de la ventana operativa (±3 días): no invalidan el par,
+  // pero elevan la incertidumbre porque el agua pudo cambiar.
   const largeTemporalDiff = paramPairs.filter(
-    (p) => (p.temporalDifferenceDays ?? 0) > 5
+    (p) => (p.temporalDifferenceDays ?? 0) >= MATCHING_MAX_TEMPORAL_DIFFERENCE_DAYS
   ).length;
   if (largeTemporalDiff > paramPairs.length * 0.5) {
-    warnings.push("Diferencias temporales campo-satélite elevadas en >50% de pares");
+    warnings.push(
+      `Más del 50% de los pares está en el borde de la ventana (±${MATCHING_MAX_TEMPORAL_DIFFERENCE_DAYS} días)`
+    );
   }
 
   if (reasons.some((r) => r.includes("Ningún índice"))) {

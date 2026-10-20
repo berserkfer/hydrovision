@@ -16,6 +16,9 @@ export interface ObservationSummary {
   acquisitionDate: string;
   indices: Record<string, number>;
   isSimulated: boolean;
+  waterFraction?: number | null;
+  pixelsUsed?: number;
+  waterSufficiency?: "sufficient" | "insufficient" | "unknown";
 }
 export interface ObservationsResponse {
   observations: ObservationSummary[];

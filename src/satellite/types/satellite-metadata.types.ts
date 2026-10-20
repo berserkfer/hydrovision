@@ -4,6 +4,7 @@
 
 import type { Sentinel2BandCode } from "../catalog/sentinel2-bands.catalog";
 import type { PixelQualityStatus } from "../quality/pixel-quality";
+import type { WaterSufficiency } from "../quality/water-fraction";
 import type { ReflectanceSemanticStatus, ReflectanceScaleEvidence } from "@/server/gee/gee-band.mapper";
 import type { SpatialRepresentativeness } from "@/server/gee/gee.adapter.types";
 
@@ -28,6 +29,12 @@ export interface SatelliteQualityMetadata {
   systemTimeStart?: number | null;
   tileId?: string | null;
   qualityNotes?: string;
+  /** Fracción de píxeles de agua en la ventana analizada (0–1). */
+  waterFraction?: number | null;
+  /** Píxeles válidos usados para calcular waterFraction. */
+  pixelsUsed?: number;
+  /** Suficiencia de píxeles acuáticos. */
+  waterSufficiency?: WaterSufficiency;
 }
 
 export const DEFAULT_CLOUD_MASK_REQUIREMENT =

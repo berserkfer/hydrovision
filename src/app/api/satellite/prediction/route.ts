@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { clientKeyFromRequest, satelliteRateLimiter } from "@/server/api/rate-limit";
 import { requirePermission } from "@/server/authorization/guards";
 import {
   PredictionInsufficientDataError,
@@ -29,6 +30,14 @@ const VALID_PARAMETERS = new Set<string>([
 const VALID_INDICES = new Set<string>(["NDVI", "NDCI", "NDWI", "MNDWI", "NDTI", "NDMI"]);
 
 export async function GET(request: Request) {
+  const rate = satelliteRateLimiter.check(clientKeyFromRequest(request));
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { error: "Demasiadas peticiones. Intenta en unos segundos." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
+    );
+  }
+
   try {
     await requirePermission(request, "STATIONS_VIEW");
     const { searchParams } = new URL(request.url);

@@ -1,46 +1,37 @@
-# HydroVision — Roadmap por fases
+# HydroVision — Roadmap
 
-## Fase 1 — Fundamentos (actual)
+Estado a octubre de 2026. Lo completado está en `docs/ESTADO_TRABAJO.md`.
 
-- [x] Documentación de arquitectura
-- [x] Estructura de carpetas
-- [x] Tipos TypeScript del dominio
-- [x] Datos simulados (sin inventar como reales)
-- [x] Dashboard prototipo funcional
-- [x] Clasificador ECA básico
-- [x] Stubs GEE e IA
+## Completado
 
-## Fase 2 — Mapa e índices satelitales
+| Fase | Entregable |
+|---|---|
+| 1 | Arquitectura modular, tipos de dominio y datos simulados etiquetados |
+| 2 | Estaciones, muestreos, campañas, parámetros y evaluación ambiental |
+| 3 | PostgreSQL + Prisma, importación CSV/Excel, auditoría y roles |
+| 4 | Capa satelital real (Sentinel-2 L2A vía Planetary Computer) e índices espectrales |
+| 5 | Calibración exploratoria, validación temporal y modelo de literatura (Nechad 2010) |
+| 6 | PWA de campo con HydroColor y modo offline |
+| 7 | Motor normativo ECA/LMP, página `/normativa` y sección normativa en el PDF |
+| 8 | Fracción de agua por píxel y bloqueo de predicciones sin píxeles acuáticos |
+| 9 | Validación *leave-one-date-out* con métricas por fecha |
 
-- [ ] Mapa Leaflet con trazado río Reque (GeoJSON)
-- [ ] Marcadores P1–P6 interactivos
-- [ ] Panel de índices: NDWI, NDVI, MNDWI, NDTI (simulados)
-- [ ] Selector de fecha / comparación visual
+## Siguiente
 
-## Fase 3 — Datos de campo
+| Prioridad | Tarea |
+|---|---|
+| Alta | Campañas de campo sincronizadas con Sentinel-2 para generar pares reales |
+| Alta | Anexos 3 y 4 de la tesis (operacionalización y ficha de campo) |
+| Media | Corregir `tsc --noEmit` en fixtures de tests y añadir CI |
+| Media | Comparar la corrección atmosférica L2A con ACOLITE/POLYMER |
+| Media | Mostrar la serie temporal satelital 2015–2026 del dren en el dashboard |
+| Baja | Autenticación real y protección de rutas administrativas |
+| Baja | Caché y límite de peticiones en `/api/satellite/*` |
+| Baja | Consolidar los dos stacks GEE y los mapas Leaflet duplicados |
 
-- [ ] Esquema Prisma + PostgreSQL
-- [ ] Formulario registro parámetros (pH, turbidez, etc.)
-- [ ] Historial de monitoreos
-- [ ] Gráficos temporales por estación
-- [ ] Comparación entre fechas
+## Líneas de investigación futuras
 
-## Fase 4 — Google Earth Engine
-
-- [ ] Servicio Python con earthengine-api
-- [ ] Autenticación GEE (cuenta institucional)
-- [ ] Pipeline Landsat/Sentinel para área Reque
-- [ ] Caché de índices en BD
-
-## Fase 5 — Reportes y estadísticas
-
-- [ ] Panel estadístico (tendencias, correlaciones)
-- [ ] Exportación PDF por estación / periodo
-- [ ] Metodología documentada para anexo de tesis
-
-## Fase 6 — Inteligencia Artificial
-
-- [ ] Dataset etiquetado (campo + satélite)
-- [ ] Modelo entrenamiento offline
-- [ ] API FastAPI inferencia
-- [ ] Visualización riesgo en dashboard y mapa
+- Fusión multisensor (Sentinel-2, Landsat 8/9, PlanetScope) con armonización.
+- Pronóstico a 7 días y detección de anomalías.
+- Gemelo digital 1D del dren para escenarios de vertido y lluvia.
+- Aprendizaje activo para decidir dónde y cuándo muestrear.

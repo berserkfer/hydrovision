@@ -3,6 +3,8 @@
  * minimum exploratory validation criteria — NO estándares científicos universales.
  */
 
+import { MATCHING_MAX_TEMPORAL_DIFFERENCE_DAYS } from "./matching.config";
+
 export const MIN_EXPLORATORY_VALIDATION_DISCLAIMER =
   "Estos umbrales son criterios técnicos internos (minimum exploratory validation criteria) para evaluar consistencia exploratoria. No constituyen validación científica definitiva ni estándares universales." as const;
 
@@ -23,8 +25,8 @@ export const MIN_EXPLORATORY_VALIDATION = {
   maxRmseRatioWarning: 2.0,
   /** Fracción máxima de pares en una estación */
   maxSingleStationShare: 0.8,
-  /** Diferencia temporal campo-satélite elevada (días) */
-  elevatedTemporalDiffDays: 5,
+  /** Diferencia temporal campo-satélite elevada (días) — misma ventana operativa */
+  elevatedTemporalDiffDays: MATCHING_MAX_TEMPORAL_DIFFERENCE_DAYS,
 } as const;
 
 export const CALIBRATION_VALIDATION_DISCLAIMERS = {

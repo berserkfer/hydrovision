@@ -4,6 +4,7 @@
 
 import type { Sentinel2BandCode, Sentinel2ReflectanceMap } from "@/satellite/catalog/sentinel2-bands.catalog";
 import type { PixelQualityStatus } from "@/satellite/quality/pixel-quality";
+import type { WaterSufficiency } from "@/satellite/quality/water-fraction";
 import type { ReflectanceScaleEvidence, ReflectanceSemanticStatus } from "./gee-band.mapper";
 
 export type SpatialRepresentativeness = "point_sampling";
@@ -43,6 +44,10 @@ export interface GeeReflectanceRecord {
   sclRawValue: number | null;
   spatialRepresentativeness: SpatialRepresentativeness;
   systemTimeStart: number | null;
+  /** Ventana de píxeles: fracción de agua, píxeles válidos y suficiencia. */
+  waterFraction?: number | null;
+  pixelsUsed?: number;
+  waterSufficiency?: WaterSufficiency;
 }
 
 export interface GeeSceneSearchRequest {

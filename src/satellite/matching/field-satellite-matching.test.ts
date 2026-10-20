@@ -59,6 +59,12 @@ describe("isTemporallyCompatible", () => {
     expect(isTemporallyCompatible(MATCHING_MAX_TEMPORAL_DIFFERENCE_DAYS)).toBe(true);
     expect(isTemporallyCompatible(MATCHING_MAX_TEMPORAL_DIFFERENCE_DAYS + 1)).toBe(false);
   });
+
+  it("fija la ventana operativa en ±3 días", () => {
+    expect(MATCHING_MAX_TEMPORAL_DIFFERENCE_DAYS).toBe(3);
+    expect(isTemporallyCompatible(3)).toBe(true);
+    expect(isTemporallyCompatible(4)).toBe(false);
+  });
 });
 
 describe("isSpatiallyCompatible", () => {

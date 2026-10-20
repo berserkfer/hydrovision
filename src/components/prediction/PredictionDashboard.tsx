@@ -58,6 +58,46 @@ function StepBadge({ ok, label }: { ok: boolean | null; label: string }) {
   );
 }
 
+function WaterPixelQuality({
+  observation,
+}: {
+  observation: {
+    waterFraction?: number | null;
+    pixelsUsed?: number;
+    waterSufficiency?: "sufficient" | "insufficient" | "unknown";
+  };
+}) {
+  if (observation.waterFraction == null && observation.waterSufficiency !== "insufficient") {
+    return null;
+  }
+
+  const percent =
+    observation.waterFraction == null ? null : Math.round(observation.waterFraction * 100);
+  const insufficient = observation.waterSufficiency === "insufficient";
+
+  return (
+    <div
+      className={cn(
+        "mt-2 rounded-lg px-3 py-2 text-xs",
+        insufficient
+          ? "bg-amber-500/10 text-amber-800 dark:text-amber-300"
+          : "bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+      )}
+    >
+      <p>
+        Píxeles de agua en la ventana 3×3:{" "}
+        <strong>{percent === null ? "desconocido" : `${percent}%`}</strong>
+        {observation.pixelsUsed != null ? ` · ${observation.pixelsUsed} píxeles válidos` : ""}
+      </p>
+      {insufficient && (
+        <p className="mt-1 font-medium">
+          Advertencia: no hay píxeles de agua suficientes; la estimación no debería usarse.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function PredictionDashboard() {
   const [stationId, setStationId] = useState(DREN_4000_STATIONS[4]?.id ?? DREN_4000_STATIONS[0].id); // P5 por defecto
   const [parameterCode, setParameterCode] = useState("total_suspended_solids");
@@ -175,14 +215,17 @@ export function PredictionDashboard() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {observations && observations.observations.length > 0 ? (
-              <ul className="space-y-1">
-                {Object.entries(observations.observations[0].indices).map(([k, v]) => (
-                  <li key={k} className="flex justify-between">
-                    <span className="text-slate-500">{k}</span>
-                    <span className="hv-num text-[var(--hv-ink)]">{v.toFixed(3)}</span>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <ul className="space-y-1">
+                  {Object.entries(observations.observations[0].indices).map(([k, v]) => (
+                    <li key={k} className="flex justify-between">
+                      <span className="text-slate-500">{k}</span>
+                      <span className="hv-num text-[var(--hv-ink)]">{v.toFixed(3)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <WaterPixelQuality observation={observations.observations[0]} />
+              </>
             ) : (
               <p className="text-slate-500">Sin observación satelital reciente para calcular índices.</p>
             )}

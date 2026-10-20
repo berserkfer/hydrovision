@@ -261,9 +261,10 @@ export class PredictionService {
       // no existe uno registrado para este parámetro, o no hay reflectancia disponible, cae
       // al mensaje honesto de "insuficiente" de siempre.
       const resolvedForLiterature = await resolveLatestObservation(request);
-      const literatureEstimate = resolvedForLiterature
-        ? applyLiteratureModel(parameterCode, resolvedForLiterature.observation.reflectances)
-        : null;
+      const literatureEstimate =
+        resolvedForLiterature && resolvedForLiterature.observation.waterSufficiency !== "insufficient"
+          ? applyLiteratureModel(parameterCode, resolvedForLiterature.observation.reflectances)
+          : null;
 
       if (literatureEstimate && resolvedForLiterature) {
         const literatureResult: PredictionLiteratureModelResult = {
@@ -326,6 +327,22 @@ export class PredictionService {
       fail({
         status: "NO_RECENT_OBSERVATION",
         message: `No hay observación satelital disponible para la estación ${stationId} en el rango consultado.`,
+        stationId,
+        parameterCode,
+        sampleSize,
+        audit: validated.audit,
+      });
+    }
+
+    // Un píxel predominantemente terrestre no puede producir un valor de agua.
+    if (resolved.observation.waterSufficiency === "insufficient") {
+      const fraction = resolved.observation.waterFraction;
+      fail({
+        status: "NO_WATER_PIXELS",
+        message:
+          `La ventana satelital de ${resolved.observation.acquisitionDate} no tiene píxeles de agua suficientes ` +
+          `(fracción ${fraction === null || fraction === undefined ? "desconocida" : fraction.toFixed(2)}, ` +
+          `${resolved.observation.pixelsUsed ?? 0} píxeles válidos). No se emite una predicción.`,
         stationId,
         parameterCode,
         sampleSize,

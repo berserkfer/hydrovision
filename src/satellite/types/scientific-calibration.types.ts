@@ -6,6 +6,7 @@
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import type { SpectralIndexCode } from "../catalog/spectral-indices.catalog";
 import type { TemporalDifferenceStatistics } from "./scientific-dataset.types";
+import type { LeaveOneDateOutResult } from "../calibration/leave-one-date-out";
 
 export type CalibrationReadinessStatus =
   | "READY"
@@ -298,6 +299,8 @@ export interface CalibrationValidateMeta {
 export interface CalibrationValidateSuccessResponse {
   model: ScientificCalibrationModel;
   validation: ScientificCalibrationValidationResult;
+  /** Validación cruzada temporal: una fecha excluida por fold. */
+  crossValidation?: LeaveOneDateOutResult;
   audit: ScientificDatasetAuditReport;
   scientificStatus: "validated_exploratory";
   meta: CalibrationValidateMeta;

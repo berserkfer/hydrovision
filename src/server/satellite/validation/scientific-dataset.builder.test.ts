@@ -14,7 +14,7 @@ import {
 import { SCIENTIFIC_DATASET_DISCLAIMER } from "@/satellite/types/scientific-dataset.types";
 
 function makeComparison(
-  overrides: Partial<FieldSatelliteComparison> & {
+  overrides: Partial<Omit<FieldSatelliteComparison, "field" | "satellite" | "matching">> & {
     field?: Partial<FieldSatelliteComparison["field"]>;
     satellite?: Partial<FieldSatelliteComparison["satellite"]>;
     matching?: Partial<FieldSatelliteComparison["matching"]>;
