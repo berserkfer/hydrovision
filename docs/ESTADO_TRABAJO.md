@@ -24,20 +24,22 @@
 | B | Scorecard de agua en vista satelital | ✅ | `8f8e7f3` |
 | C | Marco normativo en el PDF | ✅ | `0010dfe` |
 | D | Correcciones del documento de tesis (v2) | ✅ | `ca89931` |
+| E | README, roadmap y estado del proyecto | ✅ | `958c1ab` |
+| F | Typecheck de fixtures (`tsc --noEmit` limpio) | ✅ | `c1a4d66` |
 
 ## Verificación
 
 - `npx vitest run` → 36 archivos, **330 tests pasan**.
+- `npx tsc --noEmit` → sin errores.
 - `npm run build` → OK.
 
 ## Pendiente
 
-- Actualizar `README.md`, `docs/ROADMAP.md` y `docs/PROJECT_STATUS.md` al estado real.
-- Arreglar los errores de `tsc --noEmit` en fixtures de tests.
 - Anexos 3 y 4 del documento de tesis.
+- Revisión visual final del .docx.
 
 ## Reanudación
 
 Leer este archivo, el handoff y `git log --oneline -10`.
 
-**Último punto:** documentación raíz + typecheck.
+**Último punto:** anexos 3 y 4 del documento de tesis.

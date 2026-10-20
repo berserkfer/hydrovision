@@ -1,7 +1,7 @@
 # Handoff — HydroVision para Claude Code
 
 **Repositorio:** `github.com/berserkfer/hydrovision`
-**Último commit:** `ca89931` o posterior
+**Último commit:** `c1a4d66` o posterior
 **Fecha:** 20 de octubre de 2026
 **Uso:** pega este documento en el repo y pide a Claude Code ejecutar **un bloque por vez**, con tests y commit.
 
@@ -84,7 +84,7 @@ Deuda técnica pendiente (no bloquea la tesis):
 
 | Problema | Evidencia |
 |---|---|
-| `tsc --noEmit` falla | Errores en fixtures de tests (`scientific-dataset.builder.test.ts`, `monitoring.repository.test.ts`, `scientific-integrity.test.ts`, `scientific-pair-quality.test.ts`); `next build` sí pasa |
+| ~~`tsc --noEmit` falla~~ | Resuelto en `c1a4d66`: typecheck limpio |
 | Sin autenticación real | `src/server/authorization/dev-user-context.ts` |
 | Sin caché ni rate limit satelital | `/api/satellite/*` |
 | Docs desactualizados | `README.md`, `docs/ROADMAP.md`, `docs/PROJECT_STATUS.md` |
@@ -118,7 +118,7 @@ Detalle de lo aplicado:
 ```bash
 npm ci
 npx vitest run                 # 330 tests
-npx tsc --noEmit               # falla por fixtures de tests (ver deuda)
+npx tsc --noEmit               # limpio
 npm run build                  # OK
 npm run dev                    # http://localhost:3000/normativa
 ```

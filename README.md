@@ -49,10 +49,9 @@ npm run db:seed
 
 ```bash
 npx vitest run     # 330 tests
+npx tsc --noEmit   # typecheck limpio
 npm run build      # build de producción
 ```
-
-`npx tsc --noEmit` todavía reporta errores en fixtures de tests (ver `docs/ESTADO_TRABAJO.md`); el build de Next no se ve afectado.
 
 ## Documentación
 
