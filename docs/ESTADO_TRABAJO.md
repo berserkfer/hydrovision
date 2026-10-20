@@ -18,8 +18,8 @@
 |---|--------|--------|--------|
 | 1 | Motor normativo ECA/LMP | ✅ completado | `5a1980f` |
 | 1b | Página `/normativa` | ✅ completado | `864a8ba` |
-| 2 | Ventana única ±3 días | pendiente | — |
-| 3 | Fracción de agua / pureza de píxel | pendiente | — |
+| 2 | Ventana única ±3 días | ✅ completado | pendiente de commit |
+| 3 | Fracción de agua / pureza de píxel | en curso | — |
 | 4 | Validación leave-one-date-out | pendiente | — |
 | 5 | Integración del motor (selector, API, PDF) | pendiente | — |
 
