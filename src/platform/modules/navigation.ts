@@ -72,6 +72,14 @@ export const PLATFORM_NAVIGATION: PlatformNavSection[] = [
             moduleId: "environmental-monitoring",
           },
           {
+            id: "campaign-planner",
+            label: "Planificador de Campañas",
+            href: "/planificador",
+            icon: "sampling",
+            status: "active",
+            moduleId: "environmental-monitoring",
+          },
+          {
             id: "data-import",
             label: "Importación de Datos",
             href: "/import",
