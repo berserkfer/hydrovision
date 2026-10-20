@@ -1,5 +1,7 @@
 # HydroVision
 
+[![CI](https://github.com/berserkfer/hydrovision/actions/workflows/ci.yml/badge.svg)](https://github.com/berserkfer/hydrovision/actions/workflows/ci.yml)
+
 Plataforma de monitoreo y modelado de la calidad del agua del **Dren 4000** (Santa Rosa, Lambayeque, Perú). Proyecto de tesis de Ingeniería Ambiental (UCV): *"Desarrollo de plataforma predictiva de la calidad del agua mediante Sentinel-2 y datos in situ, Dren 4000, Lambayeque, 2027"*.
 
 ## Estado actual
