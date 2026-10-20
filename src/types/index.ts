@@ -36,6 +36,7 @@ export interface FieldMeasurement {
   phosphates?: number;
   totalDissolvedSolids?: number;
   totalSuspendedSolids?: number;
+  fatsOils?: number;
   isSimulated: boolean;
 }
 
