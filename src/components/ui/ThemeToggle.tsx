@@ -10,7 +10,7 @@ interface ThemeToggleProps {
 }
 
 /**
- * Control global de tema — oscuro (preferido) / claro.
+ * Control global de tema — papel (por defecto) / tinta nocturna.
  */
 export function ThemeToggle({ className, compact = false }: ThemeToggleProps) {
   const { theme, toggleTheme, isDark } = useTheme();
@@ -20,19 +20,19 @@ export function ThemeToggle({ className, compact = false }: ThemeToggleProps) {
       type="button"
       onClick={toggleTheme}
       className={cn(
-        "inline-flex items-center gap-2 rounded-lg border transition-colors",
-        "border-[var(--hv-border)] bg-[var(--hv-surface-secondary)]",
-        "text-[var(--hv-foreground-muted)] hover:border-[var(--hv-primary)]/40 hover:text-[var(--hv-primary)]",
-        compact ? "px-2.5 py-1.5" : "px-3 py-1.5",
+        "inline-flex items-center gap-2 rounded-full border transition-colors",
+        "border-[var(--hv-border)] bg-transparent",
+        "text-[var(--hv-foreground-muted)] hover:border-[var(--hv-ink)]/40 hover:text-[var(--hv-ink)]",
+        compact ? "p-1.5" : "px-3 py-1.5",
         className
       )}
       aria-label={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
       title={isDark ? "Modo claro" : "Modo oscuro"}
     >
       {isDark ? (
-        <Sun className="h-4 w-4 text-amber-400" aria-hidden />
+        <Sun className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden />
       ) : (
-        <Moon className="h-4 w-4 text-slate-600" aria-hidden />
+        <Moon className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden />
       )}
       {!compact && (
         <span className="text-xs font-medium">{isDark ? "Claro" : "Oscuro"}</span>

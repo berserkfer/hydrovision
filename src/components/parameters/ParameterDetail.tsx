@@ -127,9 +127,9 @@ export function ParameterDetail({ detail }: ParameterDetailProps) {
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="fecha" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0dcd1" />
+                <XAxis dataKey="fecha" tick={{ fontSize: 11 }} stroke="#959aa3" />
+                <YAxis tick={{ fontSize: 11 }} stroke="#959aa3" />
                 <Tooltip
                   contentStyle={{ fontSize: 12, borderRadius: 8 }}
                   formatter={(value: number) => [`${value} ${definition.unit}`, definition.name]}
@@ -137,7 +137,7 @@ export function ParameterDetail({ detail }: ParameterDetailProps) {
                 <Line
                   type="monotone"
                   dataKey="value"
-                  stroke="#0891b2"
+                  stroke="#0f2347"
                   strokeWidth={2.5}
                   dot={{ r: 4 }}
                   name={definition.name}

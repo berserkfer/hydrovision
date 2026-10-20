@@ -18,10 +18,10 @@ interface EnvironmentalChartsProps {
 }
 
 const SERIES = [
-  { key: "ph" as const, label: "pH", color: "#0891b2", unit: "—" },
-  { key: "oxigenoDisuelto" as const, label: "Oxígeno disuelto", color: "#059669", unit: "mg/L" },
-  { key: "turbidez" as const, label: "Turbidez", color: "#d97706", unit: "NTU" },
-  { key: "conductividad" as const, label: "Conductividad", color: "#7c3aed", unit: "µS/cm" },
+  { key: "ph" as const, label: "pH", color: "#0f2347", unit: "—" },
+  { key: "oxigenoDisuelto" as const, label: "Oxígeno disuelto", color: "#2f5f3f", unit: "mg/L" },
+  { key: "turbidez" as const, label: "Turbidez", color: "#93661a", unit: "NTU" },
+  { key: "conductividad" as const, label: "Conductividad", color: "#6b5a8a", unit: "µS/cm" },
 ];
 
 export function EnvironmentalCharts({ trends }: EnvironmentalChartsProps) {
@@ -37,9 +37,9 @@ export function EnvironmentalCharts({ trends }: EnvironmentalChartsProps) {
             <div className="h-52 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trends} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0dcd1" />
                   <XAxis dataKey="fecha" tickFormatter={(v) => v.slice(5, 7)} tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                  <YAxis tick={{ fontSize: 10 }} stroke="#959aa3" />
                   <Tooltip
                     contentStyle={{ fontSize: 12, borderRadius: 8 }}
                     formatter={(value: number) => [`${value} ${series.unit}`, series.label]}

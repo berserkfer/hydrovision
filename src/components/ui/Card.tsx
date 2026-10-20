@@ -47,7 +47,7 @@ export function CardTitle({
   className?: string;
 }) {
   return (
-    <h3 className={cn("text-sm font-semibold text-[var(--hv-foreground)]", className)}>
+    <h3 className={cn("text-[15px] font-medium tracking-[-0.01em] text-[var(--hv-ink)]", className)}>
       {children}
     </h3>
   );
@@ -61,7 +61,7 @@ export function CardDescription({
   className?: string;
 }) {
   return (
-    <p className={cn("mt-1 text-xs text-[var(--hv-foreground-muted)]", className)}>{children}</p>
+    <p className={cn("mt-1 text-xs leading-relaxed text-[var(--hv-foreground-muted)]", className)}>{children}</p>
   );
 }
 

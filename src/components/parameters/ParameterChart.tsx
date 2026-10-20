@@ -42,11 +42,11 @@ export function ParameterChart({ data }: ParameterChartProps) {
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.barByStation} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0dcd1" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="#959aa3" />
+                <YAxis tick={{ fontSize: 10 }} stroke="#959aa3" />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="value" fill="#0891b2" radius={[4, 4, 0, 0]} name="Promedio" />
+                <Bar dataKey="value" fill="#0f2347" radius={[4, 4, 0, 0]} name="Promedio" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -62,14 +62,14 @@ export function ParameterChart({ data }: ParameterChartProps) {
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <RadarChart data={data.radarProfile}>
-                <PolarGrid stroke="#e2e8f0" />
+                <PolarGrid stroke="#e0dcd1" />
                 <PolarAngleAxis dataKey="parameter" tick={{ fontSize: 9 }} />
                 <PolarRadiusAxis tick={{ fontSize: 9 }} />
                 <Radar
                   name="Promedio"
                   dataKey="value"
-                  stroke="#0891b2"
-                  fill="#0891b2"
+                  stroke="#0f2347"
+                  fill="#0f2347"
                   fillOpacity={0.35}
                 />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
@@ -88,14 +88,14 @@ export function ParameterChart({ data }: ParameterChartProps) {
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.lineHistory} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="fecha" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0dcd1" />
+                <XAxis dataKey="fecha" tick={{ fontSize: 10 }} stroke="#959aa3" />
+                <YAxis tick={{ fontSize: 10 }} stroke="#959aa3" />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
                 <Line
                   type="monotone"
                   dataKey="value"
-                  stroke="#059669"
+                  stroke="#2f5f3f"
                   strokeWidth={2}
                   dot={{ r: 3 }}
                   name="Promedio"
@@ -115,13 +115,13 @@ export function ParameterChart({ data }: ParameterChartProps) {
           <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.campaignComparison} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="campana" tick={{ fontSize: 9 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0dcd1" />
+                <XAxis dataKey="campana" tick={{ fontSize: 9 }} stroke="#959aa3" />
+                <YAxis tick={{ fontSize: 10 }} stroke="#959aa3" />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="promedio" fill="#0891b2" name="Promedio" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="cumple" fill="#10b981" name="Cumplen ECA" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="promedio" fill="#0f2347" name="Promedio" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="cumple" fill="#3f7550" name="Cumplen ECA" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

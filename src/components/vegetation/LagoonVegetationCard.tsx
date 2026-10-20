@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlertTriangle, CheckCircle2, Waves } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { InfoBadge } from "@/components/ui/Badge";
+import { DataTag } from "@/components/ui/DataTag";
 import { useVegetationIndex } from "@/hooks/useVegetationIndex";
 import { VEGETATION_ZONES } from "@/vegetation/config/vegetation-zones.config";
 import { DEFAULT_LAGOON_ALERT_THRESHOLD } from "@/vegetation/config/vegetation-alert.config";
@@ -19,12 +20,12 @@ export function LagoonVegetationCard() {
       <CardHeader className="flex flex-row items-start justify-between gap-3">
         <div>
           <CardTitle className="flex items-center gap-2">
-            <Waves className="h-4 w-4 text-cyan-600" />
+            <Waves className="h-4 w-4 text-[var(--hv-foreground-dim)]" strokeWidth={1.5} />
             Vegetación de laguna — NDCI
           </CardTitle>
           <CardDescription>{ZONE.description}</CardDescription>
         </div>
-        <InfoBadge variant="info">Centroide aprox.</InfoBadge>
+        <DataTag tone="neutral" className="shrink-0 whitespace-nowrap">Centroide aprox.</DataTag>
       </CardHeader>
       <CardContent className="space-y-3">
         <label className="flex items-center gap-2 text-xs text-[var(--hv-foreground-muted)]">
@@ -74,7 +75,8 @@ export function LagoonVegetationCard() {
           </>
         )}
 
-        <p className="text-[11px] text-[var(--hv-foreground-muted)]">
+        <p className="flex items-start gap-2 border-t border-[var(--hv-border)] pt-3 text-[11px] leading-relaxed text-[var(--hv-disclaimer-text)]">
+          <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rotate-45 bg-amber-500" aria-hidden />
           NDCI es un proxy de clorofila-a sin calibración local — el umbral es un punto de partida
           configurable, no un valor validado con muestreos de campo de esta laguna.
         </p>

@@ -58,7 +58,7 @@ export function EnvironmentalRiskCard({
                 cy="50"
                 r="42"
                 fill="none"
-                stroke="#e2e8f0"
+                stroke="#e0dcd1"
                 strokeWidth="8"
               />
               <circle

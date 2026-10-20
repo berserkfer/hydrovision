@@ -39,7 +39,7 @@ Una plataforma que nunca presenta un número sin decir su origen, su nivel de co
 
 ## Brand Commitments
 
-Tono técnico-científico en español, con términos precisos (SST, STD, NDVI, NDCI). Tema oscuro con acento cian, que el usuario quiere conservar.
+Tono técnico-científico en español, con términos precisos (SST, STD, NDVI, NDCI). Sistema visual "Papel y corriente" (oct. 2026): fondo papel claro, tinta añil (navy), tipografías Hanken Grotesk + IBM Plex Mono, textura de corrientes como elemento gráfico decorativo (nunca como dato). El tema oscuro queda como variante opcional ("tinta nocturna").
 
 ## Evidence on Hand
 

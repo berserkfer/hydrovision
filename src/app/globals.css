@@ -2,86 +2,199 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * HydroVision · sistema "Papel y corriente"
+ * Papel cálido + tinta añil. Las escalas de color de Tailwind se reasignan aquí para que
+ * todos los módulos (incluidos los legacy que usan slate/cyan/emerald/amber/red) hablen el
+ * mismo idioma visual sin reescribir cada clase.
+ */
 @theme {
-  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-hv-sans), "Hanken Grotesk", system-ui, sans-serif;
+  --font-mono: var(--font-hv-mono), "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-white: #fdfcf9;
+
+  /* Esquinas casi rectas: hoja de papel, no burbuja */
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+
+  /* Tinta añil — reemplaza cyan como acento primario */
+  --color-cyan-50: #eef1f6;
+  --color-cyan-100: #dce2ec;
+  --color-cyan-200: #b9c4d6;
+  --color-cyan-300: #8e9db8;
+  --color-cyan-400: #5f7396;
+  --color-cyan-500: #3a5079;
+  --color-cyan-600: #1f3760;
+  --color-cyan-700: #15294b;
+  --color-cyan-800: #0f2042;
+  --color-cyan-900: #0a1a35;
+  --color-cyan-950: #06112a;
+
+  --color-sky-50: var(--color-cyan-50);
+  --color-sky-100: var(--color-cyan-100);
+  --color-sky-200: var(--color-cyan-200);
+  --color-sky-500: var(--color-cyan-500);
+  --color-sky-600: var(--color-cyan-600);
+  --color-sky-700: var(--color-cyan-700);
+  --color-blue-50: var(--color-cyan-50);
+  --color-blue-100: var(--color-cyan-100);
+  --color-blue-200: var(--color-cyan-200);
+  --color-blue-500: var(--color-cyan-500);
+  --color-blue-600: var(--color-cyan-600);
+  --color-blue-700: var(--color-cyan-700);
+  --color-teal-500: var(--color-cyan-500);
+  --color-teal-600: var(--color-cyan-600);
+  --color-indigo-500: var(--color-cyan-500);
+  --color-indigo-600: var(--color-cyan-600);
+
+  /* Grises de tinta sobre papel — reemplaza slate */
+  --color-slate-50: #f6f4ee;
+  --color-slate-100: #eeebe3;
+  --color-slate-200: #e0dcd1;
+  --color-slate-300: #cbc6b9;
+  --color-slate-400: #959aa3;
+  --color-slate-500: #6b7385;
+  --color-slate-600: #4d5568;
+  --color-slate-700: #343d52;
+  --color-slate-800: #1f2940;
+  --color-slate-900: #111a30;
+  --color-slate-950: #0a1124;
+
+  /* Musgo — "cumple" */
+  --color-emerald-50: #eff4ef;
+  --color-emerald-100: #dce8dd;
+  --color-emerald-200: #bbd3be;
+  --color-emerald-300: #8fb596;
+  --color-emerald-400: #5f9169;
+  --color-emerald-500: #3f7550;
+  --color-emerald-600: #2f5f3f;
+  --color-emerald-700: #264d34;
+  --color-emerald-800: #1f3d2a;
+  --color-emerald-900: #193222;
+  --color-green-500: var(--color-emerald-500);
+  --color-green-600: var(--color-emerald-600);
+
+  /* Ocre — "en alerta" y etiquetas de dato simulado / no calibrado */
+  --color-amber-50: #fbf5e9;
+  --color-amber-100: #f5e8cb;
+  --color-amber-200: #ead29a;
+  --color-amber-300: #ddb665;
+  --color-amber-400: #cc9a3c;
+  --color-amber-500: #b07f22;
+  --color-amber-600: #93661a;
+  --color-amber-700: #764f17;
+  --color-amber-800: #5e3f16;
+  --color-amber-900: #4c3414;
+  --color-yellow-500: var(--color-amber-500);
+
+  /* Óxido — advertencia intermedia */
+  --color-orange-50: #fbf0e8;
+  --color-orange-500: #a95a2c;
+  --color-orange-600: #8c4823;
+  --color-orange-700: #713a1d;
+
+  /* Rubia (madder) — "no cumple" */
+  --color-red-50: #faefed;
+  --color-red-100: #f3dad6;
+  --color-red-200: #e6b5ad;
+  --color-red-300: #d48a7e;
+  --color-red-400: #be6255;
+  --color-red-500: #a4443a;
+  --color-red-600: #8a352d;
+  --color-red-700: #712b25;
+  --color-red-800: #5b2420;
+  --color-red-900: #4a1f1c;
+  --color-rose-500: var(--color-red-500);
 }
 
-/* ─── HydroVision — tokens de tema (claro por defecto en :root) ─── */
+/* ─── Tokens semánticos — papel (por defecto) ─── */
 :root {
-  --hv-background: #f1f5f9;
-  --hv-foreground: #0f172a;
-  --hv-foreground-muted: #475569;
-  --hv-foreground-dim: #64748b;
+  --hv-background: #f3f1eb;
+  --hv-foreground: #0e1c36;
+  --hv-foreground-muted: #4c5873;
+  --hv-foreground-dim: #687083;
 
-  --hv-surface: #ffffff;
-  --hv-surface-secondary: #f8fafc;
-  --hv-surface-elevated: #ffffff;
+  --hv-surface: #fbfaf6;
+  --hv-surface-secondary: #eeebe3;
+  --hv-surface-elevated: #fdfcf9;
 
-  --hv-border: #e2e8f0;
-  --hv-border-subtle: #cbd5e1;
+  --hv-border: #dedad0;
+  --hv-border-subtle: #cfcabd;
 
-  --hv-primary: #0891b2;
-  --hv-primary-foreground: #ffffff;
-  --hv-primary-muted: #06b6d4;
+  --hv-primary: #0f2347;
+  --hv-primary-foreground: #f6f4ee;
+  --hv-primary-muted: #3a5079;
 
-  --hv-sidebar-bg: #f8fafc;
-  --hv-sidebar-border: #e2e8f0;
-  --hv-sidebar-text: #334155;
-  --hv-sidebar-text-muted: #64748b;
-  --hv-sidebar-active-bg: rgba(8, 145, 178, 0.12);
-  --hv-sidebar-active-text: #0e7490;
+  --hv-ink: #0f2347;
+  --hv-ink-soft: #3a5079;
+  --hv-ink-wash: rgba(15, 35, 71, 0.06);
 
-  --hv-header-bg: #ffffff;
-  --hv-header-border: #e2e8f0;
+  --hv-sidebar-bg: #f3f1eb;
+  --hv-sidebar-border: #dedad0;
+  --hv-sidebar-text: #1f2940;
+  --hv-sidebar-text-muted: #687083;
+  --hv-sidebar-active-bg: rgba(15, 35, 71, 0.07);
+  --hv-sidebar-active-text: #0f2347;
 
-  --hv-success: #10b981;
-  --hv-warning: #f59e0b;
-  --hv-danger: #ef4444;
+  --hv-header-bg: #f3f1eb;
+  --hv-header-border: #dedad0;
 
-  --hv-disclaimer-bg: #fffbeb;
-  --hv-disclaimer-border: #fde68a;
-  --hv-disclaimer-text: #92400e;
+  --hv-success: #3f7550;
+  --hv-warning: #b07f22;
+  --hv-danger: #a4443a;
 
-  --hv-map-frame-bg: #e2e8f0;
-  --hv-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-  --hv-shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.1);
+  /* Etiqueta de honestidad: ocre sobre papel, legible al sol */
+  --hv-disclaimer-bg: #f8f0de;
+  --hv-disclaimer-border: #dfc68f;
+  --hv-disclaimer-text: #5e3f16;
+
+  --hv-map-frame-bg: #e6e2d8;
+  --hv-shadow: 0 1px 0 rgba(14, 28, 54, 0.03);
+  --hv-shadow-lg: 0 12px 32px -12px rgba(14, 28, 54, 0.18);
 }
 
-/* ─── Modo oscuro — azul profundo (NO negro puro) ─── */
+/* ─── Tinta nocturna — variante oscura opcional ─── */
 .dark {
-  --hv-background: #07111f;
-  --hv-foreground: #eef4fb;
-  --hv-foreground-muted: #94a8be;
-  --hv-foreground-dim: #6b8299;
+  --hv-background: #0b1426;
+  --hv-foreground: #ece8de;
+  --hv-foreground-muted: #a9b1c2;
+  --hv-foreground-dim: #7c869b;
 
-  --hv-surface: #0f1b2d;
-  --hv-surface-secondary: #14243a;
-  --hv-surface-elevated: #111f33;
+  --hv-surface: #101b31;
+  --hv-surface-secondary: #16223b;
+  --hv-surface-elevated: #132039;
 
-  --hv-border: #1e3350;
-  --hv-border-subtle: #243b5c;
+  --hv-border: #22304d;
+  --hv-border-subtle: #2b3a5a;
 
-  --hv-primary: #22d3ee;
-  --hv-primary-foreground: #07111f;
-  --hv-primary-muted: #06b6d4;
+  --hv-primary: #d9dfeb;
+  --hv-primary-foreground: #0b1426;
+  --hv-primary-muted: #8e9db8;
 
-  --hv-sidebar-bg: #060e1a;
-  --hv-sidebar-border: #152238;
-  --hv-sidebar-text: #c8d8ea;
-  --hv-sidebar-text-muted: #7c8fa8;
-  --hv-sidebar-active-bg: rgba(34, 211, 238, 0.12);
-  --hv-sidebar-active-text: #22d3ee;
+  --hv-ink: #d9dfeb;
+  --hv-ink-soft: #8e9db8;
+  --hv-ink-wash: rgba(217, 223, 235, 0.06);
 
-  --hv-header-bg: #0b1424;
-  --hv-header-border: #152238;
+  --hv-sidebar-bg: #0b1426;
+  --hv-sidebar-border: #22304d;
+  --hv-sidebar-text: #d4d8e2;
+  --hv-sidebar-text-muted: #7c869b;
+  --hv-sidebar-active-bg: rgba(217, 223, 235, 0.08);
+  --hv-sidebar-active-text: #ece8de;
 
-  --hv-disclaimer-bg: rgba(245, 158, 11, 0.1);
-  --hv-disclaimer-border: rgba(245, 158, 11, 0.28);
-  --hv-disclaimer-text: #fcd34d;
+  --hv-header-bg: #0b1426;
+  --hv-header-border: #22304d;
 
-  --hv-map-frame-bg: #1a2940;
-  --hv-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-  --hv-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+  --hv-disclaimer-bg: rgba(204, 154, 60, 0.12);
+  --hv-disclaimer-border: rgba(204, 154, 60, 0.35);
+  --hv-disclaimer-text: #e9cc8e;
+
+  --hv-map-frame-bg: #16223b;
+  --hv-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  --hv-shadow-lg: 0 12px 32px -12px rgba(0, 0, 0, 0.5);
 }
 
 html,
@@ -95,6 +208,39 @@ body {
   color: var(--hv-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "tnum" 0;
+}
+
+/* Grano de papel muy sutil */
+.hv-paper {
+  background-color: var(--hv-background);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .06 0 0 0 0 .11 0 0 0 0 .21 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.dark .hv-paper {
+  background-image: none;
+}
+
+/* Rótulo de datos: mayúsculas espaciadas, como un instrumento */
+.hv-eyebrow {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--hv-foreground-muted);
+}
+
+.hv-display {
+  font-weight: 300;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  color: var(--hv-ink);
+}
+
+.hv-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .hydrovision-station-marker {
@@ -123,28 +269,27 @@ body {
   }
 }
 
-@keyframes hv-glow-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 12px rgba(34, 211, 238, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.28);
-  }
-}
-
 .hv-animate-fade-in {
-  animation: hv-fade-in 0.35s ease-out both;
+  animation: hv-fade-in 0.35s cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
 .hv-animate-pulse-soft {
-  animation: hv-pulse-soft 1.5s ease-in-out infinite;
+  animation: hv-pulse-soft 1.8s ease-in-out infinite;
 }
 
+/* Sin brillo neón en el nuevo sistema */
 .hv-glow-cyan {
-  animation: hv-glow-pulse 3s ease-in-out infinite;
+  animation: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .hv-animate-fade-in,
+  .hv-animate-pulse-soft {
+    animation: none;
+  }
+}
+
+/* Tarjetas: hoja fina, esquinas casi rectas, sin sombra */
 .hv-card {
   border: 1px solid var(--hv-border);
   background: var(--hv-surface);
@@ -153,7 +298,12 @@ body {
 
 .hv-card-header {
   border-bottom: 1px solid var(--hv-border);
-  background: var(--hv-surface-secondary);
+  background: transparent;
+}
+
+.rounded-xl.hv-card,
+.rounded-2xl.hv-card {
+  border-radius: 6px;
 }
 
 .hv-map-frame {
@@ -161,11 +311,11 @@ body {
 }
 
 .hv-map-frame .leaflet-container {
-  background: #dbeafe;
+  background: #e4e7ea;
 }
 
 .dark .hv-map-frame .leaflet-container {
-  background: #c5d4e8;
+  background: #c5ccd8;
 }
 
 .hv-map-frame .leaflet-control-zoom a {
@@ -176,6 +326,22 @@ body {
 
 .hv-map-frame .leaflet-control-zoom a:hover {
   background: var(--hv-surface-secondary);
+}
+
+/* Teselas de mapa ligeramente desaturadas para convivir con el papel */
+.hv-map-frame .leaflet-tile-pane {
+  filter: saturate(0.55) contrast(0.96) sepia(0.08);
+}
+
+select,
+input,
+textarea {
+  accent-color: var(--hv-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--hv-ink-soft);
+  outline-offset: 2px;
 }
 
 /* Texto utilitario para módulos legacy con clases slate */

@@ -236,7 +236,7 @@ export function StationDetail({ detail }: StationDetailProps) {
           <HistoricalChart
             title="pH"
             unit="—"
-            color="#0891b2"
+            color="#0f2347"
             data={mediciones
               .filter((m): m is typeof m & { ph: number } => m.ph !== undefined)
               .map((m) => ({ fecha: m.fecha, value: m.ph }))}
@@ -244,7 +244,7 @@ export function StationDetail({ detail }: StationDetailProps) {
           <HistoricalChart
             title="Oxígeno disuelto"
             unit="mg/L"
-            color="#059669"
+            color="#2f5f3f"
             data={mediciones
               .filter(
                 (m): m is typeof m & { oxigenoDisuelto: number } =>
@@ -255,7 +255,7 @@ export function StationDetail({ detail }: StationDetailProps) {
           <HistoricalChart
             title="Turbidez"
             unit="NTU"
-            color="#d97706"
+            color="#93661a"
             data={mediciones
               .filter((m): m is typeof m & { turbidez: number } => m.turbidez !== undefined)
               .map((m) => ({ fecha: m.fecha, value: m.turbidez }))}

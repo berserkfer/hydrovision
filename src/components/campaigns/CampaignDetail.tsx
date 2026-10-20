@@ -167,8 +167,8 @@ export function CampaignDetail({ campaign }: CampaignDetailProps) {
       )}
 
       <div className="grid gap-6 lg:grid-cols-2 hv-animate-fade-in">
-        <BarChartCard title="Muestras por periodo" description="Cantidad de muestras simuladas" data={campaign.muestrasPorMes} color="#0891b2" />
-        <BarChartCard title="Distribución ECA" description="Clasificación por estación/muestra" data={campaign.ecaPorEstado} color="#059669" />
+        <BarChartCard title="Muestras por periodo" description="Cantidad de muestras simuladas" data={campaign.muestrasPorMes} color="#0f2347" />
+        <BarChartCard title="Distribución ECA" description="Clasificación por estación/muestra" data={campaign.ecaPorEstado} color="#2f5f3f" />
       </div>
 
       <Card>

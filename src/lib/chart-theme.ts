@@ -11,20 +11,20 @@ export interface ChartThemeColors {
 
 const CHART_THEMES: Record<ThemeMode, ChartThemeColors> = {
   dark: {
-    grid: "#1e3a5f",
-    tick: "#7c8fa8",
-    stroke: "#22d3ee",
-    tooltipBg: "#0f1b2d",
-    tooltipBorder: "#243b5c",
-    tooltipText: "#e8f0fa",
+    grid: "#22304d",
+    tick: "#7c869b",
+    stroke: "#b9c4d6",
+    tooltipBg: "#101b31",
+    tooltipBorder: "#2b3a5a",
+    tooltipText: "#ece8de",
   },
   light: {
-    grid: "#e2e8f0",
-    tick: "#64748b",
-    stroke: "#0891b2",
-    tooltipBg: "#ffffff",
-    tooltipBorder: "#e2e8f0",
-    tooltipText: "#0f172a",
+    grid: "#e0dcd1",
+    tick: "#7c8598",
+    stroke: "#0f2347",
+    tooltipBg: "#fbfaf6",
+    tooltipBorder: "#dedad0",
+    tooltipText: "#0e1c36",
   },
 };
 

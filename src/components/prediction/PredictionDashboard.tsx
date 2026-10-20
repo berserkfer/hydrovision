@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
+import { DataTag } from "@/components/ui/DataTag";
 import { DREN_4000_POINTS, DREN_4000_RIO_ID } from "@/data/mock/dren-4000-real-data";
 import {
   isPredictionInsufficient,
@@ -44,13 +45,13 @@ export const DREN_4000_STATIONS = DREN_4000_POINTS.map((p) => ({
 
 function StepBadge({ ok, label }: { ok: boolean | null; label: string }) {
   return (
-    <div className="flex items-center gap-2 text-sm font-medium">
+    <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--hv-ink)]">
       {ok === null ? (
-        <span className="h-4 w-4 animate-pulse rounded-full bg-slate-300" />
+        <span className="h-3.5 w-3.5 animate-pulse rounded-full border border-slate-300" />
       ) : ok ? (
-        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+        <CheckCircle2 className="h-4 w-4 text-emerald-600" strokeWidth={1.6} />
       ) : (
-        <XCircle className="h-4 w-4 text-amber-600" />
+        <XCircle className="h-4 w-4 text-amber-600" strokeWidth={1.6} />
       )}
       <span>{label}</span>
     </div>
@@ -94,20 +95,20 @@ export function PredictionDashboard() {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2">
-          <Satellite className="h-5 w-5 text-cyan-600" />
-          <h1 className="text-xl font-bold text-slate-900">Predicción Satelital — Dren 4000</h1>
+          <Satellite className="h-4 w-4 text-[var(--hv-foreground-dim)]" strokeWidth={1.5} />
+          <h3 className="hv-eyebrow">Predicción satelital — Dren 4000</h3>
         </div>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--hv-foreground-muted)]">
           Un solo flujo: consulta Copernicus/Sentinel-2 → índices espectrales → predicción, más
           serie histórica real y proyección a corto plazo. Todo bajo el mismo techo.
         </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm text-slate-600">
+        <label className="hv-eyebrow flex items-center text-[10px]">
           Punto de monitoreo
           <select
-            className="ml-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+            className="ml-2 rounded-[3px] border border-[var(--hv-border-subtle)] bg-[var(--hv-surface)] px-2.5 py-1.5 text-sm normal-case tracking-normal text-[var(--hv-foreground)]"
             value={stationId}
             onChange={(e) => setStationId(e.target.value)}
           >
@@ -119,10 +120,10 @@ export function PredictionDashboard() {
           </select>
         </label>
 
-        <label className="text-sm text-slate-600">
+        <label className="hv-eyebrow flex items-center text-[10px]">
           Parámetro
           <select
-            className="ml-2 rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
+            className="ml-2 rounded-[3px] border border-[var(--hv-border-subtle)] bg-[var(--hv-surface)] px-2.5 py-1.5 text-sm normal-case tracking-normal text-[var(--hv-foreground)]"
             value={parameterCode}
             onChange={(e) => setParameterCode(e.target.value)}
           >
@@ -178,7 +179,7 @@ export function PredictionDashboard() {
                 {Object.entries(observations.observations[0].indices).map(([k, v]) => (
                   <li key={k} className="flex justify-between">
                     <span className="text-slate-500">{k}</span>
-                    <span className="font-mono font-semibold">{v.toFixed(3)}</span>
+                    <span className="hv-num text-[var(--hv-ink)]">{v.toFixed(3)}</span>
                   </li>
                 ))}
               </ul>
@@ -197,7 +198,7 @@ export function PredictionDashboard() {
           <CardContent className="space-y-2 text-sm">
             {predictionOk ? (
               <>
-                <p className="text-2xl font-bold text-slate-900">
+                <p className="text-[34px] font-light leading-none tracking-[-0.02em] text-[var(--hv-ink)] tabular-nums">
                   {predictionOk.predictedValue}{" "}
                   <span className="text-sm font-normal text-slate-400">{predictionOk.unit}</span>
                 </p>
@@ -206,7 +207,7 @@ export function PredictionDashboard() {
                     Banda: {predictionOk.uncertainty.lower} – {predictionOk.uncertainty.upper} ({predictionOk.uncertainty.method})
                   </p>
                 )}
-                <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                <div className="hv-num rounded-[3px] border border-[var(--hv-border)] px-3 py-2 text-[11px] leading-relaxed text-[var(--hv-foreground-muted)]">
                   <p>N entrenamiento: {predictionOk.model.trainingSampleCount} · N validación: {predictionOk.model.validationSampleCount}</p>
                   <p>
                     R²={predictionOk.model.validationMetrics.r2} · RMSE={predictionOk.model.validationMetrics.rmse} · MAE=
@@ -216,10 +217,8 @@ export function PredictionDashboard() {
               </>
             ) : predictionLiterature ? (
               <>
-                <span className="inline-flex w-fit items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
-                  Modelo bibliográfico — no calibrado localmente
-                </span>
-                <p className="mt-1.5 text-2xl font-bold text-slate-900">
+                <DataTag tone="caution">Modelo bibliográfico — no calibrado localmente</DataTag>
+                <p className="mt-2 text-[34px] font-light leading-none tracking-[-0.02em] text-[var(--hv-ink)] tabular-nums">
                   {predictionLiterature.predictedValue}{" "}
                   <span className="text-sm font-normal text-slate-400">{predictionLiterature.unit}</span>
                 </p>
@@ -234,7 +233,7 @@ export function PredictionDashboard() {
                 <p className="text-[11px] text-amber-700">
                   {predictionLiterature.literatureModel.transferabilityWarning}
                 </p>
-                <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                <div className="hv-num rounded-[3px] border border-[var(--hv-border)] px-3 py-2 text-[11px] leading-relaxed text-[var(--hv-foreground-muted)]">
                   <p>
                     Calibración original: N={predictionLiterature.literatureModel.calibrationMetrics.n} · R²=
                     {predictionLiterature.literatureModel.calibrationMetrics.r2} ·{" "}
@@ -248,7 +247,7 @@ export function PredictionDashboard() {
               </>
             ) : predictionInsufficient ? (
               <>
-                <p className="font-semibold text-amber-700">{predictionInsufficient.status}</p>
+                <DataTag tone="caution">{predictionInsufficient.status}</DataTag>
                 <p className="text-slate-600">{predictionInsufficient.message}</p>
                 <p className="text-xs text-slate-400">
                   N real disponible: {predictionInsufficient.sampleSize.realPairs}
@@ -265,7 +264,7 @@ export function PredictionDashboard() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-cyan-600" />
+            <TrendingUp className="h-4 w-4 text-[var(--hv-foreground-dim)]" strokeWidth={1.5} />
             <CardTitle>Serie histórica real y proyección — {parameterLabel}</CardTitle>
           </div>
           <CardDescription>
@@ -280,40 +279,40 @@ export function PredictionDashboard() {
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                    <YAxis tick={{ fontSize: 11 }} stroke="#94a3b8" />
-                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} />
+                    <CartesianGrid strokeDasharray="2 4" stroke="#e0dcd1" vertical={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#959aa3" />
+                    <YAxis tick={{ fontSize: 11 }} stroke="#959aa3" />
+                    <Tooltip contentStyle={{ borderRadius: 4, border: "1px solid #e0dcd1", background: "#fbfaf6", fontSize: 12 }} />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Line type="monotone" dataKey="valor" name="Real" stroke="#0891b2" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} />
+                    <Line type="monotone" dataKey="valor" name="Real" stroke="#0f2347" strokeWidth={1.6} dot={{ r: 3.5, fill: "#0f2347", strokeWidth: 0 }} connectNulls={false} />
                     {trend.forecast && (
                       <ReferenceDot
                         x={trend.forecast.targetDate}
                         y={trend.forecast.predictedValue}
                         r={5}
-                        fill="#d97706"
+                        fill="#93661a"
                         stroke="none"
                       />
                     )}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-xs text-slate-600 sm:grid-cols-4">
-                <div>
-                  <p className="text-slate-400">Pendiente/año</p>
-                  <p className="font-mono font-semibold">{trend.trend?.slopePerYear}</p>
+              <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-[var(--hv-border)] bg-[var(--hv-border)] text-xs sm:grid-cols-4">
+                <div className="bg-[var(--hv-surface)] px-3 py-2">
+                  <p className="hv-eyebrow text-[9.5px]">Pendiente/año</p>
+                  <p className="hv-num mt-1 text-[13px] text-[var(--hv-ink)]">{trend.trend?.slopePerYear}</p>
                 </div>
-                <div>
-                  <p className="text-slate-400">R²</p>
-                  <p className="font-mono font-semibold">{trend.trend?.metrics.r2}</p>
+                <div className="bg-[var(--hv-surface)] px-3 py-2">
+                  <p className="hv-eyebrow text-[9.5px]">R²</p>
+                  <p className="hv-num mt-1 text-[13px] text-[var(--hv-ink)]">{trend.trend?.metrics.r2}</p>
                 </div>
-                <div>
-                  <p className="text-slate-400">RMSE</p>
-                  <p className="font-mono font-semibold">{trend.trend?.metrics.rmse}</p>
+                <div className="bg-[var(--hv-surface)] px-3 py-2">
+                  <p className="hv-eyebrow text-[9.5px]">RMSE</p>
+                  <p className="hv-num mt-1 text-[13px] text-[var(--hv-ink)]">{trend.trend?.metrics.rmse}</p>
                 </div>
-                <div>
-                  <p className="text-slate-400">N real</p>
-                  <p className="font-mono font-semibold">{trend.totalRecordsFound}</p>
+                <div className="bg-[var(--hv-surface)] px-3 py-2">
+                  <p className="hv-eyebrow text-[9.5px]">N real</p>
+                  <p className="hv-num mt-1 text-[13px] text-[var(--hv-ink)]">{trend.totalRecordsFound}</p>
                 </div>
               </div>
               {trend.forecast && (
@@ -325,7 +324,7 @@ export function PredictionDashboard() {
               <p className="text-[11px] text-slate-400">{trend.disclaimer}</p>
             </div>
           ) : trend ? (
-            <div className={cn("rounded-lg px-4 py-3 text-sm", "bg-amber-50 text-amber-800")}>
+            <div className={cn("rounded-[3px] border px-4 py-3 text-sm", "border-[var(--hv-disclaimer-border)] bg-[var(--hv-disclaimer-bg)] text-[var(--hv-disclaimer-text)]")}>
               <p className="font-semibold">Datos insuficientes para tendencia/proyección</p>
               <ul className="mt-1 list-disc pl-5">
                 {trend.reasons.map((r) => (

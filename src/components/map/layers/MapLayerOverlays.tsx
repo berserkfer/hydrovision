@@ -20,10 +20,10 @@ interface MapLayerOverlaysProps {
 }
 
 const RISK_COLORS = {
-  bajo: "#10b981",
-  moderado: "#f59e0b",
-  alto: "#f97316",
-  muy_alto: "#ef4444",
+  bajo: "#3f7550",
+  moderado: "#b07f22",
+  alto: "#a95a2c",
+  muy_alto: "#a4443a",
 };
 
 function SimulatedRasterOverlay({

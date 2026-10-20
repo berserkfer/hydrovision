@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { FlaskConical, Info } from "lucide-react";
+import { DataTag } from "@/components/ui/DataTag";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
   isEnvironmentalModelOk,
@@ -55,11 +56,16 @@ export function EnvironmentalModelPanel() {
   const insufficient = data && !isEnvironmentalModelOk(data) ? data : null;
 
   return (
-    <Card className="border-amber-200/60">
+    <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <FlaskConical className="h-4 w-4 text-amber-600" />
+          <FlaskConical className="h-4 w-4 text-[var(--hv-foreground-dim)]" strokeWidth={1.5} />
           <CardTitle className="text-base">Modelo Ambiental — Dren 4000 (sin satélite)</CardTitle>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <DataTag tone="real">Datos reales 2014</DataTag>
+          <DataTag tone="caution">N=10 por matriz · sin multivariado</DataTag>
+          <DataTag tone="neutral">Independiente del satélite</DataTag>
         </div>
         <CardDescription>
           Predice un parámetro a partir de OTROS parámetros medidos en la misma muestra.
@@ -70,10 +76,10 @@ export function EnvironmentalModelPanel() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm text-[var(--hv-foreground-muted)]">
+          <label className="hv-eyebrow flex items-center text-[10px]">
             Matriz de agua
             <select
-              className="ml-2 rounded-lg border border-[var(--hv-border)] bg-[var(--hv-surface)] px-3 py-1.5 text-sm"
+              className="ml-2 rounded-[3px] border border-[var(--hv-border-subtle)] bg-[var(--hv-surface)] px-2.5 py-1.5 text-sm normal-case tracking-normal text-[var(--hv-foreground)]"
               value={matrix}
               onChange={(e) => setMatrix(e.target.value as EnvironmentalWaterMatrix)}
             >
@@ -85,10 +91,10 @@ export function EnvironmentalModelPanel() {
             </select>
           </label>
 
-          <label className="text-sm text-[var(--hv-foreground-muted)]">
+          <label className="hv-eyebrow flex items-center text-[10px]">
             Parámetro objetivo
             <select
-              className="ml-2 rounded-lg border border-[var(--hv-border)] bg-[var(--hv-surface)] px-3 py-1.5 text-sm"
+              className="ml-2 rounded-[3px] border border-[var(--hv-border-subtle)] bg-[var(--hv-surface)] px-2.5 py-1.5 text-sm normal-case tracking-normal text-[var(--hv-foreground)]"
               value={effectiveTarget}
               onChange={(e) => setTargetCode(e.target.value)}
             >
@@ -105,7 +111,7 @@ export function EnvironmentalModelPanel() {
 
         {ok ? (
           <>
-            <div className="rounded-lg bg-[var(--hv-surface-secondary)] px-3 py-2 text-xs text-[var(--hv-foreground-muted)]">
+            <div className="rounded-[3px] border border-[var(--hv-border)] px-3 py-2 text-xs leading-relaxed text-[var(--hv-foreground-muted)]">
               N real disponible: <strong>{ok.n}</strong> muestras · máximo de predictores
               simultáneos permitido: <strong>{ok.maxSimultaneousPredictorsAllowed}</strong>{" "}
               (modelo multivariante requeriría N≥{ok.multivariate.requiredNFor2Predictors} —
@@ -115,7 +121,7 @@ export function EnvironmentalModelPanel() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--hv-border)] text-xs uppercase tracking-wide text-[var(--hv-foreground-dim)]">
+                  <tr className="border-b border-[var(--hv-border)] text-[9.5px] font-medium uppercase tracking-[0.16em] text-[var(--hv-foreground-dim)]">
                     <th className="py-2 pr-4">Predictor</th>
                     <th className="py-2 pr-4">N</th>
                     <th className="py-2 pr-4">R²</th>
@@ -128,13 +134,13 @@ export function EnvironmentalModelPanel() {
                   {ok.fits.map((fit) => (
                     <tr key={fit.predictorCode} className="border-b border-[var(--hv-border)]/50">
                       <td className="py-2 pr-4">{fit.predictorLabel}</td>
-                      <td className="py-2 pr-4 font-mono">{fit.n}</td>
+                      <td className="py-2 pr-4 hv-num">{fit.n}</td>
                       {fit.sufficientData ? (
                         <>
-                          <td className="py-2 pr-4 font-mono">{fit.metrics.r2}</td>
-                          <td className="py-2 pr-4 font-mono">{fit.metrics.rmse}</td>
-                          <td className="py-2 pr-4 font-mono">{fit.metrics.mae}</td>
-                          <td className="py-2 pr-4 font-mono text-xs text-[var(--hv-foreground-dim)]">
+                          <td className="py-2 pr-4 hv-num">{fit.metrics.r2}</td>
+                          <td className="py-2 pr-4 hv-num">{fit.metrics.rmse}</td>
+                          <td className="py-2 pr-4 hv-num">{fit.metrics.mae}</td>
+                          <td className="py-2 pr-4 hv-num text-xs text-[var(--hv-foreground-dim)]">
                             y = {fit.coefficientA} + {fit.coefficientB}·x
                           </td>
                         </>
@@ -149,7 +155,7 @@ export function EnvironmentalModelPanel() {
               </table>
             </div>
 
-            <div className="space-y-1.5 rounded-lg border border-amber-200/60 bg-amber-500/5 p-3 text-xs text-[var(--hv-foreground-muted)]">
+            <div className="space-y-1.5 rounded-[3px] border border-[var(--hv-disclaimer-border)] bg-[var(--hv-disclaimer-bg)] p-3 text-xs text-[var(--hv-disclaimer-text)]">
               <div className="flex items-center gap-1.5 font-semibold text-amber-700">
                 <Info className="h-3.5 w-3.5" /> Advertencias — léelas antes de usar cualquier
                 valor
@@ -162,7 +168,7 @@ export function EnvironmentalModelPanel() {
             </div>
           </>
         ) : insufficient ? (
-          <div className="rounded-lg border border-amber-300/60 bg-amber-500/10 px-4 py-3 text-sm">
+          <div className="rounded-[3px] border border-[var(--hv-disclaimer-border)] bg-[var(--hv-disclaimer-bg)] px-4 py-3 text-sm">
             <p className="font-semibold text-amber-800">{insufficient.status}</p>
             <p className="mt-1 text-[var(--hv-foreground-muted)]">{insufficient.message}</p>
             <p className="mt-1 text-xs text-[var(--hv-foreground-dim)]">

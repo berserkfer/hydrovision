@@ -51,7 +51,7 @@ export function WaterQualityTrendChart({ data }: WaterQualityTrendChartProps) {
               Índice compuesto ejecutivo · no incluye todos los parámetros científicos
             </CardDescription>
           </div>
-          <span className="rounded-lg border border-[var(--hv-border)] bg-[var(--hv-surface-secondary)] px-2.5 py-1 text-xs font-medium text-[var(--hv-foreground-muted)]">
+          <span className="rounded-[3px] border border-[var(--hv-border)] px-2 py-0.5 text-[11px] font-medium text-[var(--hv-foreground-muted)]">
             {trendLabel}
           </span>
         </div>
@@ -62,7 +62,7 @@ export function WaterQualityTrendChart({ data }: WaterQualityTrendChartProps) {
             <AreaChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="qualityGradientTheme" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={colors.stroke} stopOpacity={0.4} />
+                  <stop offset="5%" stopColor={colors.stroke} stopOpacity={0.14} />
                   <stop offset="95%" stopColor={colors.stroke} stopOpacity={0.02} />
                 </linearGradient>
               </defs>
@@ -82,12 +82,12 @@ export function WaterQualityTrendChart({ data }: WaterQualityTrendChartProps) {
               />
               <Tooltip
                 contentStyle={{
-                  borderRadius: "10px",
+                  borderRadius: "4px",
                   border: `1px solid ${colors.tooltipBorder}`,
                   backgroundColor: colors.tooltipBg,
                   color: colors.tooltipText,
                   fontSize: "12px",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+                  boxShadow: "0 8px 24px -12px rgba(14,28,54,0.25)",
                 }}
                 formatter={(value: number) => [`${value}`, "Índice de calidad"]}
               />
@@ -96,7 +96,7 @@ export function WaterQualityTrendChart({ data }: WaterQualityTrendChartProps) {
                 dataKey="qualityIndex"
                 name="Índice de calidad"
                 stroke={colors.stroke}
-                strokeWidth={2.5}
+                strokeWidth={1.6}
                 fill="url(#qualityGradientTheme)"
                 dot={{ r: 3, fill: colors.stroke, strokeWidth: 0 }}
                 activeDot={{ r: 5, fill: colors.stroke }}

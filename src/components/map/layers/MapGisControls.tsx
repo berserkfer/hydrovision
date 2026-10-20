@@ -71,7 +71,7 @@ export function MiniMapPlugin({ mainZoom }: MiniMapPluginProps) {
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(mini);
 
       const rect = L.rectangle(map.getBounds(), {
-        color: "#0891b2",
+        color: "#0f2347",
         weight: 2,
         fillOpacity: 0.12,
       }).addTo(mini);

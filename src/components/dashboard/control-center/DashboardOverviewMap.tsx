@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { DataTag } from "@/components/ui/DataTag";
 import { MapPin, Maximize2 } from "lucide-react";
 import type { MapCenter, RiverContext } from "@/types/geography";
 import type { StationSummary } from "@/types";
@@ -61,18 +62,13 @@ export function DashboardOverviewMap({
             {isRiverSimulated ? (
               <SimulatedDataIndicator />
             ) : (
-              <span
-                className="inline-flex items-center gap-1.5 rounded-md bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 ring-1 ring-inset ring-emerald-500/30"
-                role="status"
-                aria-label="Datos reales"
-              >
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                Datos reales
+              <span role="status" aria-label="Datos reales">
+                <DataTag tone="real">Datos reales</DataTag>
               </span>
             )}
             <Link
               href="/mapa"
-              className="inline-flex items-center gap-1 rounded-lg border border-[var(--hv-primary)]/30 bg-[var(--hv-sidebar-active-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--hv-primary)] transition-colors hover:border-[var(--hv-primary)]/50"
+              className="inline-flex items-center gap-1 rounded-[3px] border border-[var(--hv-ink)]/30 px-2.5 py-1 text-xs font-medium text-[var(--hv-ink)] transition-colors hover:bg-[var(--hv-ink-wash)]"
             >
               <Maximize2 className="h-3.5 w-3.5" />
               Mapa completo

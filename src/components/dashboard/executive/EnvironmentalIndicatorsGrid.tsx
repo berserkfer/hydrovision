@@ -69,10 +69,10 @@ export function EnvironmentalIndicatorsGrid({ cards }: EnvironmentalIndicatorsGr
           const Icon = ICONS[card.icon];
           const sparkColor =
             card.status === "non_compliant"
-              ? "#ef4444"
+              ? "#a4443a"
               : card.status === "alert"
-                ? "#f59e0b"
-                : "#0891b2";
+                ? "#b07f22"
+                : "#0f2347";
 
           return (
             <Card

@@ -30,3 +30,4 @@ Thumbs.db
 services/**/__pycache__/
 services/**/.venv/
 *.pyc
+.playwright-mcp/

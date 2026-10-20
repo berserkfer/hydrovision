@@ -11,7 +11,8 @@ import {
 
 export type ThemeMode = "dark" | "light";
 
-const STORAGE_KEY = "hv-theme";
+/** v2: el rediseño "Papel y corriente" parte en claro; la clave nueva evita heredar el oscuro anterior. */
+const STORAGE_KEY = "hv-theme-v2";
 
 interface ThemeContextValue {
   theme: ThemeMode;
@@ -33,17 +34,17 @@ function applyThemeClass(theme: ThemeMode) {
 }
 
 function readStoredTheme(): ThemeMode {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === "light" ? "light" : "dark";
+    return stored === "dark" ? "dark" : "light";
   } catch {
-    return "dark";
+    return "light";
   }
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>("dark");
+  const [theme, setThemeState] = useState<ThemeMode>("light");
 
   useEffect(() => {
     const stored = readStoredTheme();

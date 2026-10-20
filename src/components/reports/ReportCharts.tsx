@@ -18,7 +18,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 
-const PIE_COLORS = ["#10b981", "#f59e0b", "#ef4444", "#0891b2", "#8b5cf6"];
+const PIE_COLORS = ["#3f7550", "#b07f22", "#a4443a", "#0f2347", "#8b5cf6"];
 
 interface ReportChartsProps {
   charts: ReportChartSection[];
@@ -48,19 +48,19 @@ function ReportChartCard({ chart }: { chart: ReportChartSection }) {
           <ResponsiveContainer width="100%" height="100%">
             {chart.type === "bar" ? (
               <BarChart data={chart.data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0dcd1" />
+                <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="#959aa3" />
+                <YAxis tick={{ fontSize: 10 }} stroke="#959aa3" />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="value" fill="#0891b2" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="value" fill="#0f2347" radius={[4, 4, 0, 0]} />
               </BarChart>
             ) : chart.type === "line" ? (
               <LineChart data={chart.data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="#94a3b8" />
-                <YAxis tick={{ fontSize: 10 }} stroke="#94a3b8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0dcd1" />
+                <XAxis dataKey="label" tick={{ fontSize: 10 }} stroke="#959aa3" />
+                <YAxis tick={{ fontSize: 10 }} stroke="#959aa3" />
                 <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Line type="monotone" dataKey="value" stroke="#059669" strokeWidth={2} dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="value" stroke="#2f5f3f" strokeWidth={2} dot={{ r: 3 }} />
               </LineChart>
             ) : (
               <PieChart>

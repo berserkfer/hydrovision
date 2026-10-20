@@ -12,17 +12,24 @@ interface RecentAlertsPanelProps {
 }
 
 const LEVEL_DOT: Record<ExecutiveAlert["level"], string> = {
-  normal: "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]",
-  atencion: "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]",
-  advertencia: "bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]",
-  critico: "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]",
+  normal: "bg-emerald-500",
+  atencion: "bg-amber-500",
+  advertencia: "bg-orange-500",
+  critico: "bg-red-500",
+};
+
+const LEVEL_LABEL: Record<ExecutiveAlert["level"], string> = {
+  normal: "Normal",
+  atencion: "Atención",
+  advertencia: "Advertencia",
+  critico: "Crítico",
 };
 
 const LEVEL_BG: Record<ExecutiveAlert["level"], string> = {
-  normal: "border-emerald-500/15 bg-emerald-500/5",
-  atencion: "border-amber-500/15 bg-amber-500/5",
-  advertencia: "border-orange-500/15 bg-orange-500/5",
-  critico: "border-red-500/15 bg-red-500/5",
+  normal: "border-l-emerald-500",
+  atencion: "border-l-amber-500",
+  advertencia: "border-l-orange-500",
+  critico: "border-l-red-500",
 };
 
 export function RecentAlertsPanel({ alerts, maxItems = 4 }: RecentAlertsPanelProps) {
@@ -40,24 +47,22 @@ export function RecentAlertsPanel({ alerts, maxItems = 4 }: RecentAlertsPanelPro
             No hay alertas activas en este momento.
           </p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-3.5">
             {visible.map((alert) => (
               <li
                 key={alert.id}
                 className={cn(
-                  "flex items-start gap-3 rounded-lg border px-3 py-2.5",
+                  "flex items-start gap-3 border-l-2 py-1 pl-3",
                   LEVEL_BG[alert.level]
                 )}
               >
-                <span
-                  className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", LEVEL_DOT[alert.level])}
-                  aria-hidden
-                />
                 <div className="min-w-0 flex-1">
+                  <p className="mb-0.5 flex items-center gap-1.5 text-[9.5px] font-medium uppercase tracking-[0.16em] text-[var(--hv-foreground-dim)]" aria-hidden>
+                    <span className={cn("h-1.5 w-1.5 rounded-full", LEVEL_DOT[alert.level])} />
+                    {LEVEL_LABEL[alert.level]}
+                  </p>
                   <p className="text-sm font-medium text-[var(--hv-foreground)]">
-                    <span className="mr-1" aria-hidden>
-                      {alert.emoji}
-                    </span>
+                    <span className="sr-only">{LEVEL_LABEL[alert.level]}: </span>
                     {alert.title}
                   </p>
                   <p className="mt-0.5 line-clamp-2 text-xs text-[var(--hv-foreground-muted)]">

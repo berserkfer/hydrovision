@@ -11,9 +11,9 @@ export const DEFAULT_MAP_ZOOM = 12;
 
 /** Colores de marcadores según clasificación ECA */
 export const COMPLIANCE_MARKER_COLORS: Record<ComplianceStatus, string> = {
-  compliant: "#10b981",
-  alert: "#f59e0b",
-  non_compliant: "#ef4444",
+  compliant: "#3f7550",
+  alert: "#b07f22",
+  non_compliant: "#a4443a",
 };
 
 /** Etiquetas de la leyenda del mapa */

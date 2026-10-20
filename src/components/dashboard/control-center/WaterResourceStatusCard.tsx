@@ -54,23 +54,20 @@ export function WaterResourceStatusCard({
   const config = LEVEL_CONFIG[level];
 
   return (
-    <Card className={cn("overflow-hidden ring-1 ring-inset", config.ring)}>
+    <Card className="overflow-hidden">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Estado del recurso hídrico</CardTitle>
         <CardDescription>{riverName} · Datos simulados de demostración</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 pt-1">
         <div className="flex items-center gap-3">
-          <span className="text-2xl" aria-hidden>
-            {config.emoji}
-          </span>
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--hv-foreground-muted)]">
               Estado actual
             </p>
             <span
               className={cn(
-                "mt-1 inline-flex rounded-lg border px-3 py-1 text-sm font-bold tracking-wide",
+                "mt-1 inline-flex rounded-[3px] border px-2.5 py-0.5 text-sm font-medium",
                 config.badge
               )}
             >

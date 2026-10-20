@@ -36,7 +36,7 @@ export function TabsList({ children, className }: { children: ReactNode; classNa
     <div
       role="tablist"
       className={cn(
-        "flex gap-1 overflow-x-auto rounded-lg bg-[var(--hv-surface-secondary)] p-1",
+        "flex gap-6 overflow-x-auto border-b border-[var(--hv-border)]",
         className
       )}
     >
@@ -63,10 +63,10 @@ export function TabsTrigger({
       aria-selected={active}
       onClick={() => ctx.setValue(value)}
       className={cn(
-        "whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+        "-mb-px whitespace-nowrap border-b-[1.5px] pb-2.5 pt-1 text-[11px] font-medium uppercase tracking-[0.16em] transition-colors",
         active
-          ? "bg-[var(--hv-surface-elevated)] text-[var(--hv-foreground)] shadow-sm"
-          : "text-[var(--hv-foreground-muted)] hover:text-[var(--hv-foreground)]",
+          ? "border-[var(--hv-ink)] text-[var(--hv-ink)]"
+          : "border-transparent text-[var(--hv-foreground-dim)] hover:text-[var(--hv-foreground)]",
         className
       )}
     >

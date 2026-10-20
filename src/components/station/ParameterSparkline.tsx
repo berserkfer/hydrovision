@@ -11,7 +11,7 @@ interface ParameterSparklineProps {
  */
 export function ParameterSparkline({
   data,
-  color = "#0891b2",
+  color = "#0f2347",
   className = "",
 }: ParameterSparklineProps) {
   if (data.length < 2) return null;
@@ -53,7 +53,7 @@ export function ParameterSparkline({
 export function getSparklineColor(param: ParameterDisplayConfig): string {
   const percent =
     ((param.value - param.min) / (param.max - param.min)) * 100;
-  if (percent >= 85) return "#ef4444";
-  if (percent >= 65) return "#f59e0b";
-  return "#10b981";
+  if (percent >= 85) return "#a4443a";
+  if (percent >= 65) return "#b07f22";
+  return "#3f7550";
 }

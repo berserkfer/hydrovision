@@ -34,14 +34,14 @@ export function TemporalChart({ data }: TemporalChartProps) {
         <div className="h-72 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-              <YAxis yAxisId="left" tick={{ fontSize: 11 }} stroke="#94a3b8" />
-              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} stroke="#94a3b8" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e0dcd1" />
+              <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="#959aa3" />
+              <YAxis yAxisId="left" tick={{ fontSize: 11 }} stroke="#959aa3" />
+              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }} stroke="#959aa3" />
               <Tooltip
                 contentStyle={{
                   borderRadius: "8px",
-                  border: "1px solid #e2e8f0",
+                  border: "1px solid #e0dcd1",
                   fontSize: "12px",
                 }}
               />
@@ -51,7 +51,7 @@ export function TemporalChart({ data }: TemporalChartProps) {
                 type="monotone"
                 dataKey="dissolvedOxygen"
                 name="OD (mg/L)"
-                stroke="#0891b2"
+                stroke="#0f2347"
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />
@@ -60,7 +60,7 @@ export function TemporalChart({ data }: TemporalChartProps) {
                 type="monotone"
                 dataKey="turbidity"
                 name="Turbidez (NTU)"
-                stroke="#d97706"
+                stroke="#93661a"
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />
@@ -69,7 +69,7 @@ export function TemporalChart({ data }: TemporalChartProps) {
                 type="monotone"
                 dataKey="ph"
                 name="pH"
-                stroke="#059669"
+                stroke="#2f5f3f"
                 strokeWidth={2}
                 dot={{ r: 3 }}
               />
