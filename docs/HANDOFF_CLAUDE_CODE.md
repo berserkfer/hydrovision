@@ -1,7 +1,7 @@
 # Handoff — HydroVision para Claude Code
 
 **Repositorio:** `github.com/berserkfer/hydrovision`
-**Último commit:** `0010dfe`
+**Último commit:** `ca89931` o posterior
 **Fecha:** 20 de octubre de 2026
 **Uso:** pega este documento en el repo y pide a Claude Code ejecutar **un bloque por vez**, con tests y commit.
 
@@ -92,10 +92,15 @@ Deuda técnica pendiente (no bloquea la tesis):
 
 ---
 
-## 6. Lo que falta — documento de tesis
+## 6. Documento de tesis — corregido (v2)
 
-Archivo: `Proyecto_de_investigacion_HydroVision_formato_UCV_corregido.docx`.
+Archivo corregido: `docs/Proyecto_de_investigacion_HydroVision_UCV_corregido_v2.docx` (commit `ca89931`).
 
+Correcciones aplicadas: año 2027 en problema y objetivo; autoría de Nizama (L. K. y C. F.); separación ECA/LMP por punto (P1 PTAR, P2–P5 pesca, E2 cauce, E3 mar, P8 excluido); regla `f_agua ≥ 0,5` con mínimo 3 píxeles; mínimo 30 pares en 6 fechas; ventana ±3 días; validación leave-one-date-out con métricas por fecha. Se agregaron las referencias del D.S. 003-2010-MINAM y del D.S. 010-2008-PRODUCE.
+
+Pendiente en el documento: anexos 3 y 4 (matriz de operacionalización y ficha de campo) y revisión visual final.
+
+Detalle de lo aplicado:
 1. **Año:** la universidad pidió **2027**. Cambiar las dos frases que aún dicen 2026 (problema y objetivo general).
 2. **Autoría de Nizama:** la referencia dice "W. R. y C. E."; los autores reales son **Lizveth Karín Nizama Pacheco** y **Carlos Francisco Cabrera Carranza**.
 3. **ECA vs LMP:** separar P1 LMP PTAR; P2–P5 LMP pesca; cauce E2 (o D1); P6–P10 E3; P8 excluido.

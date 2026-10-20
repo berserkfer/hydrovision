@@ -23,6 +23,7 @@
 | A | API normativa + selector de perfil | ✅ | `3ead7d0` |
 | B | Scorecard de agua en vista satelital | ✅ | `8f8e7f3` |
 | C | Marco normativo en el PDF | ✅ | `0010dfe` |
+| D | Correcciones del documento de tesis (v2) | ✅ | `ca89931` |
 
 ## Verificación
 
@@ -31,10 +32,12 @@
 
 ## Pendiente
 
-Solo las correcciones del documento de tesis (ver `docs/HANDOFF_CLAUDE_CODE.md`, sección 6).
+- Actualizar `README.md`, `docs/ROADMAP.md` y `docs/PROJECT_STATUS.md` al estado real.
+- Arreglar los errores de `tsc --noEmit` en fixtures de tests.
+- Anexos 3 y 4 del documento de tesis.
 
 ## Reanudación
 
 Leer este archivo, el handoff y `git log --oneline -10`.
 
-**Último punto:** correcciones del .docx (año 2027, autoría de Nizama, ECA/LMP, píxel mixto, tamaño muestral, ventana, validación, anexos).
+**Último punto:** documentación raíz + typecheck.
