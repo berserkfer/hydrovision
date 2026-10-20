@@ -3,7 +3,10 @@ import { PageContent } from "@/components/layout/PageContent";
 import { getDataStore } from "@/data/store-access";
 import { classifyForPointType } from "@/lib/eca/classifier";
 import {
+  NORMATIVE_PROFILES,
   POINT_TYPE_LABELS,
+  evaluateNormative,
+  getProfileById,
   resolveProfileForPointType,
   type MonitoringPointType,
   type NormativeEvaluation,
@@ -75,8 +78,9 @@ interface PointResult {
   reason?: string;
 }
 
-function buildResults(): PointResult[] {
+function buildResults(profileOverrideId?: string): PointResult[] {
   const store = getDataStore();
+  const override = profileOverrideId ? getProfileById(profileOverrideId) : undefined;
   const stations = store.estaciones
     .filter((e) => e.rioId === DREN_RIO_ID)
     .sort((a, b) => a.codigo.localeCompare(b.codigo, "es", { numeric: true }));
@@ -111,7 +115,9 @@ function buildResults(): PointResult[] {
       station,
       fecha: muestra.fechaMuestreo,
       pointType,
-      evaluation: classifyForPointType(measurement, pointType),
+      evaluation: override
+        ? evaluateNormative(measurement, override)
+        : classifyForPointType(measurement, pointType),
     };
   });
 }
@@ -126,9 +132,14 @@ function StatusPill({ status }: { status: NormativeEvaluation["status"] }) {
   );
 }
 
-export function NormativeComplianceView() {
-  const results = buildResults();
+export function NormativeComplianceView({
+  profileOverrideId,
+}: {
+  profileOverrideId?: string;
+}) {
+  const results = buildResults(profileOverrideId);
   const evaluated = results.filter((r) => r.evaluation);
+  const activeProfile = profileOverrideId ? getProfileById(profileOverrideId) : undefined;
   const counts = {
     compliant: evaluated.filter((r) => r.evaluation?.status === "compliant").length,
     alert: evaluated.filter((r) => r.evaluation?.status === "alert").length,
@@ -148,12 +159,49 @@ export function NormativeComplianceView() {
       </header>
 
       <PageContent>
+        <nav className="mb-4 flex flex-wrap gap-2 text-xs" aria-label="Selector de perfil normativo">
+          <a
+            href="/normativa"
+            className={`rounded-full px-3 py-1 ring-1 ring-inset ${
+              activeProfile
+                ? "bg-white text-slate-600 ring-slate-300 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700"
+                : "bg-cyan-500/15 text-cyan-700 ring-cyan-500/30 dark:text-cyan-300"
+            }`}
+          >
+            Por tipo de punto (recomendado)
+          </a>
+          {NORMATIVE_PROFILES.map((profile) => (
+            <a
+              key={profile.id}
+              href={`/normativa?perfil=${profile.id}`}
+              className={`rounded-full px-3 py-1 ring-1 ring-inset ${
+                activeProfile?.id === profile.id
+                  ? "bg-cyan-500/15 text-cyan-700 ring-cyan-500/30 dark:text-cyan-300"
+                  : "bg-white text-slate-600 ring-slate-300 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700"
+              }`}
+            >
+              {profile.label}
+            </a>
+          ))}
+        </nav>
+
         <section className="mb-6 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
           <p>
-            <strong>ECA</strong> (D.S. N° 004-2017-MINAM) aplica al cuerpo de agua: E2 para el
-            cauce y E3 para la zona marina. <strong>LMP</strong> (D.S. N° 003-2010-MINAM y D.S.
-            N° 010-2008-PRODUCE) aplica al efluente en su punto de descarga. Mezclar ambos
-            instrumentos en un mismo veredicto sería un error metodológico.
+            {activeProfile ? (
+              <>
+                Estás evaluando <strong>todos los puntos</strong> contra{" "}
+                <strong>{activeProfile.label}</strong> ({activeProfile.instrument}). Es una vista
+                comparativa: un efluente no deja de estar sujeto a LMP porque lo compares contra
+                ECA.
+              </>
+            ) : (
+              <>
+                <strong>ECA</strong> (D.S. N° 004-2017-MINAM) aplica al cuerpo de agua: E2 para el
+                cauce y E3 para la zona marina. <strong>LMP</strong> (D.S. N° 003-2010-MINAM y
+                D.S. N° 010-2008-PRODUCE) aplica al efluente en su punto de descarga. Mezclar
+                ambos instrumentos en un mismo veredicto sería un error metodológico.
+              </>
+            )}
           </p>
           <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             Los valores de fósforo total no se comparan contra fosfatos: se reportan como no
