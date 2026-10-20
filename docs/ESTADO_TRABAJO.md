@@ -33,7 +33,7 @@
 
 ## Verificación
 
-- `npx vitest run` → 39 archivos, **345 tests pasan**.
+- `npx vitest run` → 40 archivos, **348 tests pasan**.
 - `npx tsc --noEmit` → sin errores.
 - `npm run build` → OK, incluye `/planificador`.
 - Revisión visual del .docx: anexos renderizados y verificados (31 páginas).

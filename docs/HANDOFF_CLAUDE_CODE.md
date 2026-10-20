@@ -20,7 +20,7 @@ Datos clave:
 - Landsat 8 (desde 2013) sí podría emparejar 2014, a 30 m.
 - El Excel de la tesis tiene coliformes 2015-2016, promedios 2017 y estudios experimentales.
 
-Estado verificado: **345 tests pasan** (39 archivos) y `next build` compila.
+Estado verificado: **348 tests pasan** (40 archivos) y `next build` compila.
 
 Documentos: `docs/INFORME_COMPARATIVO_2026-10.md` (13 referentes y roadmap) y `docs/ESTADO_TRABAJO.md`.
 
@@ -65,6 +65,7 @@ Documentos: `docs/INFORME_COMPARATIVO_2026-10.md` (13 referentes y roadmap) y `d
 | `0010dfe` | Marco normativo aplicable en el PDF de reportes y mapeo compartido `point-types.ts` |
 | `f217b09` | Planificador de campañas: proyección de pasadas, nubosidad y ventana ±3 días (`/planificador`) |
 | `967c525` | Caché TTL de búsquedas STAC y rate limit en rutas satelitales |
+| `a004759` | Rate limit también en predicción y tendencia |
 
 Valores normativos verificados (fuente en `catalog.ts`):
 
@@ -88,7 +89,7 @@ Deuda técnica pendiente (no bloquea la tesis):
 |---|---|
 | ~~`tsc --noEmit` falla~~ | Resuelto en `c1a4d66`: typecheck limpio |
 | Sin autenticación real | `src/server/authorization/dev-user-context.ts` |
-| Sin caché ni rate limit satelital | `/api/satellite/*` |
+| ~~Sin caché ni rate limit satelital~~ | Resuelto: caché TTL de STAC y límite de 30 peticiones/min en las rutas satelitales |
 | Docs desactualizados | `README.md`, `docs/ROADMAP.md`, `docs/PROJECT_STATUS.md` |
 | Duplicación | 2 stacks GEE, 4 mapas Leaflet, 3 namespaces de repositorios |
 
@@ -119,7 +120,7 @@ Detalle de lo aplicado:
 
 ```bash
 npm ci
-npx vitest run                 # 345 tests
+npx vitest run                 # 348 tests
 npx tsc --noEmit               # limpio
 npm run build                  # OK
 npm run dev                    # http://localhost:3000/normativa
