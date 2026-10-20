@@ -23,6 +23,7 @@ import {
   isReadinessSufficientForCalibration,
 } from "@/satellite/calibration/calibration-readiness";
 import { runExploratoryCalibration } from "@/satellite/calibration/exploratory-calibration";
+import { leaveOneDateOut } from "@/satellite/calibration/leave-one-date-out";
 import {
   isValidationSuccessful,
   validateCalibrationModel,
@@ -311,6 +312,11 @@ export class ScientificCalibrationService {
     return {
       model: calibrationResult.model,
       validation: validationResult,
+      crossValidation: leaveOneDateOut(
+        allPairs,
+        calibrationResult.model.parameterCode,
+        calibrationResult.model.predictorIndex
+      ),
       audit,
       scientificStatus: "validated_exploratory",
       meta: {
