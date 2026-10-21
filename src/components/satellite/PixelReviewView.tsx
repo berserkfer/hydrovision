@@ -174,6 +174,7 @@ export function PixelReviewView() {
                             <span className="hv-num block whitespace-nowrap text-[12px]">{r.acquisitionDate}</span>
                             <span className="text-[11px] text-[var(--hv-foreground-dim)]">
                               {r.provider} · nubes {r.cloudPercentage === null ? "?" : `${Math.round(r.cloudPercentage)} %`}
+                              {r.cloudMode ? ` · regla ${r.cloudMode === "relaxed" ? "relajada" : "estricta"}` : ""}
                             </span>
                           </td>
                           <td className="px-4 py-3">

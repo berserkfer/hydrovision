@@ -28,6 +28,8 @@ export interface PixelReviewRow {
   statusLabel: string;
   usable: boolean | null;
   reason: string;
+  /** Regla de nubes con que se evaluó la escena (null si no hubo selección). */
+  cloudMode: string | null;
   originalLatitude: number | null;
   originalLongitude: number | null;
   adjustedLatitude: number | null;
@@ -98,6 +100,7 @@ export function toPixelReviewRow(
     statusLabel: PIXEL_REVIEW_STATUS_LABELS[status],
     usable: selection ? selection.usable : null,
     reason: selection?.reason ?? "El proveedor de esta escena no aplica la selección de píxel de agua.",
+    cloudMode: selection ? selection.cloudMode ?? "strict" : null,
     originalLatitude: selection?.originalCoordinate.latitude ?? null,
     originalLongitude: selection?.originalCoordinate.longitude ?? null,
     adjustedLatitude: selection?.adjustedCoordinate?.latitude ?? null,
@@ -194,6 +197,7 @@ const CSV_COLUMNS: Array<[keyof PixelReviewRow, string]> = [
   ["waterPixels", "pixeles_agua"],
   ["validPixels", "pixeles_validos"],
   ["cloudPercentage", "nubosidad_escena_pct"],
+  ["cloudMode", "regla_nubes"],
   ["reason", "motivo"],
 ];
 

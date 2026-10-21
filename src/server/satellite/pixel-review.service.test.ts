@@ -14,6 +14,7 @@ function selection(overrides: Partial<WaterPixelSelectionRecord>): WaterPixelSel
     pixelOffset: { dRow: 0, dCol: 0 },
     searchRadiusM: 30,
     channelCheck: "connected_water_body",
+    cloudMode: "strict",
     window: { waterPixels: 9, validPixels: 9, contaminatedPixels: 0, waterFraction: 1 },
     selectedNdwi: 0.5,
     selectedScl: 6,

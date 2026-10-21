@@ -123,3 +123,17 @@ Los puntos históricos dentro del dren (P1–P5) no tienen agua visible en el p�
 - **Histórico o nuevo:** a ≤ 25 m de un punto P es **histórico**; si no, **nuevo**. P6–P10 se evalúan aparte como **referencia** (puntos históricos con agua visible) y se conservan.
 - **Uso del resultado:** los candidatos se ordenan por frecuencia de aptitud y luego por f_agua. Se pueden marcar como **"propuesto"** (la marca se guarda por traza) y exportar a CSV.
 - **Cálculo:** corre **en segundo plano** y se guarda; la página muestra el último resultado y su fecha, sin recalcular al abrirse.
+
+## Fase 2 · Regla de nubes configurable
+
+`WATER_PIXEL_CLOUD_MODE` define qué hacer con los píxeles contaminados (SCL 3, 8, 9, 10, 11) de la ventana 3×3 del píxel usado:
+
+| Modo | Valor | Regla |
+|---|---|---|
+| Estricto (por defecto) | `strict` | Un solo píxel con nube, sombra, cirros o nieve descarta la ventana |
+| Relajado costero | `relaxed` (también `costero`) | Se acepta si el píxel usado es agua, se cumple f_agua (≥ 3 píxeles de agua y ≥ 0,5) y hay **como máximo 1** píxel contaminado, que no cuenta como válido |
+
+- **Dónde queda guardado el modo:** en cada registro (`waterPixelSelection.cloudMode`) y en cada par de calibración (`pixelSelection.cloudMode`).
+- **En las exportaciones:** columna `pixel_cloud_mode` del dataset y `regla_nubes` de la revisión de píxeles.
+- **En el buscador de tramos:** lo indica en sus notas.
+- **Registros antiguos:** los anteriores a esta fase se evaluaron con la regla estricta y así se exportan.

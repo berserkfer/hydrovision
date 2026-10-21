@@ -140,6 +140,7 @@ describe("píxel de agua en el par de calibración", () => {
     originalCoordinate: original,
     searchRadiusM: 30,
     channelCheck: "connected_water_body" as const,
+    cloudMode: "relaxed" as const,
     window: { waterPixels: 6, validPixels: 9, contaminatedPixels: 0, waterFraction: 0.6667 },
     selectedNdwi: 0.6,
     selectedScl: 6,

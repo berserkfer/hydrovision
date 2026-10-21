@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   classifyScl,
+  getCloudMode,
+  toPairPixelSelection,
+  pixelExportColumns,
   getWaterSearchRadiusM,
   requiredGridHalfSize,
   selectWaterPixel,
@@ -141,5 +144,62 @@ describe("selectWaterPixel", () => {
     expect(selectWaterPixel(grid(SOIL, channel([6, 7])), { searchRadiusM: 10 }).status).toBe(
       "blocked_no_water_in_radius"
     );
+  });
+});
+
+describe("regla de nubes configurable (Fase 2)", () => {
+  it("por defecto es estricta; WATER_PIXEL_CLOUD_MODE=relaxed activa la costera", () => {
+    expect(getCloudMode({} as NodeJS.ProcessEnv)).toBe("strict");
+    expect(getCloudMode({ WATER_PIXEL_CLOUD_MODE: "relaxed" } as unknown as NodeJS.ProcessEnv)).toBe("relaxed");
+    expect(getCloudMode({ WATER_PIXEL_CLOUD_MODE: "costero" } as unknown as NodeJS.ProcessEnv)).toBe("relaxed");
+    expect(getCloudMode({ WATER_PIXEL_CLOUD_MODE: "otra" } as unknown as NodeJS.ProcessEnv)).toBe("strict");
+  });
+
+  it("estricto: 1 píxel contaminado descarta la ventana", () => {
+    const r = selectWaterPixel(grid(WATER, [[3, 3, CLOUD]]), { cloudMode: "strict" });
+    expect(r.status).toBe("discarded_clouds");
+    expect(r.cloudMode).toBe("strict");
+  });
+
+  it("relajado: con el píxel central de agua, f_agua y 1 contaminado, se acepta", () => {
+    const r = selectWaterPixel(grid(WATER, [[3, 3, CLOUD]]), { cloudMode: "relaxed" });
+    expect(r.status).toBe("center_water");
+    expect(r.usable).toBe(true);
+    expect(r.cloudMode).toBe("relaxed");
+    // El píxel contaminado no cuenta como válido: 8 de agua sobre 8 válidos.
+    expect(r.window).toMatchObject({ contaminatedPixels: 1, validPixels: 8, waterPixels: 8 });
+  });
+
+  it("relajado: 2 píxeles contaminados siguen descartando", () => {
+    const r = selectWaterPixel(grid(WATER, [[3, 3, CLOUD], [5, 5, SHADOW]]), { cloudMode: "relaxed" });
+    expect(r.status).toBe("discarded_clouds");
+    expect(r.reason).toMatch(/modo relajado/);
+  });
+
+  it("relajado: con 1 contaminado pero f_agua insuficiente, se bloquea", () => {
+    // Cauce de 1 columna: 2 de agua / 8 válidos en la ventana.
+    const r = selectWaterPixel(grid(VEG, [...channel([4]), [3, 4, CLOUD]]), { cloudMode: "relaxed" });
+    expect(r.status).toBe("blocked_insufficient_water");
+  });
+
+  it("el modo queda en el par de calibración y en la exportación", () => {
+    const base = selectWaterPixel(grid(WATER, [[3, 3, CLOUD]]), { cloudMode: "relaxed" });
+    const pair = toPairPixelSelection({
+      status: base.status,
+      usable: base.usable,
+      reason: base.reason,
+      originalCoordinate: { latitude: -6.87, longitude: -79.93 },
+      adjustedCoordinate: { latitude: -6.87, longitude: -79.93 },
+      adjustmentDistanceM: 0,
+      pixelOffset: base.pixelOffset,
+      searchRadiusM: base.searchRadiusM,
+      channelCheck: base.channelCheck,
+      cloudMode: base.cloudMode,
+      window: base.window,
+      selectedNdwi: base.selectedNdwi,
+      selectedScl: base.selectedScl,
+    });
+    expect(pair?.cloudMode).toBe("relaxed");
+    expect(pixelExportColumns(pair).pixel_cloud_mode).toBe("relaxed");
   });
 });

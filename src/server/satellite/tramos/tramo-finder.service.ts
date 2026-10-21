@@ -36,7 +36,7 @@ import {
   type SceneGrid,
   type TramoCandidate,
 } from "@/satellite/tramos/tramo-suitability";
-import { getWaterSearchRadiusM } from "@/satellite/quality/water-pixel-selection";
+import { CLOUD_MODE_LABELS, getCloudMode, getWaterSearchRadiusM, type CloudMode } from "@/satellite/quality/water-pixel-selection";
 
 export const TRAMO_FINDER_JOB = "tramo-finder";
 const TRACE_FILE = "tramos/trace.json";
@@ -132,6 +132,7 @@ export interface TramoFinderResult {
   };
   scenes: TramoSceneInfo[];
   searchRadiusM: number;
+  cloudMode: CloudMode;
   candidates: TramoCandidate[];
   references: TramoCandidate[];
   notes: string[];
@@ -229,6 +230,7 @@ export async function runTramoFinder(
     .map((h) => ({ id: h.codigo, coordinate: h.coordinate, chainageM: null }));
 
   const searchRadiusM = getWaterSearchRadiusM();
+  const cloudMode = getCloudMode();
   const allPoints = [...samples, ...references].map((s) => s.coordinate);
   // Margen: radio de búsqueda + ventana 3×3 + un píxel de holgura.
   const { min, max } = boundingBox(allPoints, searchRadiusM + 30);
@@ -254,7 +256,7 @@ export async function runTramoFinder(
     });
     if (!grid) continue;
     for (const sample of [...samples, ...references]) {
-      const result = evaluateSampleInScene(grid, sample.coordinate, { searchRadiusM });
+      const result = evaluateSampleInScene(grid, sample.coordinate, { searchRadiusM, cloudMode });
       perSample.set(sample.id, [...(perSample.get(sample.id) ?? []), result]);
     }
   }
@@ -274,6 +276,7 @@ export async function runTramoFinder(
   const notes = [
     `Criterio de aptitud por escena: SCL = 6 y NDWI > 0, ventana 3×3, ≥ 3 píxeles de agua conectados y f_agua ≥ 0,5, con ajuste ≤ ${searchRadiusM} m dentro del cauce.`,
     "Frecuencia de aptitud = escenas aptas / escenas con datos en el tramo (las descartadas por nubes cuentan como no aptas).",
+    `Regla de nubes: ${CLOUD_MODE_LABELS[cloudMode]} (WATER_PIXEL_CLOUD_MODE).`,
     "Un tramo a ≤ 25 m de un punto de Nizama y Cabrera (2014) se marca como histórico; el resto, como nuevo.",
   ];
   if (trace.source === "default_points") {
@@ -292,6 +295,7 @@ export async function runTramoFinder(
     },
     scenes: sceneInfo,
     searchRadiusM,
+    cloudMode,
     candidates,
     references: referenceCandidates,
     notes,

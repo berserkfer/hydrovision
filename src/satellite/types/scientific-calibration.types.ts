@@ -151,6 +151,7 @@ export interface ScientificCalibrationDatasetRow {
   pixel_latitude: number | null;
   pixel_longitude: number | null;
   pixel_reason: string | null;
+  pixel_cloud_mode: string | null;
   satellite_acquisition_date: string | null;
   temporal_difference_days: number | null;
   distance_meters: number | null;

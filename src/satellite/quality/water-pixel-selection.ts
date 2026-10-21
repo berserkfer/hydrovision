@@ -87,6 +87,29 @@ export type WaterPixelSelectionStatus =
 
 export type ChannelCheck = "channel_polygon" | "connected_water_body";
 
+/**
+ * Regla de nubes en la ventana 3×3 del píxel usado:
+ *  - strict:  un solo píxel con nube, sombra, cirros o nieve descarta la ventana (por defecto);
+ *  - relaxed: para zona costera, se acepta si el píxel usado es agua, se cumple f_agua y hay
+ *             como máximo 1 píxel contaminado (que no cuenta como válido).
+ * Se elige con WATER_PIXEL_CLOUD_MODE y queda guardado en cada registro y par.
+ */
+export type CloudMode = "strict" | "relaxed";
+
+export const CLOUD_MODE_LABELS: Record<CloudMode, string> = {
+  strict: "Estricto (0 píxeles contaminados)",
+  relaxed: "Relajado costero (≤ 1 píxel contaminado)",
+};
+
+export function getCloudMode(env: NodeJS.ProcessEnv = process.env): CloudMode {
+  const raw = env.WATER_PIXEL_CLOUD_MODE?.trim().toLowerCase();
+  return raw === "relaxed" || raw === "relajado" || raw === "coastal" || raw === "costero" ? "relaxed" : "strict";
+}
+
+function maxContaminated(mode: CloudMode): number {
+  return mode === "relaxed" ? 1 : 0;
+}
+
 export interface WaterPixelSelection {
   status: WaterPixelSelectionStatus;
   /** true solo para center_water y adjusted */
@@ -98,6 +121,7 @@ export interface WaterPixelSelection {
   adjustmentDistanceM: number;
   searchRadiusM: number;
   channelCheck: ChannelCheck;
+  cloudMode: CloudMode;
   /** Métricas de la ventana 3×3 del píxel elegido (o del punto si no hubo elección). */
   window: {
     waterPixels: number;
@@ -118,6 +142,8 @@ export interface SelectionOptions {
    * está dentro. Sin él se usa el criterio de cuerpo de agua conexo.
    */
   isInChannel?: (dRow: number, dCol: number) => boolean;
+  /** Regla de nubes; por defecto la de WATER_PIXEL_CLOUD_MODE (strict). */
+  cloudMode?: CloudMode;
 }
 
 export function getWaterSearchRadiusM(env: NodeJS.ProcessEnv = process.env): number {
@@ -181,11 +207,17 @@ export function selectWaterPixel(grid: PixelGrid, options: SelectionOptions = {}
   const minWater = options.minWaterPixels ?? MIN_WATER_PIXELS;
   const threshold = options.waterFractionThreshold ?? WATER_FRACTION_THRESHOLD;
   const channelCheck: ChannelCheck = options.isInChannel ? "channel_polygon" : "connected_water_body";
+  const cloudMode = options.cloudMode ?? getCloudMode();
+  const tolerance = maxContaminated(cloudMode);
+  const tooCloudy = (pixels: EvaluatedPixel[]) =>
+    pixels.filter((p) => p.mask === "contaminated").length > tolerance;
+  const cloudRule =
+    cloudMode === "relaxed" ? "más de 1 píxel con nube, sombra, cirros o nieve (modo relajado)" : "nube, sombra de nube, cirros o nieve (modo estricto)";
   const size = grid.pixels.length;
   const half = Math.floor(size / 2);
   const evaluated = evaluateGrid(grid);
 
-  const base = { searchRadiusM, channelCheck };
+  const base = { searchRadiusM, channelCheck, cloudMode };
 
   const finish = (
     status: WaterPixelSelectionStatus,
@@ -221,10 +253,10 @@ export function selectWaterPixel(grid: PixelGrid, options: SelectionOptions = {}
 
   // Nubes, sombra, cirros o nieve junto al punto: la escena se descarta para este punto.
   const centerWindow = windowAround(evaluated, half, half, EVALUATION_WINDOW_HALF);
-  if (centerWindow.some((p) => p.mask === "contaminated")) {
+  if (tooCloudy(centerWindow)) {
     return finish(
       "discarded_clouds",
-      "La ventana 3×3 del punto tiene nube, sombra de nube, cirros o nieve (SCL): escena descartada para este punto.",
+      `La ventana 3×3 del punto tiene ${cloudRule}: escena descartada para este punto.`,
       half,
       half,
       false
@@ -279,10 +311,10 @@ export function selectWaterPixel(grid: PixelGrid, options: SelectionOptions = {}
     status = "adjusted";
 
     const adjustedWindow = windowAround(evaluated, targetRow, targetCol, EVALUATION_WINDOW_HALF);
-    if (adjustedWindow.some((p) => p.mask === "contaminated")) {
+    if (tooCloudy(adjustedWindow)) {
       return finish(
         "discarded_clouds",
-        "La ventana 3×3 del píxel de agua más cercano tiene nube, sombra, cirros o nieve: escena descartada para este punto.",
+        `La ventana 3×3 del píxel de agua más cercano tiene ${cloudRule}: escena descartada para este punto.`,
         targetRow,
         targetCol,
         true
@@ -331,6 +363,7 @@ export interface WaterPixelSelectionRecord {
   pixelOffset: { dRow: number; dCol: number } | null;
   searchRadiusM: number;
   channelCheck: ChannelCheck;
+  cloudMode: CloudMode;
   window: WaterPixelSelection["window"];
   selectedNdwi: number | null;
   selectedScl: number | null;
@@ -358,6 +391,8 @@ export function toPairPixelSelection(
     adjustmentDistanceM: record.adjustmentDistanceM,
     pixelOffset: record.pixelOffset,
     channelCheck: record.channelCheck,
+    // Registros anteriores a la Fase 2 se evaluaron con la regla estricta.
+    cloudMode: record.cloudMode ?? "strict",
   };
 }
 
@@ -369,5 +404,6 @@ export function pixelExportColumns(selection: PairPixelSelection | null) {
     pixel_latitude: used?.latitude ?? null,
     pixel_longitude: used?.longitude ?? null,
     pixel_reason: selection?.reason ?? null,
+    pixel_cloud_mode: selection?.cloudMode ?? null,
   };
 }

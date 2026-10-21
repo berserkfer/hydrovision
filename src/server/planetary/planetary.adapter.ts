@@ -17,6 +17,7 @@ import {
   type BandGridReadResult,
 } from "./pc-band-reader";
 import {
+  getCloudMode,
   getWaterSearchRadiusM,
   requiredGridHalfSize,
   selectWaterPixel,
@@ -243,6 +244,7 @@ export class PlanetaryAdapter {
     searchRadiusM: number
   ): Promise<{ record: WaterPixelSelectionRecord; sampleCell: { row: number; col: number }; sclAtSample: number | null }> {
     const originalCoordinate = { latitude: request.latitude, longitude: request.longitude };
+    const cloudMode = getCloudMode();
     const emptyRecord = (reason: string): WaterPixelSelectionRecord => ({
       status: "no_data",
       usable: false,
@@ -253,6 +255,7 @@ export class PlanetaryAdapter {
       pixelOffset: null,
       searchRadiusM,
       channelCheck: "connected_water_body",
+      cloudMode,
       window: { waterPixels: 0, validPixels: 0, contaminatedPixels: 0, waterFraction: null },
       selectedNdwi: null,
       selectedScl: null,
@@ -285,7 +288,7 @@ export class PlanetaryAdapter {
       ),
     };
 
-    const selection = selectWaterPixel(grid, { searchRadiusM });
+    const selection = selectWaterPixel(grid, { searchRadiusM, cloudMode });
     const offset = selection.pixelOffset;
     const sampleCell = offset ? { row: half + offset.dRow, col: half + offset.dCol } : { row: half, col: half };
     const adjustedCoordinate = offset
@@ -308,6 +311,7 @@ export class PlanetaryAdapter {
         pixelOffset: selection.pixelOffset,
         searchRadiusM: selection.searchRadiusM,
         channelCheck: selection.channelCheck,
+        cloudMode: selection.cloudMode,
         window: selection.window,
         selectedNdwi: selection.selectedNdwi,
         selectedScl: selection.selectedScl,
