@@ -20,6 +20,7 @@ interface Payload {
   state: JobState;
   latest: StoredResult<TramoFinderResult> | null;
   proposals: Record<string, ProposalMark>;
+  ownImages: Record<string, { count: number; latest: string | null }>;
   uploadedTrace: { name: string; uploadedAt: string; hash: string } | null;
 }
 
@@ -132,6 +133,7 @@ export function TramoFinderView() {
             <th className="px-3 py-2">UTM 17S (E, N)</th>
             <th className="px-3 py-2">Geográficas</th>
             <th className="px-3 py-2">Histórico más cercano</th>
+            <th className="px-3 py-2" title="Imágenes propias: verificación, no satélite">Imagen propia</th>
             {withProposal && <th className="px-3 py-2">Propuesto</th>}
           </tr>
         </thead>
@@ -157,6 +159,15 @@ export function TramoFinderView() {
               <td className="hv-num px-3 py-2.5 text-[11.5px]">{c.coordinate.latitude.toFixed(6)}, {c.coordinate.longitude.toFixed(6)}</td>
               <td className="px-3 py-2.5 text-[12px]">
                 {c.nearestHistorical.codigo} · <span className="hv-num">{c.nearestHistorical.distanceM} m</span>
+              </td>
+              <td className="px-3 py-2.5 text-xs text-[var(--hv-foreground-muted)]">
+                {data?.ownImages?.[c.id]?.count ? (
+                  <a href="/imagenes-propias" className="underline decoration-dotted">
+                    {data.ownImages[c.id].count} imagen(es)
+                  </a>
+                ) : (
+                  "—"
+                )}
               </td>
               {withProposal && (
                 <td className="px-3 py-2.5">

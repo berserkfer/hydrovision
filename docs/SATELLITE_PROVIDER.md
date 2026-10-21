@@ -152,3 +152,19 @@ Los puntos históricos dentro del dren (P1–P5) no tienen agua visible en el p�
   - El polígono **tiene prioridad** sobre la regla de cuerpo de agua conexo. `channelCheck` pasa de `connected_water_body` a `channel_polygon`.
   - Se aplica en la selección del píxel (predicción, pares, revisión de píxeles) y en el buscador de tramos.
   - Al cambiar el polígono se vacía la caché de reflectancias.
+
+## Fase 4 · Imágenes propias (apoyo y verificación, NO satélite)
+
+Página `/imagenes-propias` y API `/api/imagenes-propias`.
+
+- **Archivos admitidos:** se identifican por su contenido, no por la extensión. Máximo `OWN_IMAGE_MAX_BYTES` (50 MB).
+  - **GeoTIFF** de dron o multiespectral, en UTM WGS84 o geográficas `EPSG:4326`. Se recorta **geográficamente** una ventana de `windowM` metros (por defecto 30 m, como la ventana 3×3 de Sentinel-2) centrada en el punto. Si el píxel es muy fino, se lee remuestreado a ≤ 1000 px por lado.
+  - **Foto JPEG/PNG:** no tiene georreferencia por píxel. Se usa la posición de la cámara del **GPS del EXIF** (o la que indique el usuario) y se recorta el **40 % central** de la imagen. Se registra la distancia de la cámara al punto.
+- **Señal:** promedio, desviación, mínimo y máximo por banda disponible, en valores del sensor (DN o 0–255), **no reflectancia**.
+- **Destino:** cada imagen se asocia a un punto histórico (P1–P10) o a un tramo marcado como **propuesto** en el buscador.
+- **Separación de los datos satelitales:**
+  - cada registro lleva `source = "imagen_propia"` y se guarda en su propio almacén;
+  - **nunca** forma pares de calibración y **nunca** entra en R², RMSE ni MAE de Sentinel-2;
+  - una prueba automática verifica que ningún módulo de calibración, pares, calidad o predicción lo importa;
+  - en las tablas y CSV del buscador de tramos y de la revisión de píxeles aparece como **columna separada** (`imagen_propia_n`, `imagen_propia_ultima`), calculada al consultar;
+  - tiene además su propia exportación CSV, con la columna `fuente`.

@@ -319,7 +319,14 @@ function csvCell(value: unknown): string {
   return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-export function tramoCandidatesToCsv(result: TramoFinderResult, proposals: ProposalStore): string {
+/** Columna separada "imagen propia" por candidato (no se mezcla con los datos satelitales). */
+export type OwnImageColumns = Record<string, { count: number; latest: string | null }>;
+
+export function tramoCandidatesToCsv(
+  result: TramoFinderResult,
+  proposals: ProposalStore,
+  ownImages: OwnImageColumns = {}
+): string {
   const header = [
     "id",
     "rol",
@@ -338,6 +345,8 @@ export function tramoCandidatesToCsv(result: TramoFinderResult, proposals: Propo
     "historico_mas_cercano",
     "distancia_historico_m",
     "propuesto",
+    "imagen_propia_n",
+    "imagen_propia_ultima",
   ];
   const rows = [...result.candidates, ...result.references].map((c) =>
     [
@@ -358,6 +367,8 @@ export function tramoCandidatesToCsv(result: TramoFinderResult, proposals: Propo
       c.nearestHistorical.codigo,
       c.nearestHistorical.distanceM,
       proposals[proposalKey(result.traceKey, c.id)]?.proposed ? "si" : "no",
+      ownImages[c.id]?.count ?? 0,
+      ownImages[c.id]?.latest ?? null,
     ]
       .map(csvCell)
       .join(",")

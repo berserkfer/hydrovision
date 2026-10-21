@@ -216,8 +216,18 @@ function csvCell(value: unknown): string {
   return /[",\n;]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
-export function pixelReviewToCsv(report: PixelReviewReport): string {
-  const header = CSV_COLUMNS.map(([, name]) => name).join(",");
-  const lines = report.rows.map((row) => CSV_COLUMNS.map(([key]) => csvCell(row[key])).join(","));
+/** `ownImages`: columna separada "imagen propia" por punto (código → resumen). */
+export function pixelReviewToCsv(
+  report: PixelReviewReport,
+  ownImages: Record<string, { count: number; latest: string | null }> = {}
+): string {
+  const header = [...CSV_COLUMNS.map(([, name]) => name), "imagen_propia_n", "imagen_propia_ultima"].join(",");
+  const lines = report.rows.map((row) =>
+    [
+      ...CSV_COLUMNS.map(([key]) => csvCell(row[key])),
+      csvCell(ownImages[row.codigo]?.count ?? 0),
+      csvCell(ownImages[row.codigo]?.latest ?? null),
+    ].join(",")
+  );
   return [header, ...lines].join("\n") + "\n";
 }

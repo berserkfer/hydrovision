@@ -11,6 +11,8 @@ import { runRouteHandler } from "@/server/api/handler";
 import { ApiError } from "@/server/api/errors";
 import { requirePermission } from "@/server/authorization/guards";
 import { getJobState, getLatestResult, startJob } from "@/server/jobs/background-jobs";
+import { listOwnImages, ownImageColumn, ownImagesNear } from "@/server/own-imagery/own-imagery.service";
+import { historicalPoints } from "@/satellite/geo/trace";
 import {
   PIXEL_REVIEW_JOB,
   buildPixelReview,
@@ -28,9 +30,15 @@ export async function GET(request: Request) {
       getLatestResult<PixelReviewReport>(PIXEL_REVIEW_JOB),
     ]);
 
+    // Columna aparte con imágenes propias cerca de cada punto (no se mezcla con el satélite).
+    const records = await listOwnImages();
+    const ownImages = Object.fromEntries(
+      historicalPoints().map((p) => [p.codigo, ownImageColumn(ownImagesNear(records, p.coordinate))])
+    );
+
     if (new URL(request.url).searchParams.get("format") === "csv") {
       if (!latest) throw ApiError.notFound("Revisión de píxeles calculada");
-      return new NextResponse(pixelReviewToCsv(latest.result), {
+      return new NextResponse(pixelReviewToCsv(latest.result, ownImages), {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
           "Content-Disposition": `attachment; filename="revision-pixeles-${latest.computedAt.slice(0, 10)}.csv"`,
@@ -38,7 +46,7 @@ export async function GET(request: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, data: { state, latest } });
+    return NextResponse.json({ success: true, data: { state, latest, ownImages } });
   });
 }
 

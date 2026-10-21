@@ -80,6 +80,14 @@ export const PLATFORM_NAVIGATION: PlatformNavSection[] = [
             moduleId: "environmental-monitoring",
           },
           {
+            id: "own-imagery",
+            label: "Imágenes Propias",
+            href: "/imagenes-propias",
+            icon: "image",
+            status: "active",
+            moduleId: "environmental-monitoring",
+          },
+          {
             id: "pixel-review",
             label: "Revisión de Píxeles",
             href: "/revision-pixeles",

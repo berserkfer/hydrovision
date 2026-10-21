@@ -6,6 +6,8 @@ import type { JobState, StoredResult } from "@/server/jobs/background-jobs";
 interface JobPayload<T> {
   state: JobState;
   latest: StoredResult<T> | null;
+  /** Columnas separadas de imágenes propias por punto, si la API las envía. */
+  ownImages?: Record<string, { count: number; latest: string | null }>;
 }
 
 /**
@@ -68,5 +70,13 @@ export function useBackgroundJob<T>(url: string) {
     [url, refresh]
   );
 
-  return { state: data?.state ?? null, latest: data?.latest ?? null, error, starting, start, refresh };
+  return {
+    state: data?.state ?? null,
+    latest: data?.latest ?? null,
+    ownImages: data?.ownImages ?? {},
+    error,
+    starting,
+    start,
+    refresh,
+  };
 }

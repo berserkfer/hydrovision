@@ -10,14 +10,27 @@ import { runRouteHandler } from "@/server/api/handler";
 import { ApiError } from "@/server/api/errors";
 import { requirePermission } from "@/server/authorization/guards";
 import { getJobState, getLatestResult, startJob } from "@/server/jobs/background-jobs";
+import { listOwnImages, ownImageColumn, ownImagesNear } from "@/server/own-imagery/own-imagery.service";
 import {
   TRAMO_FINDER_JOB,
   getProposals,
   getStoredTrace,
   runTramoFinder,
   tramoCandidatesToCsv,
+  type OwnImageColumns,
   type TramoFinderResult,
 } from "@/server/satellite/tramos/tramo-finder.service";
+
+/** Imágenes propias cerca de cada candidato — columna aparte, calculada al servir. */
+async function ownImageColumns(result: TramoFinderResult | undefined): Promise<OwnImageColumns> {
+  if (!result) return {};
+  const records = await listOwnImages();
+  const out: OwnImageColumns = {};
+  for (const c of [...result.candidates, ...result.references]) {
+    out[c.id] = ownImageColumn(ownImagesNear(records, c.coordinate));
+  }
+  return out;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -31,9 +44,11 @@ export async function GET(request: Request) {
       getStoredTrace(),
     ]);
 
+    const ownImages = await ownImageColumns(latest?.result);
+
     if (new URL(request.url).searchParams.get("format") === "csv") {
       if (!latest) throw ApiError.notFound("Resultado del buscador de tramos");
-      return new NextResponse(tramoCandidatesToCsv(latest.result, proposals), {
+      return new NextResponse(tramoCandidatesToCsv(latest.result, proposals, ownImages), {
         headers: {
           "Content-Type": "text/csv; charset=utf-8",
           "Content-Disposition": `attachment; filename="tramos-aptos-${latest.computedAt.slice(0, 10)}.csv"`,
@@ -47,6 +62,7 @@ export async function GET(request: Request) {
         state,
         latest,
         proposals,
+        ownImages,
         uploadedTrace: trace ? { name: trace.name, uploadedAt: trace.uploadedAt, hash: trace.hash } : null,
       },
     });

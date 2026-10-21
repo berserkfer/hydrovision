@@ -157,12 +157,13 @@ export function PixelReviewView() {
                       <th className="px-4 py-2">Ajuste</th>
                       <th className="px-4 py-2">f_agua</th>
                       <th className="px-4 py-2">Motivo</th>
+                      <th className="px-4 py-2" title="Imágenes propias (dron o campo): verificación, no satélite">Imagen propia</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {rows.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="px-4 py-6 text-[var(--hv-foreground-muted)]">
+                        <td colSpan={9} className="px-4 py-6 text-[var(--hv-foreground-muted)]">
                           No hay escenas en este filtro.
                         </td>
                       </tr>
@@ -200,6 +201,15 @@ export function PixelReviewView() {
                           </td>
                           <td className="max-w-[360px] px-4 py-3 text-xs leading-relaxed text-[var(--hv-foreground-muted)]">
                             {r.reason}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-[var(--hv-foreground-muted)]">
+                            {job.ownImages[r.codigo]?.count ? (
+                              <a href="/imagenes-propias" className="underline decoration-dotted">
+                                {job.ownImages[r.codigo].count} imagen(es)
+                              </a>
+                            ) : (
+                              "—"
+                            )}
                           </td>
                         </tr>
                       ))
