@@ -4,6 +4,7 @@
  */
 
 import type { WaterPixelSelectionRecord } from "../quality/water-pixel-selection";
+import type { SubpixelEstimate } from "../quality/subpixel-unmixing";
 import type { Sentinel2BandCode, Sentinel2ReflectanceMap } from "../catalog/sentinel2-bands.catalog";
 import type { SpectralIndexCode } from "../catalog/spectral-indices.catalog";
 import type { EstimatedVariableCode } from "../catalog/estimated-variables.catalog";
@@ -60,6 +61,8 @@ export interface SatelliteObservation {
   waterSufficiency?: WaterSufficiency;
   /** Selección del píxel de agua: coordenada original/ajustada, distancia y motivo. */
   waterPixelSelection?: WaterPixelSelectionRecord;
+  /** EXPERIMENTAL: mezcla subpíxel (solo con SUBPIXEL_UNMIXING_ENABLED=true). Fuera de métricas. */
+  subpixelEstimate?: SubpixelEstimate;
   quality: SatelliteQualityMetadata;
   createdAt: string;
 }

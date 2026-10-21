@@ -67,6 +67,35 @@ describe("buildPixelReview", () => {
     expect(csv).toContain("discarded_clouds");
   });
 
+  it("exporta la mezcla subpíxel solo en columnas marcadas como experimentales", async () => {
+    const withSubpixel = {
+      ...obs("2026-10-09", selection({})),
+      subpixelEstimate: {
+        experimental: true,
+        status: "ok",
+        message: "Estimación experimental",
+        fractions: { agua: 0.41, suelo: 0.59, vegetacion: 0 },
+        waterFractionStd: 0.03,
+        residualRmse: 0.001,
+        correctedWaterReflectance: { B03: 0.061, B04: 0.04, B08: 0.021 },
+        correctedWaterReflectanceStd: null,
+        endmembers: {},
+      },
+    } as unknown as SatelliteObservation;
+    const report = await buildPixelReview({}, {
+      now: () => new Date("2026-10-21T12:00:00Z"),
+      channelName: async () => null,
+      listObservations: async ({ stationId = "" }) => (stationId.endsWith("p1") ? [withSubpixel] : []),
+    });
+    expect(report.rows[0].experimentalSubpixel).toMatchObject({ waterFraction: 0.41, waterFractionStd: 0.03 });
+    const [header, row] = pixelReviewToCsv(report).split("\n");
+    const cols = header.split(",");
+    const vals = row.split(",");
+    expect(cols.filter((c) => c.includes("subpixel")).every((c) => c.startsWith("experimental_"))).toBe(true);
+    expect(vals[cols.indexOf("experimental_subpixel_f_agua")]).toBe("0.41");
+    expect(vals[cols.indexOf("experimental_subpixel_B03_agua")]).toBe("0.061");
+  });
+
   it("no inventa filas si el proveedor falla", async () => {
     const report = await buildPixelReview({}, {
       now: () => new Date("2026-10-21T12:00:00Z"),

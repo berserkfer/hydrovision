@@ -31,6 +31,15 @@ export interface PixelReviewRow {
   reason: string;
   /** Regla de nubes con que se evaluó la escena (null si no hubo selección). */
   cloudMode: string | null;
+  /** EXPERIMENTAL: mezcla subpíxel (null si está desactivada). Fuera de las métricas. */
+  experimentalSubpixel: {
+    status: string;
+    waterFraction: number | null;
+    waterFractionStd: number | null;
+    correctedB03: number | null;
+    correctedB08: number | null;
+    message: string;
+  } | null;
   originalLatitude: number | null;
   originalLongitude: number | null;
   adjustedLatitude: number | null;
@@ -106,6 +115,16 @@ export function toPixelReviewRow(
     usable: selection ? selection.usable : null,
     reason: selection?.reason ?? "El proveedor de esta escena no aplica la selección de píxel de agua.",
     cloudMode: selection ? selection.cloudMode ?? "strict" : null,
+    experimentalSubpixel: observation.subpixelEstimate
+      ? {
+          status: observation.subpixelEstimate.status,
+          waterFraction: observation.subpixelEstimate.fractions?.agua ?? null,
+          waterFractionStd: observation.subpixelEstimate.waterFractionStd,
+          correctedB03: observation.subpixelEstimate.correctedWaterReflectance?.B03 ?? null,
+          correctedB08: observation.subpixelEstimate.correctedWaterReflectance?.B08 ?? null,
+          message: observation.subpixelEstimate.message,
+        }
+      : null,
     originalLatitude: selection?.originalCoordinate.latitude ?? null,
     originalLongitude: selection?.originalCoordinate.longitude ?? null,
     adjustedLatitude: selection?.adjustedCoordinate?.latitude ?? null,
@@ -221,12 +240,27 @@ export function pixelReviewToCsv(
   report: PixelReviewReport,
   ownImages: Record<string, { count: number; latest: string | null }> = {}
 ): string {
-  const header = [...CSV_COLUMNS.map(([, name]) => name), "imagen_propia_n", "imagen_propia_ultima"].join(",");
+  const header = [
+    ...CSV_COLUMNS.map(([, name]) => name),
+    "imagen_propia_n",
+    "imagen_propia_ultima",
+    // Columnas EXPERIMENTALES (mezcla subpíxel): no entran en la calibración ni en las métricas.
+    "experimental_subpixel_estado",
+    "experimental_subpixel_f_agua",
+    "experimental_subpixel_f_agua_desv",
+    "experimental_subpixel_B03_agua",
+    "experimental_subpixel_B08_agua",
+  ].join(",");
   const lines = report.rows.map((row) =>
     [
       ...CSV_COLUMNS.map(([key]) => csvCell(row[key])),
       csvCell(ownImages[row.codigo]?.count ?? 0),
       csvCell(ownImages[row.codigo]?.latest ?? null),
+      csvCell(row.experimentalSubpixel?.status ?? null),
+      csvCell(row.experimentalSubpixel?.waterFraction ?? null),
+      csvCell(row.experimentalSubpixel?.waterFractionStd ?? null),
+      csvCell(row.experimentalSubpixel?.correctedB03 ?? null),
+      csvCell(row.experimentalSubpixel?.correctedB08 ?? null),
     ].join(",")
   );
   return [header, ...lines].join("\n") + "\n";

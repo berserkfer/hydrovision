@@ -201,6 +201,20 @@ export function PixelReviewView() {
                           </td>
                           <td className="max-w-[360px] px-4 py-3 text-xs leading-relaxed text-[var(--hv-foreground-muted)]">
                             {r.reason}
+                            {r.experimentalSubpixel && (
+                              <span className="mt-1.5 block">
+                                <DataTag tone="caution">Experimental · subpíxel</DataTag>{" "}
+                                <span className="hv-num">
+                                  {r.experimentalSubpixel.waterFraction !== null
+                                    ? `f_agua ${r.experimentalSubpixel.waterFraction}${
+                                        r.experimentalSubpixel.waterFractionStd !== null
+                                          ? ` ± ${r.experimentalSubpixel.waterFractionStd}`
+                                          : ""
+                                      }`
+                                    : r.experimentalSubpixel.message}
+                                </span>
+                              </span>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-xs text-[var(--hv-foreground-muted)]">
                             {job.ownImages[r.codigo]?.count ? (

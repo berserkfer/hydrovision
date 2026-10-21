@@ -168,3 +168,17 @@ Página `/imagenes-propias` y API `/api/imagenes-propias`.
   - una prueba automática verifica que ningún módulo de calibración, pares, calidad o predicción lo importa;
   - en las tablas y CSV del buscador de tramos y de la revisión de píxeles aparece como **columna separada** (`imagen_propia_n`, `imagen_propia_ultima`), calculada al consultar;
   - tiene además su propia exportación CSV, con la columna `fuente`.
+
+## Fase 5 · Mezcla subpíxel (EXPERIMENTAL, desactivada por defecto)
+
+Se activa con `SUBPIXEL_UNMIXING_ENABLED=true`. Con el indicador apagado no cambia ninguna lectura ni ningún resultado.
+
+- **Objetivo:** estimar qué fracción del píxel del punto es agua y entregar una reflectancia del agua corregida de la mezcla con la orilla.
+- **Método:** mezcla espectral lineal **totalmente restringida** (fracciones ≥ 0 que suman 1) en B03, B04 y B08 (bandas de 10 m), resuelta de forma exacta probando cada subconjunto de endmembers.
+  - **Endmembers de la propia escena,** como mediana de píxeles puros en un entorno de unos 300 m: agua (SCL 6, NDWI > 0,2), suelo (SCL 5, NDVI < 0,25) y vegetación (SCL 4, NDVI > 0,5). Se exigen al menos 5 píxeles de cada uno.
+  - **Reflectancia corregida del agua:** (r − f_suelo·e_suelo − f_veg·e_veg) / f_agua. No se calcula si f_agua < 0,2, porque amplificaría demasiado el error.
+  - **Incertidumbre:** desviación de f_agua y de la reflectancia corregida por Monte Carlo (200 corridas con semilla fija, perturbando los endmembers con su variabilidad en la escena), más el residuo del ajuste.
+- **Etiquetado:**
+  - en la interfaz, "Experimental · subpíxel" en la revisión de píxeles;
+  - en las exportaciones, columnas con prefijo `experimental_subpixel_*`.
+- **Fuera de la tesis:** **no** entra en los pares de calibración ni en R², RMSE o MAE. Una prueba automática verifica que ningún módulo de calibración, pares, validación o predicción la usa.

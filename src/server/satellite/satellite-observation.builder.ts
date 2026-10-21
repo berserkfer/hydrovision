@@ -94,6 +94,7 @@ function buildSatelliteObservationFromProvider(
     pixelsUsed: reflectance.pixelsUsed ?? 0,
     waterSufficiency: reflectance.waterSufficiency ?? "unknown",
     ...(reflectance.waterPixelSelection ? { waterPixelSelection: reflectance.waterPixelSelection } : {}),
+    ...(reflectance.subpixelEstimate ? { subpixelEstimate: reflectance.subpixelEstimate } : {}),
     quality: {
       acquisitionDate,
       processingLevel: SENTINEL2_PROCESSING_LEVEL,

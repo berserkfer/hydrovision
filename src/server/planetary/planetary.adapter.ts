@@ -9,6 +9,12 @@ import { interpretSclPixelQuality } from "@/satellite/quality/pixel-quality";
 import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
 import { reflectanceCache, reflectanceCacheKey } from "./pc-reflectance-cache";
 import { getChannelPolygon } from "@/server/satellite/channel/channel-polygon.store";
+import {
+  estimateSubpixel,
+  isSubpixelUnmixingEnabled,
+  type SubpixelEstimate,
+  type UnmixPixel,
+} from "@/satellite/quality/subpixel-unmixing";
 import { isInsideChannel } from "@/satellite/geo/channel-polygon";
 import { getSentinel2ItemById, searchSentinel2Items, type StacItem } from "./pc-stac.client";
 import {
@@ -83,6 +89,21 @@ function sceneRecordFromStacItem(item: StacItem): PlanetarySceneRecord {
 // Caché de reflectancias: ver pc-reflectance-cache.ts (se reexporta para compatibilidad).
 export { clearPlanetaryReflectanceCache } from "./pc-reflectance-cache";
 
+/** Rejilla de endmembers para la mezcla subpíxel: 30 píxeles a cada lado (≈ 300 m). */
+const ENDMEMBER_GRID_HALF = 30;
+
+/** Recorta una rejilla (2·from+1)² a su centro (2·to+1)². */
+function cropGrid(grid: BandGridReadResult | null, fromHalf: number, toHalf: number): BandGridReadResult | null {
+  if (!grid || fromHalf === toHalf) return grid;
+  const o = fromHalf - toHalf;
+  const size = 2 * toHalf + 1;
+  return {
+    ...grid,
+    values: grid.values.slice(o, o + size).map((row) => row.slice(o, o + size)),
+    cellCenters: grid.cellCenters.slice(o, o + size).map((row) => row.slice(o, o + size)),
+  };
+}
+
 export class PlanetaryAdapter {
   getStatus(): PlanetaryAdapterStatus {
     const enabled = isPlanetaryComputerEnabled();
@@ -146,12 +167,20 @@ export class PlanetaryAdapter {
       //    en el centro de cada píxel de 10 m. Ver src/satellite/quality/water-pixel-selection.ts.
       const searchRadiusM = getWaterSearchRadiusM();
       const half = requiredGridHalfSize(searchRadiusM);
+      // Mezcla subpíxel (experimental): solo si está activada se leen rejillas más grandes
+      // (≈ 300 m) para obtener endmembers de la escena; la selección usa la rejilla central.
+      const unmixEnabled = isSubpixelUnmixingEnabled();
+      const readHalf = unmixEnabled ? Math.max(half, ENDMEMBER_GRID_HALF) : half;
       const greenHref = hrefOf("B03");
       const nirHref = hrefOf("B08");
-      const [greenGrid, nirGrid] = await Promise.all([
-        greenHref ? readBandGridAtPoint(greenHref, request.latitude, request.longitude, half) : null,
-        nirHref ? readBandGridAtPoint(nirHref, request.latitude, request.longitude, half) : null,
+      const redHref = hrefOf("B04");
+      const [greenBig, nirBig, redBig] = await Promise.all([
+        greenHref ? readBandGridAtPoint(greenHref, request.latitude, request.longitude, readHalf) : null,
+        nirHref ? readBandGridAtPoint(nirHref, request.latitude, request.longitude, readHalf) : null,
+        unmixEnabled && redHref ? readBandGridAtPoint(redHref, request.latitude, request.longitude, readHalf) : null,
       ]);
+      const greenGrid = cropGrid(greenBig, readHalf, half);
+      const nirGrid = cropGrid(nirBig, readHalf, half);
 
       const selection = await this.selectWaterPixelForScene(
         request,
@@ -186,6 +215,10 @@ export class PlanetaryAdapter {
       if (nirRaw != null) rawAllBands.B08 = convertDnToReflectance(nirRaw, boaOffset);
       const sclRawValue = selection.sclAtSample;
 
+      const subpixelEstimate = unmixEnabled
+        ? await this.estimateSubpixelForPoint(greenBig, nirBig, redBig, hrefOf(SCL_BAND), boaOffset)
+        : undefined;
+
       if (Object.keys(rawAllBands).length === 0) return null;
 
       const processed = processGeeSurfaceReflectances(rawAllBands, mapCopernicusReflectances);
@@ -210,6 +243,7 @@ export class PlanetaryAdapter {
         pixelsUsed: water.pixelsUsed,
         waterSufficiency: water.waterSufficiency,
         waterPixelSelection: selection.record,
+        ...(subpixelEstimate ? { subpixelEstimate } : {}),
       };
 
       if (processed.semanticStatus !== "valid") {
@@ -221,6 +255,48 @@ export class PlanetaryAdapter {
       // Nunca se fabrica una reflectancia ante un fallo de red/lectura del COG.
       return null;
     }
+  }
+
+  /**
+   * Mezcla subpíxel EXPERIMENTAL del píxel del punto (centro de la rejilla grande), con
+   * endmembers tomados de la propia escena. No entra en pares ni en métricas.
+   */
+  private async estimateSubpixelForPoint(
+    green: BandGridReadResult | null,
+    nir: BandGridReadResult | null,
+    red: BandGridReadResult | null,
+    sclHref: string | undefined,
+    boaOffset: number
+  ): Promise<SubpixelEstimate> {
+    const missing = (message: string): SubpixelEstimate => ({
+      experimental: true,
+      status: "invalid_pixel",
+      message,
+      fractions: null,
+      waterFractionStd: null,
+      residualRmse: null,
+      correctedWaterReflectance: null,
+      correctedWaterReflectanceStd: null,
+      endmembers: {},
+    });
+    if (!green || !nir || !red || !sclHref) return missing("Faltan bandas B03/B04/B08/SCL para la mezcla subpíxel.");
+    const scl = await readBandAtCrsPoints(sclHref, green.cellCenters.flat());
+    if (!scl) return missing("No se pudo leer la banda SCL para los endmembers.");
+    const size = green.values.length;
+    const refl = (v: number | null | undefined) => (v == null ? null : convertDnToReflectance(v, boaOffset));
+    const pixels: UnmixPixel[] = [];
+    for (let r = 0; r < size; r += 1) {
+      for (let c = 0; c < size; c += 1) {
+        pixels.push({
+          B03: refl(green.values[r]?.[c]),
+          B04: refl(red.values[r]?.[c]),
+          B08: refl(nir.values[r]?.[c]),
+          scl: scl[r * size + c] ?? null,
+        });
+      }
+    }
+    const center = Math.floor(size / 2);
+    return estimateSubpixel(pixels[center * size + center], pixels);
   }
 
   /** Arma la rejilla con máscara SCL, elige el píxel y devuelve el registro trazable. */

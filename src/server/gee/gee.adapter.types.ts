@@ -3,6 +3,7 @@
  */
 
 import type { WaterPixelSelectionRecord } from "@/satellite/quality/water-pixel-selection";
+import type { SubpixelEstimate } from "@/satellite/quality/subpixel-unmixing";
 import type { Sentinel2BandCode, Sentinel2ReflectanceMap } from "@/satellite/catalog/sentinel2-bands.catalog";
 import type { PixelQualityStatus } from "@/satellite/quality/pixel-quality";
 import type { WaterSufficiency } from "@/satellite/quality/water-fraction";
@@ -51,6 +52,8 @@ export interface GeeReflectanceRecord {
   waterSufficiency?: WaterSufficiency;
   /** Selección robusta del píxel de agua (solo proveedores que la implementan: Planetary). */
   waterPixelSelection?: WaterPixelSelectionRecord;
+  /** EXPERIMENTAL (desactivado por defecto): mezcla subpíxel del punto. No entra en métricas. */
+  subpixelEstimate?: SubpixelEstimate;
 }
 
 export interface GeeSceneSearchRequest {
