@@ -45,6 +45,7 @@ function makeRealPair(
     fieldDate: `2025-${month}-${day}T12:00:00.000Z`,
     satelliteObservationId: `sat-${index}`,
     satelliteSceneId: `S2A_${index}`,
+    satelliteProvider: "planetary",
     satelliteAcquisitionDate: `2025-${month}-${day}`,
     spectralIndices: {
       ndvi: 0.1,

@@ -137,6 +137,7 @@ function buildComparisons(
         collection: obs?.collection ?? null,
         tileId: obs?.quality.tileId ?? null,
         systemTimeStart: obs?.quality.systemTimeStart ?? null,
+        provider: obs?.provider,
         sourceType: "satellite",
         isSimulated: obs?.isSimulated ?? match.isSimulated,
       },

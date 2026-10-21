@@ -7,7 +7,7 @@ import type { Sentinel2BandCode, Sentinel2ReflectanceMap } from "../catalog/sent
 import type { SpectralIndexCode } from "../catalog/spectral-indices.catalog";
 import type { EstimatedVariableCode } from "../catalog/estimated-variables.catalog";
 import type { SatelliteQualityMetadata } from "./satellite-metadata.types";
-import type { SourceType } from "./data-origin.types";
+import type { SatelliteDataProvider, SourceType } from "./data-origin.types";
 import type { WaterSufficiency } from "../quality/water-fraction";
 
 export type SatellitePlatform = "sentinel2" | "landsat8" | "landsat9";
@@ -47,6 +47,8 @@ export interface SatelliteObservation {
   estimatedVariables: EstimatedVariableValue[];
   source: SatellitePlatform;
   sourceType: SourceType;
+  /** Proveedor que sirvió la observación (Planetary, Copernicus, GEE…). */
+  provider?: SatelliteDataProvider;
   isSimulated: boolean;
   spatialResolutionMeters: number;
   /** Fracción de píxeles de agua en la ventana analizada (0–1). null = desconocida. */

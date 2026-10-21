@@ -190,6 +190,7 @@ export function toCalibrationDatasetRow(
     field_unit: pair.fieldUnit,
     field_date: pair.fieldDate,
     satellite_scene_id: pair.satelliteSceneId,
+    satellite_provider: pair.satelliteProvider,
     satellite_acquisition_date: pair.satelliteAcquisitionDate,
     temporal_difference_days: pair.temporalDifferenceDays,
     distance_meters: pair.distanceMeters,

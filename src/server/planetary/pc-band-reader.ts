@@ -8,6 +8,7 @@
 import proj4 from "proj4";
 import { fromUrl, type GeoTIFFImage } from "geotiff";
 import { signAssetHref } from "./pc-sign.client";
+import { withPlanetarySlot, withRetry } from "./pc-request-pool";
 
 export interface BandPixelReadResult {
   rawValue: number;
@@ -25,11 +26,10 @@ function utmProj4Def(epsg: number): string {
 }
 
 async function attemptReadBandPixelAtPoint(
-  assetHref: string,
+  signedHref: string,
   latitude: number,
   longitude: number
 ): Promise<BandPixelReadResult | null> {
-  const signedHref = await signAssetHref(assetHref);
   const tiff = await fromUrl(signedHref);
   const image: GeoTIFFImage = await tiff.getImage();
 
@@ -64,12 +64,11 @@ export interface BandWindowReadResult {
 }
 
 async function attemptReadBandWindowAtPoint(
-  assetHref: string,
+  signedHref: string,
   latitude: number,
   longitude: number,
   windowSize: number
 ): Promise<BandWindowReadResult | null> {
-  const signedHref = await signAssetHref(assetHref);
   const tiff = await fromUrl(signedHref);
   const image: GeoTIFFImage = await tiff.getImage();
 
@@ -116,27 +115,28 @@ export async function readBandWindowAtPoint(
   longitude: number,
   windowSize = 3
 ): Promise<BandWindowReadResult | null> {
-  for (let attempt = 1; attempt <= MAX_READ_ATTEMPTS; attempt++) {
-    try {
-      return await attemptReadBandWindowAtPoint(assetHref, latitude, longitude, windowSize);
-    } catch {
-      if (attempt === MAX_READ_ATTEMPTS) return null;
-      await sleep(RETRY_BASE_DELAY_MS * attempt);
-    }
+  try {
+    return await withRetry(
+      async () => {
+        // La firma toma su propio turno (y suele venir de caché); la lectura del COG toma
+        // otro. Nunca se anidan turnos: anidarlos podría bloquear el cupo.
+        const signedHref = await signAssetHref(assetHref);
+        return withPlanetarySlot(() =>
+          attemptReadBandWindowAtPoint(signedHref, latitude, longitude, windowSize)
+        );
+      },
+      { maxRetries: MAX_READ_RETRIES }
+    );
+  } catch {
+    return null;
   }
-  return null;
 }
 
-// Deliberadamente bajo: cada intento ya implica una petición HTTP real (firma + range request
-// al COG en Azure Blob Storage) que puede tardar varios segundos por sí sola. Un tercer intento
-// multiplicaría la latencia total sin una ganancia de fiabilidad proporcional — 2 intentos
-// cubre el caso típico de un fallo puntual sin volver la consulta impracticablemente lenta.
-const MAX_READ_ATTEMPTS = 2;
-const RETRY_BASE_DELAY_MS = 150;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+// Cada lectura pasa por el cupo compartido de Planetary Computer (pc-request-pool.ts) y
+// reintenta con espera exponencial + jitter: antes eran 2 intentos a 150 ms, que ante un
+// límite de peticiones volvían a chocar casi de inmediato. La firma SAS ya viene cacheada,
+// así que un reintento normalmente solo repite el range request al COG.
+const MAX_READ_RETRIES = 2;
 
 /**
  * Lee el valor crudo (DN) de un único píxel en (latitude, longitude) desde un asset de banda,
@@ -153,13 +153,15 @@ export async function readBandPixelAtPoint(
   latitude: number,
   longitude: number
 ): Promise<BandPixelReadResult | null> {
-  for (let attempt = 1; attempt <= MAX_READ_ATTEMPTS; attempt++) {
-    try {
-      return await attemptReadBandPixelAtPoint(assetHref, latitude, longitude);
-    } catch {
-      if (attempt === MAX_READ_ATTEMPTS) return null;
-      await sleep(RETRY_BASE_DELAY_MS * attempt);
-    }
+  try {
+    return await withRetry(
+      async () => {
+        const signedHref = await signAssetHref(assetHref);
+        return withPlanetarySlot(() => attemptReadBandPixelAtPoint(signedHref, latitude, longitude));
+      },
+      { maxRetries: MAX_READ_RETRIES }
+    );
+  } catch {
+    return null;
   }
-  return null;
 }

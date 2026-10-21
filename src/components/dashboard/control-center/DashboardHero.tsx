@@ -124,7 +124,12 @@ export function DashboardHero({ data, evaluatedAt }: DashboardHeroProps) {
             <Readout label="Satélite" className="border-t-0 pt-0">
               Sentinel-2 L2A
             </Readout>
-            <Readout label="Acceso">Planetary Computer</Readout>
+            <Readout label="Proveedor">
+              Planetary Computer
+              <span className="block text-[11px] text-[var(--hv-foreground-muted)]">
+                respaldo: Copernicus Data Space
+              </span>
+            </Readout>
             <Readout label="Puntos reales">
               <span className="hv-num">{DREN_4000_POINTS.length}</span>
               <span className="text-[var(--hv-foreground-muted)]"> · 2014</span>

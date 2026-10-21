@@ -1,11 +1,12 @@
 /**
- * Índice de vegetación/clorofila por zona — reutiliza el mismo planetaryAdapter y el mismo
+ * Índice de vegetación/clorofila por zona — usa el selector de proveedor Sentinel-2
+ * (Copernicus por defecto, Planetary Computer como respaldo) y el mismo
  * catálogo de índices espectrales que el resto de la plataforma (predicción satelital, módulo
  * de foto). Solo cambia el punto geográfico de análisis (VEGETATION_ZONES) y el índice
  * (NDVI para tierra, NDCI para agua) — nunca se mezclan los dos usos en un mismo número.
  */
 
-import { planetaryAdapter } from "@/server/planetary/planetary.adapter";
+import { SATELLITE_PROVIDER_LABELS, sentinel2Provider } from "@/server/satellite/sentinel2-provider";
 import { computeSpectralIndex } from "@/satellite/catalog/spectral-indices.catalog";
 import {
   getVegetationZone,
@@ -21,6 +22,8 @@ export interface VegetationIndexResult {
   index: "NDVI" | "NDCI";
   found: boolean;
   sceneId?: string;
+  /** Proveedor que sirvió la escena (Copernicus o Planetary Computer). */
+  provider?: string;
   acquisitionDate?: string;
   cloudPercentage?: number | null;
   daysFromReference?: number;
@@ -50,7 +53,7 @@ export async function getVegetationIndexForZone(
     .toISOString()
     .slice(0, 10);
 
-  const scenes = await planetaryAdapter.searchSentinel2Scenes({
+  const foundScenes = await sentinel2Provider.searchScenes({
     latitude: zone.centroid.latitude,
     longitude: zone.centroid.longitude,
     startDate,
@@ -59,7 +62,7 @@ export async function getVegetationIndexForZone(
     limit: 5,
   });
 
-  if (scenes.length === 0) {
+  if (!foundScenes) {
     return {
       zoneId,
       index: zone.index,
@@ -68,13 +71,14 @@ export async function getVegetationIndexForZone(
     };
   }
 
+  const { provider, scenes } = foundScenes;
   const closest = [...scenes].sort(
     (a, b) =>
       daysBetween(new Date(a.acquisitionDate), refDate) -
       daysBetween(new Date(b.acquisitionDate), refDate)
   )[0];
 
-  const reflectance = await planetaryAdapter.getReflectanceAtPoint({
+  const reflectance = await sentinel2Provider.getReflectance(provider, {
     latitude: zone.centroid.latitude,
     longitude: zone.centroid.longitude,
     startDate,
@@ -101,10 +105,11 @@ export async function getVegetationIndexForZone(
     index: zone.index,
     found: true,
     sceneId: closest.sceneId,
+    provider: SATELLITE_PROVIDER_LABELS[provider],
     acquisitionDate: closest.acquisitionDate,
     cloudPercentage: closest.cloudPercentage,
     daysFromReference: Number(daysBetween(new Date(closest.acquisitionDate), refDate).toFixed(1)),
     value,
-    message: `Escena Sentinel-2 real del ${closest.acquisitionDate} (nubosidad ${closest.cloudPercentage ?? "?"}%).`,
+    message: `Escena Sentinel-2 real del ${closest.acquisitionDate} (nubosidad ${closest.cloudPercentage ?? "?"}%, ${SATELLITE_PROVIDER_LABELS[provider]}).`,
   };
 }

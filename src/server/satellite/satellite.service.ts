@@ -6,6 +6,10 @@ import { isSatelliteDatabaseEnabled } from "@/config/satellite-data-source.confi
 import { isGeeIntegrationEnabled } from "@/config/gee-integration.config";
 import { isCopernicusIntegrationEnabled } from "@/config/copernicus-integration.config";
 import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
+import {
+  getPrimarySatelliteProvider,
+  isSatelliteProviderFallbackEnabled,
+} from "@/config/satellite-provider.config";
 import { SENTINEL2_BANDS, SENTINEL2_BAND_CODES } from "@/satellite/catalog/sentinel2-bands.catalog";
 import {
   SPECTRAL_INDEX_DEFINITIONS,
@@ -126,7 +130,21 @@ function shouldUseGee(filters?: SatelliteQueryFilters): boolean {
 function shouldUsePlanetary(filters?: SatelliteQueryFilters): boolean {
   if (!filters?.stationId || !isPlanetaryComputerEnabled()) return false;
   if (filters.usePlanetaryComputer) return true;
+  if (!isSatelliteProviderFallbackEnabled()) return false;
   return Boolean(filters.useCopernicus || filters.useGee);
+}
+
+type LiveProvider = "copernicus" | "gee" | "planetary";
+
+/**
+ * Orden de los proveedores en vivo según SATELLITE_PRIMARY_PROVIDER. Por defecto Planetary
+ * Computer va primero y Copernicus queda de respaldo; GEE conserva su lugar como opción
+ * explícita.
+ */
+function liveProviderOrder(): LiveProvider[] {
+  return getPrimarySatelliteProvider() === "planetary"
+    ? ["planetary", "copernicus", "gee"]
+    : ["copernicus", "gee", "planetary"];
 }
 
 export class SatelliteService {
@@ -135,24 +153,30 @@ export class SatelliteService {
   }
 
   async listObservations(filters?: SatelliteQueryFilters): Promise<SatelliteObservationsResponse> {
-    if (shouldUseCopernicus(filters)) {
-      const observations = await satelliteCopernicusService.queryObservationsFromCopernicus(filters);
-      if (observations.length > 0) {
-        return { observations, meta: await buildMeta(false, "copernicus") };
+    for (const provider of liveProviderOrder()) {
+      if (provider === "copernicus" && shouldUseCopernicus(filters)) {
+        // Sin token real el adaptador fabrica observaciones de ejemplo: no se presentan
+        // como dato real, se pasa al siguiente proveedor.
+        const observations = (
+          await satelliteCopernicusService.queryObservationsFromCopernicus(filters)
+        ).filter((o) => !o.isSimulated);
+        if (observations.length > 0) {
+          return { observations, meta: await buildMeta(false, "copernicus") };
+        }
       }
-    }
 
-    if (shouldUseGee(filters)) {
-      const geeObservations = await satelliteGeeService.queryObservationsFromGee(filters);
-      if (geeObservations.length > 0) {
-        return { observations: geeObservations, meta: await buildMeta(false, "gee") };
+      if (provider === "gee" && shouldUseGee(filters)) {
+        const geeObservations = await satelliteGeeService.queryObservationsFromGee(filters);
+        if (geeObservations.length > 0) {
+          return { observations: geeObservations, meta: await buildMeta(false, "gee") };
+        }
       }
-    }
 
-    if (shouldUsePlanetary(filters)) {
-      const planetaryObservations = await satellitePlanetaryService.queryObservationsFromPlanetary(filters);
-      if (planetaryObservations.length > 0) {
-        return { observations: planetaryObservations, meta: await buildMeta(false, "planetary") };
+      if (provider === "planetary" && shouldUsePlanetary(filters)) {
+        const planetaryObservations = await satellitePlanetaryService.queryObservationsFromPlanetary(filters);
+        if (planetaryObservations.length > 0) {
+          return { observations: planetaryObservations, meta: await buildMeta(false, "planetary") };
+        }
       }
     }
 
@@ -176,24 +200,28 @@ export class SatelliteService {
   }
 
   async listScenes(filters?: SatelliteQueryFilters): Promise<SatelliteScenesResponse> {
-    if (shouldUseCopernicus(filters)) {
-      const scenes = await satelliteCopernicusService.queryScenesFromCopernicus(filters);
-      if (scenes.length > 0) {
-        return { scenes, meta: await buildMeta(false, "copernicus") };
+    for (const provider of liveProviderOrder()) {
+      if (provider === "copernicus" && shouldUseCopernicus(filters)) {
+        const scenes = (await satelliteCopernicusService.queryScenesFromCopernicus(filters)).filter(
+          (s) => !s.isSimulated
+        );
+        if (scenes.length > 0) {
+          return { scenes, meta: await buildMeta(false, "copernicus") };
+        }
       }
-    }
 
-    if (shouldUseGee(filters)) {
-      const scenes = await satelliteGeeService.queryScenesFromGee(filters);
-      if (scenes.length > 0) {
-        return { scenes, meta: await buildMeta(false, "gee") };
+      if (provider === "gee" && shouldUseGee(filters)) {
+        const scenes = await satelliteGeeService.queryScenesFromGee(filters);
+        if (scenes.length > 0) {
+          return { scenes, meta: await buildMeta(false, "gee") };
+        }
       }
-    }
 
-    if (shouldUsePlanetary(filters)) {
-      const scenes = await satellitePlanetaryService.queryScenesFromPlanetary(filters);
-      if (scenes.length > 0) {
-        return { scenes, meta: await buildMeta(false, "planetary") };
+      if (provider === "planetary" && shouldUsePlanetary(filters)) {
+        const scenes = await satellitePlanetaryService.queryScenesFromPlanetary(filters);
+        if (scenes.length > 0) {
+          return { scenes, meta: await buildMeta(false, "planetary") };
+        }
       }
     }
 

@@ -15,6 +15,7 @@ function user(role: AuthUserContext["role"], status: AuthUserContext["status"] =
     role,
     status,
     isSimulated: true,
+    authMode: "dev-simulated",
   };
 }
 

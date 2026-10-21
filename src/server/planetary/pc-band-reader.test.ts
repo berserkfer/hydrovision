@@ -62,7 +62,8 @@ describe("readBandPixelAtPoint — resiliencia ante fallos transitorios", () => 
     const result = await readBandPixelAtPoint("https://example/B04.tif", -6.5, -79.9);
 
     expect(result).toBeNull();
-    expect((fromUrl as ReturnType<typeof vi.fn>).mock.calls.length).toBe(2);
+    // 1 intento + 2 reintentos con espera exponencial (pc-request-pool.ts)
+    expect((fromUrl as ReturnType<typeof vi.fn>).mock.calls.length).toBe(3);
   }, 10_000);
 
   it("un punto fuera del raster retorna null en el primer intento, sin reintentar", async () => {

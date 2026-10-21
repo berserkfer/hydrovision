@@ -7,6 +7,7 @@
 
 import { interpretSclPixelQuality } from "@/satellite/quality/pixel-quality";
 import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
+import { TtlCache } from "@/server/cache/ttl-cache";
 import { getSentinel2ItemById, searchSentinel2Items, type StacItem } from "./pc-stac.client";
 import { readBandPixelAtPoint, readBandWindowAtPoint } from "./pc-band-reader";
 import { assessWaterSufficiency, computeWaterFraction } from "@/satellite/quality/water-fraction";
@@ -73,6 +74,22 @@ function sceneRecordFromStacItem(item: StacItem): PlanetarySceneRecord {
   };
 }
 
+/**
+ * Una escena Sentinel-2 publicada no cambia: la reflectancia leída en un punto se reutiliza
+ * 6 h para no repetir 6 lecturas de COG por cada consulta. Solo se guardan lecturas
+ * obtenidas (nunca un fallo), y solo cuando se pidió una escena concreta.
+ */
+const reflectanceCache = new TtlCache<PlanetaryReflectanceRecord>(6 * 60 * 60_000, 300);
+
+function reflectanceCacheKey(request: PlanetaryReflectanceRequest): string | null {
+  if (!request.sceneId) return null;
+  return `${request.sceneId}|${request.latitude.toFixed(6)}|${request.longitude.toFixed(6)}`;
+}
+
+export function clearPlanetaryReflectanceCache(): void {
+  reflectanceCache.clear();
+}
+
 export class PlanetaryAdapter {
   getStatus(): PlanetaryAdapterStatus {
     const enabled = isPlanetaryComputerEnabled();
@@ -102,6 +119,19 @@ export class PlanetaryAdapter {
     request: PlanetaryReflectanceRequest
   ): Promise<PlanetaryReflectanceRecord | null> {
     if (!isPlanetaryComputerEnabled()) return null;
+
+    const cacheKey = reflectanceCacheKey(request);
+    const cached = cacheKey ? reflectanceCache.get(cacheKey) : undefined;
+    if (cached) return cached;
+
+    const record = await this.readReflectanceAtPoint(request);
+    if (record && cacheKey) reflectanceCache.set(cacheKey, record);
+    return record;
+  }
+
+  private async readReflectanceAtPoint(
+    request: PlanetaryReflectanceRequest
+  ): Promise<PlanetaryReflectanceRecord | null> {
 
     try {
       let item: StacItem | null = null;

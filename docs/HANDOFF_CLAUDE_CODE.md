@@ -11,7 +11,7 @@
 
 HydroVision es la plataforma de la tesis de Ingeniería Ambiental (UCV) sobre calidad del agua del **Dren 4000**, Santa Rosa, Lambayeque, Perú. Título: *"Desarrollo de plataforma predictiva de la calidad del agua mediante Sentinel-2 y datos in situ, Dren 4000, Lambayeque, 2027"*.
 
-Stack: Next.js 15.5, React 19, TypeScript estricto, Tailwind 4, Prisma 6/PostgreSQL. Capa satelital real vía Microsoft Planetary Computer (Sentinel-2 L2A) y adaptadores Copernicus/GEE.
+Stack: Next.js 15.5, React 19, TypeScript estricto, Tailwind 4, Prisma 6/PostgreSQL. Capa satelital Sentinel-2 L2A con Microsoft Planetary Computer como proveedor principal (con control de carga: concurrencia limitada, reintentos y cachés) y Copernicus Data Space como respaldo opcional; cada par de calibración guarda su proveedor (ver `docs/SATELLITE_PROVIDER.md`); adaptador GEE opcional.
 
 Datos clave:
 

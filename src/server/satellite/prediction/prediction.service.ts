@@ -21,6 +21,7 @@ import { predictLinear } from "@/satellite/calibration/linear-regression";
 import { isCopernicusIntegrationEnabled } from "@/config/copernicus-integration.config";
 import { isGeeIntegrationEnabled } from "@/config/gee-integration.config";
 import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
+import { getPrimarySatelliteProvider } from "@/config/satellite-provider.config";
 import { applyLiteratureModel } from "@/satellite/literature-models/literature-model-registry";
 import type { SatelliteObservation } from "@/satellite/types/satellite-observation.types";
 import type { ScientificDatasetAuditReport } from "@/satellite/types/scientific-calibration.types";
@@ -124,6 +125,22 @@ async function resolveLatestObservation(
 
   const tryCopernicus = !explicitGeeOnly && isCopernicusIntegrationEnabled();
   const tryGee = !explicitCopernicusOnly && isGeeIntegrationEnabled();
+  const planetaryFirst = getPrimarySatelliteProvider() === "planetary";
+
+  // Por defecto (SATELLITE_PRIMARY_PROVIDER=planetary) Planetary Computer se consulta antes
+  // que Copernicus/GEE; con `copernicus` como principal, Planetary va al final de respaldo.
+  if (planetaryFirst && isPlanetaryComputerEnabled()) {
+    const result = await satelliteService.listObservations({
+      stationId: request.stationId,
+      fechaInicio: request.fechaInicio,
+      fechaFin: request.fechaFin,
+      usePlanetaryComputer: true,
+    });
+    const sorted = sortByAcquisitionDateDesc(result.observations);
+    if (sorted.length > 0) {
+      return { observation: sorted[0], provider: providerFromMeta(result.meta.providerStatus, result.meta.dataSource) };
+    }
+  }
 
   if (tryCopernicus) {
     const result = await satelliteService.listObservations({
@@ -151,7 +168,7 @@ async function resolveLatestObservation(
     }
   }
 
-  if (isPlanetaryComputerEnabled()) {
+  if (!planetaryFirst && isPlanetaryComputerEnabled()) {
     const result = await satelliteService.listObservations({
       stationId: request.stationId,
       fechaInicio: request.fechaInicio,
@@ -402,6 +419,24 @@ export class PredictionService {
         trainingMetrics: validated.model.trainingMetrics,
         validationMetrics: validated.model.validationMetrics,
         temporalSplit: validated.model.temporalSplit,
+        crossValidation: validated.crossValidation
+          ? {
+              strategy: "leave_one_date_out",
+              evaluatedFolds: validated.crossValidation.evaluatedFolds,
+              pooledN: validated.crossValidation.pooled.n,
+              pooledR2: validated.crossValidation.pooled.r2,
+              pooledRmse: validated.crossValidation.pooled.rmse,
+              pooledMae: validated.crossValidation.pooled.mae,
+              r2Ci95: validated.crossValidation.pooled.r2Ci95
+                ? {
+                    lower: validated.crossValidation.pooled.r2Ci95.lower,
+                    upper: validated.crossValidation.pooled.r2Ci95.upper,
+                  }
+                : null,
+              meanR2PerDate: validated.crossValidation.meanR2,
+              sdR2PerDate: validated.crossValidation.sdR2,
+            }
+          : null,
       },
       sampleSize,
       isSimulated: resolved.observation.isSimulated || validated.meta.isSimulated,

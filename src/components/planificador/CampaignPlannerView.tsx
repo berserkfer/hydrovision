@@ -23,6 +23,7 @@ interface OpportunitiesResponse {
   today?: string;
   opportunities?: Opportunity[];
   historyScenes?: number;
+  provider?: string | null;
   disclaimer?: string;
   error?: string;
 }
@@ -108,6 +109,7 @@ export function CampaignPlannerView() {
           {data?.station ? (
             <span className="text-xs text-slate-500 dark:text-slate-400">
               Escenas analizadas en 60 días: {data.historyScenes ?? 0}
+              {data.provider ? ` · fuente: ${data.provider}` : ""}
             </span>
           ) : null}
         </div>

@@ -7,7 +7,7 @@
  */
 
 import { getDataStore } from "@/data/store-access";
-import { searchSentinel2Items } from "@/server/planetary/pc-stac.client";
+import { SATELLITE_PROVIDER_LABELS, sentinel2Provider } from "@/server/satellite/sentinel2-provider";
 import {
   buildOpportunity,
   projectFutureOverpasses,
@@ -32,6 +32,8 @@ export interface CampaignOpportunitiesResult {
   today: string;
   opportunities: OpportunityCandidate[];
   historyScenes: number;
+  /** Proveedor que sirvió el historial de escenas; null si ninguno respondió. */
+  provider: string | null;
   disclaimer: string;
 }
 
@@ -86,23 +88,16 @@ export async function getCampaignOpportunities(
   const today = todayOverride ?? isoOffset(0);
   const startDate = isoOffset(-HISTORY_DAYS, new Date(`${today}T00:00:00Z`));
 
-  let historyScenes = 0;
-  let acquisitionDates: string[] = [];
-
-  try {
-    const items = await searchSentinel2Items({
-      latitude,
-      longitude,
-      startDate,
-      endDate: today,
-      cloudCoverMax: 100,
-      limit: 100,
-    });
-    historyScenes = items.length;
-    acquisitionDates = items.map((item) => item.properties.datetime);
-  } catch {
-    acquisitionDates = [];
-  }
+  const history = await sentinel2Provider.searchScenes({
+    latitude,
+    longitude,
+    startDate,
+    endDate: today,
+    cloudCoverMax: 100,
+    limit: 100,
+  });
+  const historyScenes = history?.scenes.length ?? 0;
+  const acquisitionDates = history?.scenes.map((scene) => scene.acquisitionDate) ?? [];
 
   const projected = projectFutureOverpasses(acquisitionDates, {
     today,
@@ -125,6 +120,7 @@ export async function getCampaignOpportunities(
     today,
     opportunities,
     historyScenes,
+    provider: history ? SATELLITE_PROVIDER_LABELS[history.provider] : null,
     disclaimer: DISCLAIMER,
   };
 }

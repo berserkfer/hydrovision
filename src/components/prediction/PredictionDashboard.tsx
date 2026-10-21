@@ -22,6 +22,7 @@ import {
   isPredictionLiteratureModel,
   isPredictionOk,
   useDrenPrediction,
+  type PredictionOk,
 } from "@/hooks/useDrenPrediction";
 
 const PARAMETER_OPTIONS: { code: string; label: string; unit: string }[] = [
@@ -62,13 +63,24 @@ function WaterPixelQuality({
   observation,
 }: {
   observation: {
+    provider?: string;
     waterFraction?: number | null;
     pixelsUsed?: number;
     waterSufficiency?: "sufficient" | "insufficient" | "unknown";
   };
 }) {
   if (observation.waterFraction == null && observation.waterSufficiency !== "insufficient") {
-    return null;
+    // Solo el respaldo de Copernicus no calcula la fracción de agua: ahí la regla f_agua ≥ 0,5
+    // no se pudo verificar y se dice explícitamente. Con Planetary (principal) la regla sí se
+    // aplica; si aun así no hay fracción, no hay nada que mostrar.
+    if (observation.provider !== "copernicus") return null;
+    return (
+      <p className="mt-3 flex items-start gap-2 rounded-[3px] border border-[var(--hv-disclaimer-border)] bg-[var(--hv-disclaimer-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--hv-disclaimer-text)]">
+        <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rotate-45 bg-amber-500" aria-hidden />
+        Escena del respaldo Copernicus: la fracción de agua no se verificó y la regla f_agua ≥ 0,5
+        no se aplicó a esta escena.
+      </p>
+    );
   }
 
   const percent =
@@ -97,6 +109,46 @@ function WaterPixelQuality({
           Advertencia: no hay píxeles de agua suficientes; la estimación no debería usarse.
         </p>
       )}
+    </div>
+  );
+}
+
+/** R² agrupado leave-one-date-out: la métrica de generalización temporal del modelo. */
+function CrossValidationReadout({
+  cv,
+}: {
+  cv: PredictionOk["model"]["crossValidation"];
+}) {
+  if (!cv) {
+    return (
+      <p className="text-[11px] text-[var(--hv-foreground-dim)]">
+        Validación cruzada por fecha no disponible para este modelo.
+      </p>
+    );
+  }
+  return (
+    <div className="rounded-[3px] border border-[var(--hv-border)] px-3 py-2 text-[11px] leading-relaxed text-[var(--hv-foreground-muted)]">
+      <p className="hv-eyebrow text-[9.5px]">R² agrupado · leave-one-date-out</p>
+      <p className="mt-1 flex items-baseline gap-2">
+        <span className="hv-num text-[20px] font-light text-[var(--hv-ink)]">
+          {cv.pooledR2 ?? "—"}
+        </span>
+        {cv.r2Ci95 ? (
+          <span className="hv-num">
+            IC 95 % [{cv.r2Ci95.lower}, {cv.r2Ci95.upper}]
+          </span>
+        ) : (
+          <span>sin intervalo (N fuera de muestra &lt; 5)</span>
+        )}
+      </p>
+      <p className="hv-num mt-1">
+        N fuera de muestra={cv.pooledN} · {cv.evaluatedFolds} fechas · RMSE={cv.pooledRmse ?? "—"} · MAE=
+        {cv.pooledMae ?? "—"}
+      </p>
+      <p className="mt-1 text-[var(--hv-foreground-dim)]">
+        Complemento por fecha: R² medio {cv.meanR2PerDate ?? "—"}
+        {cv.sdR2PerDate !== null ? ` ± ${cv.sdR2PerDate}` : ""} (inestable con pocos puntos por fecha).
+      </p>
     </div>
   );
 }
@@ -260,6 +312,7 @@ export function PredictionDashboard() {
                     {predictionOk.model.validationMetrics.mae}
                   </p>
                 </div>
+                <CrossValidationReadout cv={predictionOk.model.crossValidation} />
               </>
             ) : predictionLiterature ? (
               <>

@@ -23,7 +23,7 @@ Una plataforma que nunca presenta un número sin decir su origen, su nivel de co
 ## Operating Context
 
 - Tesis de pregrado; datos reales publicados (Nizama y Cabrera, 2014; 20 registros) mezclados con datos simulados de demostración en otras cuencas, siempre rotulados.
-- Satélite: Sentinel-2 L2A vía Microsoft Planetary Computer (público, sin credenciales).
+- Satélite: Sentinel-2 L2A vía Microsoft Planetary Computer (principal; público, sin credenciales) con Copernicus Data Space como respaldo opcional si se configuran sus credenciales OAuth. Cada observación y cada par de calibración registra su proveedor. Ver `docs/SATELLITE_PROVIDER.md`.
 - Campo: fotos con celular siguiendo el método HydroColor (Leeuw y Boss, 2018).
 - Entorno actual: datos en memoria (mock), sin base de datos PostgreSQL real.
 

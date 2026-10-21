@@ -6,6 +6,35 @@
 /** Origen de un dato en HydroVision */
 export type SourceType = "field" | "satellite" | "model";
 
+/**
+ * Proveedor que sirvió un dato satelital. "unknown" cuando no se puede determinar
+ * (observaciones antiguas sin el campo): nunca se adivina.
+ */
+export type SatelliteDataProvider = "planetary" | "copernicus" | "gee" | "database" | "mock" | "unknown";
+
+const PROVIDER_ID_PREFIXES: Array<[string, SatelliteDataProvider]> = [
+  ["planetary-", "planetary"],
+  ["copernicus-", "copernicus"],
+  ["gee-", "gee"],
+];
+
+/**
+ * Proveedor declarado o, si falta, deducido del prefijo del id de observación
+ * (los builders generan `planetary-…`, `copernicus-…`, `gee-…`).
+ */
+export function resolveSatelliteProvider(
+  declared: SatelliteDataProvider | undefined | null,
+  observationId: string | null | undefined
+): SatelliteDataProvider {
+  if (declared) return declared;
+  if (observationId) {
+    for (const [prefix, provider] of PROVIDER_ID_PREFIXES) {
+      if (observationId.startsWith(prefix)) return provider;
+    }
+  }
+  return "unknown";
+}
+
 /** Categoría de variable de calidad del agua */
 export type WaterVariableCategory =
   | "field_measured"

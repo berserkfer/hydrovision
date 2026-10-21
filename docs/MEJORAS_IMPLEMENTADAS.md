@@ -63,8 +63,10 @@ Se corrigieron los huecos identificados en la plataforma y en el documento de te
 ### 2.5 Validación leave-one-date-out — `f3b57e7`
 
 - `src/satellite/calibration/leave-one-date-out.ts`: entrena con todas las fechas menos una y valida con la excluida.
-- Reporta R², RMSE, MAE y sesgo por fecha, más media y desviación.
-- La respuesta de calibración incluye `crossValidation`.
+- **Métrica principal (rama `rediseno`):** R², RMSE y MAE **agrupados** sobre todas las predicciones fuera de muestra (`crossValidation.pooled`), con IC 95 % por bootstrap percentil del R² y del RMSE (2000 remuestreos de pares, semilla fija `4000`, reproducible). Sin intervalo si hay menos de 5 predicciones fuera de muestra.
+- Limitación declarada: el bootstrap remuestrea pares individuales; si los pares de una misma fecha están correlacionados, el intervalo puede subestimar la incertidumbre.
+- **Complemento:** R², RMSE, MAE y sesgo por fecha, con media y desviación (`meanR2`, `sdR2`…). Con pocos puntos por fecha el R² de cada fold es inestable, por eso ya no es el resumen principal.
+- La respuesta de calibración incluye `crossValidation`; la predicción la resume en `model.crossValidation` y `/prediccion` muestra el R² agrupado con su intervalo en el Paso 3.
 
 ### 2.6 Scorecard en la vista satelital — `8f8e7f3`
 
@@ -112,7 +114,7 @@ Archivo: `docs/Proyecto_de_investigacion_HydroVision_UCV_corregido_v2.docx`.
 - Separación de instrumentos: P1 LMP PTAR; P2–P5 LMP pesca; cauce E2 (o D1); P6–P10 E3; P8 excluido.
 - Regla de **fracción de agua** (`f_agua ≥ 0,5`, mínimo 3 píxeles) en lugar de descartar píxeles mezclados.
 - Mínimo **30 pares en 6 fechas**; ventana **±3 días**.
-- Validación **leave-one-date-out** con métricas por fecha y desviación.
+- Validación **leave-one-date-out** con R² agrupado fuera de muestra e IC 95 % por bootstrap (métricas por fecha como complemento).
 - Referencias agregadas del D.S. 003-2010-MINAM y D.S. 010-2008-PRODUCE.
 
 ### 3.2 Anexos — `5361f87`

@@ -60,6 +60,21 @@ export interface PredictionModelSummary {
   trainingMetrics: RegressionMetrics;
   validationMetrics: RegressionMetrics;
   temporalSplit: TemporalSplitInfo;
+  /** Validación cruzada leave-one-date-out: métricas agrupadas fuera de muestra. */
+  crossValidation: PredictionCrossValidationSummary | null;
+}
+
+export interface PredictionCrossValidationSummary {
+  strategy: "leave_one_date_out";
+  evaluatedFolds: number;
+  pooledN: number;
+  pooledR2: number | null;
+  pooledRmse: number | null;
+  pooledMae: number | null;
+  r2Ci95: { lower: number; upper: number } | null;
+  /** Complemento por fecha. */
+  meanR2PerDate: number | null;
+  sdR2PerDate: number | null;
 }
 
 export interface PredictionSuccessResult {

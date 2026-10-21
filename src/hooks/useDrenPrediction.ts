@@ -16,6 +16,8 @@ export interface ObservationSummary {
   acquisitionDate: string;
   indices: Record<string, number>;
   isSimulated: boolean;
+  /** Proveedor que sirvió la observación (planetary, copernicus, gee…). */
+  provider?: string;
   waterFraction?: number | null;
   pixelsUsed?: number;
   waterSufficiency?: "sufficient" | "insufficient" | "unknown";
@@ -35,6 +37,16 @@ export interface PredictionOk {
     trainingSampleCount: number;
     validationSampleCount: number;
     validationMetrics: { r2: number; rmse: number; mae: number };
+    crossValidation: {
+      evaluatedFolds: number;
+      pooledN: number;
+      pooledR2: number | null;
+      pooledRmse: number | null;
+      pooledMae: number | null;
+      r2Ci95: { lower: number; upper: number } | null;
+      meanR2PerDate: number | null;
+      sdR2PerDate: number | null;
+    } | null;
   };
   sampleSize: { realPairs: number; acceptedRealPairs: number };
   disclaimer: string;

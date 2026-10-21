@@ -3,6 +3,7 @@
  * scientificStatus siempre "descriptive_only" en esta fase — sin predicción ni correlación.
  */
 
+import type { SatelliteDataProvider } from "./data-origin.types";
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import type { SpectralIndexCode } from "../catalog/spectral-indices.catalog";
 import type { FieldSatelliteMatchingStatus } from "./field-satellite-match.types";
@@ -34,6 +35,8 @@ export interface SatelliteComparisonSide {
   collection?: string | null;
   tileId?: string | null;
   systemTimeStart?: number | null;
+  /** Proveedor que sirvió la observación. */
+  provider?: SatelliteDataProvider;
   sourceType: "satellite";
   isSimulated: boolean;
 }

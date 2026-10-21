@@ -111,6 +111,28 @@ describe("buildScientificFieldSatellitePairs", () => {
   });
 });
 
+describe("trazabilidad del proveedor satelital", () => {
+  it("guarda en el par el proveedor declarado por la observación", () => {
+    const [pair] = buildScientificFieldSatellitePairs([
+      makeComparison({ satellite: { provider: "copernicus", observationId: "copernicus-est-e01-S2B_x" } }),
+    ]);
+    expect(pair.satelliteProvider).toBe("copernicus");
+    expect(toScientificDatasetExportRow(pair).satellite_provider).toBe("copernicus");
+  });
+
+  it("si la observación no lo declara, lo deduce del prefijo del id", () => {
+    const [pair] = buildScientificFieldSatellitePairs([
+      makeComparison({ satellite: { observationId: "planetary-est-e01-S2A_y" } }),
+    ]);
+    expect(pair.satelliteProvider).toBe("planetary");
+  });
+
+  it("no adivina: sin declaración ni prefijo conocido queda como unknown", () => {
+    const [pair] = buildScientificFieldSatellitePairs([makeComparison()]);
+    expect(pair.satelliteProvider).toBe("unknown");
+  });
+});
+
 describe("filterPairsByIncludeSimulated", () => {
   const pairs = buildScientificFieldSatellitePairs([
     makeComparison(),

@@ -49,6 +49,7 @@ export function AgriculturalVegetationCard() {
             <p className="text-xs text-[var(--hv-foreground-muted)]">
               Escena del {data.acquisitionDate} · nubosidad {data.cloudPercentage ?? "?"}% · {data.daysFromReference}{" "}
               días de la fecha de referencia.
+              {data.provider ? ` Fuente: ${data.provider}.` : ""}
             </p>
           </>
         )}

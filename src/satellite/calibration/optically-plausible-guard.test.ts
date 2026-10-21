@@ -28,6 +28,7 @@ function makeAbundantPhosphatesPair(index: number): ScientificFieldSatellitePair
     fieldDate: `2025-${month}-${day}T12:00:00.000Z`,
     satelliteObservationId: `sat-${index}`,
     satelliteSceneId: `S2A_${index}`,
+    satelliteProvider: "planetary",
     satelliteAcquisitionDate: `2025-${month}-${day}`,
     spectralIndices: { ndvi: 0.1, ndci: 0.2, ndwi: 0.05, mndwi: null, ndti: null, ndmi: null },
     temporalDifferenceDays: 1,

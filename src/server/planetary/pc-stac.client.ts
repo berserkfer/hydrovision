@@ -5,6 +5,7 @@
 
 import { PLANETARY_COMPUTER_COLLECTION, PLANETARY_COMPUTER_STAC_URL } from "@/config/planetary-computer.config";
 import { TtlCache } from "@/server/cache/ttl-cache";
+import { PlanetaryHttpError, planetaryFetch } from "./pc-request-pool";
 
 /** Las búsquedas STAC idénticas se reutilizan durante 10 minutos. */
 const stacSearchCache = new TtlCache<StacItem[]>(10 * 60_000, 100);
@@ -57,7 +58,7 @@ export async function searchSentinel2Items(params: StacSearchParams): Promise<St
   const cloudMax = params.cloudCoverMax ?? 30;
   const limit = params.limit ?? 10;
 
-  const response = await fetch(PLANETARY_COMPUTER_STAC_URL, {
+  const response = await planetaryFetch(PLANETARY_COMPUTER_STAC_URL, {
     method: "POST",
     cache: "no-store",
     headers: { "Content-Type": "application/json" },
@@ -71,22 +72,29 @@ export async function searchSentinel2Items(params: StacSearchParams): Promise<St
     }),
   });
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Planetary Computer STAC search falló (${response.status}): ${text}`);
-  }
-
   const data = (await response.json()) as StacSearchResponse;
   const items = data.features ?? [];
   stacSearchCache.set(cacheKey, items);
   return items;
 }
 
+/** Un ítem STAC publicado no cambia: se reutiliza 30 min. */
+const stacItemCache = new TtlCache<StacItem>(30 * 60_000, 200);
+
 export async function getSentinel2ItemById(itemId: string): Promise<StacItem | null> {
-  const response = await fetch(
-    `https://planetarycomputer.microsoft.com/api/stac/v1/collections/${PLANETARY_COMPUTER_COLLECTION}/items/${itemId}`,
-    { cache: "no-store" }
-  );
-  if (!response.ok) return null;
-  return (await response.json()) as StacItem;
+  const cached = stacItemCache.get(itemId);
+  if (cached) return cached;
+  try {
+    const response = await planetaryFetch(
+      `https://planetarycomputer.microsoft.com/api/stac/v1/collections/${PLANETARY_COMPUTER_COLLECTION}/items/${itemId}`,
+      { cache: "no-store" }
+    );
+    const item = (await response.json()) as StacItem;
+    stacItemCache.set(itemId, item);
+    return item;
+  } catch (error) {
+    // 404 u otro error definitivo: el ítem no existe. Transitorios agotados: sin dato.
+    if (error instanceof PlanetaryHttpError || error instanceof Error) return null;
+    throw error;
+  }
 }

@@ -3,6 +3,7 @@
  * DESCRIPTIVO — sin predicción, correlación ni coeficientes.
  */
 
+import type { SatelliteDataProvider } from "./data-origin.types";
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import type { ScientificDatasetQualityReport } from "../quality/dataset-quality-metrics";
 import type { GeeEmpiricalVerificationReport } from "./gee-verification.types";
@@ -44,6 +45,8 @@ export interface ScientificFieldSatellitePair {
   fieldDate: string;
   satelliteObservationId: string | null;
   satelliteSceneId: string | null;
+  /** Proveedor de la escena (trazabilidad): Planetary, Copernicus, GEE… o "unknown". */
+  satelliteProvider: SatelliteDataProvider;
   satelliteAcquisitionDate: string | null;
   spectralIndices: SpectralIndicesSnapshot;
   temporalDifferenceDays: number | null;
@@ -100,6 +103,7 @@ export interface ScientificDatasetExportRow {
   field_date: string;
   satellite_observation_id: string | null;
   satellite_scene_id: string | null;
+  satellite_provider: SatelliteDataProvider;
   satellite_acquisition_date: string | null;
   temporal_difference_days: number | null;
   distance_meters: number | null;

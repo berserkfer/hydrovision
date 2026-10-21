@@ -3,6 +3,7 @@
  * NO persistencia, NO ML, NO producción automática.
  */
 
+import type { SatelliteDataProvider } from "./data-origin.types";
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import type { SpectralIndexCode } from "../catalog/spectral-indices.catalog";
 import type { TemporalDifferenceStatistics } from "./scientific-dataset.types";
@@ -144,6 +145,7 @@ export interface ScientificCalibrationDatasetRow {
   field_unit: string;
   field_date: string;
   satellite_scene_id: string | null;
+  satellite_provider: SatelliteDataProvider;
   satellite_acquisition_date: string | null;
   temporal_difference_days: number | null;
   distance_meters: number | null;

@@ -22,7 +22,7 @@ function defaultDateRange(filters?: SatelliteQueryFilters): { startDate: string;
 
 let copernicusAdapterSingleton: CopernicusAdapter | null = null;
 
-function getCopernicusAdapter(): CopernicusAdapter {
+export function getCopernicusAdapter(): CopernicusAdapter {
   if (!copernicusAdapterSingleton) {
     copernicusAdapterSingleton = new CopernicusAdapter(
       getCopernicusTokenManager(),

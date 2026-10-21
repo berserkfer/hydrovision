@@ -87,6 +87,7 @@ function buildSatelliteObservationFromProvider(
     estimatedVariables: buildPlaceholderEstimatedVariables(isSimulated),
     source: "sentinel2",
     sourceType: "satellite",
+    provider: providerIdPrefix,
     isSimulated,
     spatialResolutionMeters: 10,
     waterFraction: reflectance.waterFraction ?? null,

@@ -2,6 +2,7 @@
  * Builder determinista del dataset científico — sin DB, GEE ni HTTP.
  */
 
+import { resolveSatelliteProvider } from "@/satellite/types/data-origin.types";
 import type { FieldSatelliteComparison } from "@/satellite/types/field-satellite-comparison.types";
 import type { FieldSatelliteMatch } from "@/satellite/types/field-satellite-match.types";
 import {
@@ -115,6 +116,10 @@ export function buildScientificFieldSatellitePairs(
       fieldDate: comparison.field.date,
       satelliteObservationId: comparison.satellite.observationId,
       satelliteSceneId: comparison.satellite.sceneId,
+      satelliteProvider: resolveSatelliteProvider(
+        comparison.satellite.provider,
+        comparison.satellite.observationId
+      ),
       satelliteAcquisitionDate: comparison.satellite.acquisitionDate,
       spectralIndices,
       temporalDifferenceDays: comparison.matching.temporalDifferenceDays,
@@ -248,6 +253,7 @@ export function toScientificDatasetExportRow(
     field_date: pair.fieldDate,
     satellite_observation_id: pair.satelliteObservationId,
     satellite_scene_id: pair.satelliteSceneId,
+    satellite_provider: pair.satelliteProvider,
     satellite_acquisition_date: pair.satelliteAcquisitionDate,
     temporal_difference_days: pair.temporalDifferenceDays,
     distance_meters: pair.distanceMeters,
