@@ -31,3 +31,6 @@ services/**/__pycache__/
 services/**/.venv/
 *.pyc
 .playwright-mcp/
+
+# Binario local de la skill impeccable (17 MB, no se versiona)
+.claude/skills/impeccable/scripts/bin/

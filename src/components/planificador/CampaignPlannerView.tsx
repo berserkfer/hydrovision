@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { PageContent } from "@/components/layout/PageContent";
+import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
+import { DataTag } from "@/components/ui/DataTag";
 import { DREN_4000_POINTS, DREN_4000_RIO_ID } from "@/data/mock/dren-4000-real-data";
 import type { CloudSuitability } from "@/satellite/opportunities/overpass";
 
@@ -39,10 +41,10 @@ const SUITABILITY_LABEL: Record<CloudSuitability, string> = {
 };
 
 const SUITABILITY_CLASS: Record<CloudSuitability, string> = {
-  good: "bg-emerald-500/15 text-emerald-700 ring-emerald-500/30 dark:text-emerald-300",
-  acceptable: "bg-amber-500/15 text-amber-800 ring-amber-500/30 dark:text-amber-300",
-  poor: "bg-red-500/15 text-red-700 ring-red-500/30 dark:text-red-300",
-  unknown: "bg-slate-500/15 text-slate-600 ring-slate-500/30 dark:text-slate-300",
+  good: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/35 dark:text-emerald-300",
+  acceptable: "bg-amber-500/12 text-amber-800 ring-amber-500/40 dark:text-amber-300",
+  poor: "bg-red-500/10 text-red-700 ring-red-500/35 dark:text-red-300",
+  unknown: "bg-slate-500/10 text-slate-600 ring-slate-500/30 dark:text-slate-300",
 };
 
 export function CampaignPlannerView() {
@@ -75,25 +77,27 @@ export function CampaignPlannerView() {
 
   return (
     <MainLayout>
-      <header className="shrink-0 border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-950">
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-          Planificador de campañas
-        </h1>
-        <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
-          Próximas pasadas estimadas de Sentinel-2 y ventana de muestreo para que el par
-          campo–satélite sea comparable.
-        </p>
-      </header>
+      <MonitoringHeader
+        title="Planificador de campañas"
+        subtitle="Próximas pasadas estimadas de Sentinel-2 y ventana de muestreo para que el par campo–satélite sea comparable."
+        origin={
+          <>
+            <DataTag tone="caution">Fechas estimadas, no efeméride oficial</DataTag>
+            <DataTag tone="neutral">Nubosidad: pronóstico Open-Meteo</DataTag>
+          </>
+        }
+        showDisclaimer={false}
+      />
 
       <PageContent>
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
+          <label className="hv-eyebrow text-[10px]">
             Punto de monitoreo
           </label>
           <select
             value={stationId}
             onChange={(event) => setStationId(event.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="rounded-[3px] border border-[var(--hv-border-subtle)] bg-[var(--hv-surface)] px-2.5 py-1.5 text-sm text-[var(--hv-foreground)]"
           >
             {STATIONS.map((station) => (
               <option key={station.id} value={station.id}>
@@ -113,7 +117,7 @@ export function CampaignPlannerView() {
         ) : null}
 
         {!loading && data && !data.ok ? (
-          <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+          <p className="rounded-[3px] border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-300">
             {data.error ?? "No se pudo obtener el planificador."}
           </p>
         ) : null}
@@ -121,7 +125,7 @@ export function CampaignPlannerView() {
         {!loading && data?.ok ? (
           <section className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+              <thead className="border-b border-[var(--hv-border)] text-[9.5px] font-medium uppercase tracking-[0.16em] text-[var(--hv-foreground-dim)]">
                 <tr>
                   <th className="px-4 py-2">Fecha estimada</th>
                   <th className="px-4 py-2">Días</th>
@@ -140,7 +144,7 @@ export function CampaignPlannerView() {
                 ) : (
                   opportunities.map((opportunity) => (
                     <tr key={opportunity.date}>
-                      <td className="px-4 py-2 font-medium text-slate-900 dark:text-slate-100">
+                      <td className="hv-num px-4 py-2 text-[13px] text-[var(--hv-ink)]">
                         {opportunity.date}
                       </td>
                       <td className="px-4 py-2 text-slate-600 dark:text-slate-400">
@@ -148,7 +152,7 @@ export function CampaignPlannerView() {
                       </td>
                       <td className="px-4 py-2">
                         <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset ${SUITABILITY_CLASS[opportunity.suitability]}`}
+                          className={`inline-flex items-center whitespace-nowrap rounded-[3px] px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${SUITABILITY_CLASS[opportunity.suitability]}`}
                         >
                           {SUITABILITY_LABEL[opportunity.suitability]}
                           {opportunity.cloudCoverPercent !== null
@@ -156,7 +160,7 @@ export function CampaignPlannerView() {
                             : ""}
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-slate-600 dark:text-slate-400">
+                      <td className="hv-num px-4 py-2 text-[12px] text-slate-600 dark:text-slate-400">
                         {opportunity.window.from} a {opportunity.window.to}
                       </td>
                       <td className="px-4 py-2">
@@ -177,7 +181,10 @@ export function CampaignPlannerView() {
         ) : null}
 
         {data?.disclaimer ? (
-          <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">{data.disclaimer}</p>
+          <p className="mt-4 flex max-w-[900px] items-start gap-2.5 rounded-[3px] border border-[var(--hv-disclaimer-border)] bg-[var(--hv-disclaimer-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--hv-disclaimer-text)]">
+            <span className="mt-[5px] h-2 w-2 shrink-0 rotate-45 bg-amber-500" aria-hidden />
+            {data.disclaimer}
+          </p>
         ) : null}
       </PageContent>
     </MainLayout>

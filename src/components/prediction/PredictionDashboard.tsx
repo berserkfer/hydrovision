@@ -78,19 +78,22 @@ function WaterPixelQuality({
   return (
     <div
       className={cn(
-        "mt-2 rounded-lg px-3 py-2 text-xs",
+        "mt-3 rounded-[3px] border px-3 py-2 text-xs leading-relaxed",
         insufficient
-          ? "bg-amber-500/10 text-amber-800 dark:text-amber-300"
-          : "bg-slate-50 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+          ? "border-[var(--hv-disclaimer-border)] bg-[var(--hv-disclaimer-bg)] text-[var(--hv-disclaimer-text)]"
+          : "border-[var(--hv-border)] text-[var(--hv-foreground-muted)]"
       )}
     >
-      <p>
-        Píxeles de agua en la ventana 3×3:{" "}
-        <strong>{percent === null ? "desconocido" : `${percent}%`}</strong>
+      <p className="hv-eyebrow text-[9.5px]">Píxeles de agua · ventana 3×3</p>
+      <p className="mt-1">
+        <span className="hv-num text-[13px] text-[var(--hv-ink)]">
+          {percent === null ? "desconocido" : `${percent}%`}
+        </span>
         {observation.pixelsUsed != null ? ` · ${observation.pixelsUsed} píxeles válidos` : ""}
       </p>
       {insufficient && (
-        <p className="mt-1 font-medium">
+        <p className="mt-1.5 flex items-start gap-2 font-medium">
+          <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rotate-45 bg-amber-500" aria-hidden />
           Advertencia: no hay píxeles de agua suficientes; la estimación no debería usarse.
         </p>
       )}

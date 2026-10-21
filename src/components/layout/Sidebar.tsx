@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Activity,
   BarChart3,
+  CalendarDays,
   Brain,
   Camera,
   ClipboardList,
@@ -18,6 +19,7 @@ import {
   Leaf,
   LineChart,
   Map,
+  Scale,
   Satellite,
   Settings,
   TreePine,
@@ -53,6 +55,8 @@ const icons = {
   upload: Upload,
   download: Download,
   camera: Camera,
+  normative: Scale,
+  planner: CalendarDays,
   users: Users,
 } as const;
 

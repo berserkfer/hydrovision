@@ -4,13 +4,23 @@ import { formatDate } from "@/lib/utils";
 import { SIMULATION_DISCLAIMER } from "@/lib/data/simulated";
 
 interface MonitoringHeaderProps {
-  lastUpdate: string;
   title: string;
   subtitle: string;
+  lastUpdate?: string;
+  /** Etiquetas de origen propias del módulo. Si se omite, se muestra "Datos simulados". */
+  origin?: React.ReactNode;
+  /** Muestra el aviso general de datos reales + simulados (por defecto sí). */
+  showDisclaimer?: boolean;
 }
 
 /** Cabecera de módulo: misma gramática que el héroe del dashboard, en versión compacta. */
-export function MonitoringHeader({ lastUpdate, title, subtitle }: MonitoringHeaderProps) {
+export function MonitoringHeader({
+  lastUpdate,
+  title,
+  subtitle,
+  origin,
+  showDisclaimer = true,
+}: MonitoringHeaderProps) {
   return (
     <header className="relative isolate shrink-0 overflow-hidden border-b border-[var(--hv-header-border)]">
       <div
@@ -30,13 +40,17 @@ export function MonitoringHeader({ lastUpdate, title, subtitle }: MonitoringHead
         </h1>
         <p className="mt-1 max-w-2xl text-sm text-[var(--hv-foreground-muted)]">{subtitle}</p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <DataTag tone="simulated">Datos simulados</DataTag>
-          <DataTag tone="neutral">Última actualización: {formatDate(lastUpdate)}</DataTag>
+          {origin ?? <DataTag tone="simulated">Datos simulados</DataTag>}
+          {lastUpdate && (
+            <DataTag tone="neutral">Última actualización: {formatDate(lastUpdate)}</DataTag>
+          )}
         </div>
-        <p className="mt-3 flex max-w-[900px] items-start gap-2.5 rounded-[3px] border border-[var(--hv-disclaimer-border)] bg-[var(--hv-disclaimer-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--hv-disclaimer-text)]">
-          <span className="mt-[5px] h-2 w-2 shrink-0 rotate-45 bg-amber-500" aria-hidden />
-          {SIMULATION_DISCLAIMER}
-        </p>
+        {showDisclaimer && (
+          <p className="mt-3 flex max-w-[900px] items-start gap-2.5 rounded-[3px] border border-[var(--hv-disclaimer-border)] bg-[var(--hv-disclaimer-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--hv-disclaimer-text)]">
+            <span className="mt-[5px] h-2 w-2 shrink-0 rotate-45 bg-amber-500" aria-hidden />
+            {SIMULATION_DISCLAIMER}
+          </p>
+        )}
       </div>
     </header>
   );
