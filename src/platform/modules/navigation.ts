@@ -72,6 +72,14 @@ export const PLATFORM_NAVIGATION: PlatformNavSection[] = [
             moduleId: "environmental-monitoring",
           },
           {
+            id: "tramo-finder",
+            label: "Tramos Aptos (S-2)",
+            href: "/tramos-aptos",
+            icon: "route",
+            status: "active",
+            moduleId: "environmental-monitoring",
+          },
+          {
             id: "pixel-review",
             label: "Revisión de Píxeles",
             href: "/revision-pixeles",

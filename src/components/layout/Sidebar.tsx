@@ -20,6 +20,7 @@ import {
   Leaf,
   LineChart,
   Map,
+  Route,
   Scale,
   Satellite,
   Settings,
@@ -60,6 +61,7 @@ const icons = {
   normative: Scale,
   planner: CalendarDays,
   crosshair: Crosshair,
+  route: Route,
   users: Users,
 } as const;
 

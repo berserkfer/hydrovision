@@ -99,3 +99,27 @@ Con Planetary Computer, cada escena pasa por la selección robusta del píxel de
 - `src/server/planetary/pc-request-pool.test.ts`: cupo de concurrencia, reintentos con `Retry-After` y espera exponencial, sin reintento ante 404.
 - `src/server/planetary/pc-stac.client.test.ts`: búsqueda STAC con respuestas 429/503 simuladas (reintentos, `PLANETARY_MAX_RETRIES`, sin reintento ante 400), caché de búsquedas repetidas y simultáneas, fallos fuera de caché, cupo de concurrencia y acotado de la configuración.
 - `src/server/planetary/pc-sign.client.test.ts`: reutilización de la firma, firma compartida entre peticiones simultáneas, no reutilizar una firma a punto de caducar.
+
+---
+
+# Reglas Sentinel-2 del Dren 4000 (fases 1–5)
+
+## Fase 1 · Buscador de tramos aptos (`/tramos-aptos`)
+
+Los puntos históricos dentro del dren (P1–P5) no tienen agua visible en el píxel de 10 m. El buscador indica **dónde** muestrear para que el par campo–satélite sea posible.
+
+- **Traza:**
+  - Por defecto, la poligonal P1 → P5. Es **aproximada**: une los puntos con rectas.
+  - Se puede subir un GeoJSON de **línea** (eje del dren) o de **polígono** (cauce). WGS84 o UTM 17S (`EPSG:32717`), máximo `GEOJSON_MAX_BYTES` (1 MB), dentro de la zona del dren.
+- **Muestreo:** un punto cada **50 m** a lo largo de la línea, o una rejilla de 50 m dentro del polígono.
+- **Escenas:** las `TRAMO_FINDER_SCENES` (por defecto **6**) más recientes de Sentinel-2 L2A en Planetary Computer, con nubosidad ≤ 40 % en los últimos 180 días.
+- **Eficiencia:** por escena se hace **una lectura por banda** (B03, B08 y SCL) que cubre toda la traza, en lugar de una por punto.
+- **Aptitud por escena:** la misma regla del píxel de agua de toda la plataforma. SCL = 6 y NDWI > 0, ventana 3×3, ≥ 3 píxeles de agua conectados, f_agua ≥ 0,5 y ajuste ≤ 30 m dentro del cauce.
+- **Por tramo se calcula:**
+  - frecuencia de aptitud (escenas aptas / escenas con datos; las descartadas por nubes cuentan como no aptas);
+  - f_agua media;
+  - coordenada representativa (el píxel de agua más repetido), en **UTM 17S** y en geográficas;
+  - distancia al punto histórico más cercano (Nizama y Cabrera, 2014).
+- **Histórico o nuevo:** a ≤ 25 m de un punto P es **histórico**; si no, **nuevo**. P6–P10 se evalúan aparte como **referencia** (puntos históricos con agua visible) y se conservan.
+- **Uso del resultado:** los candidatos se ordenan por frecuencia de aptitud y luego por f_agua. Se pueden marcar como **"propuesto"** (la marca se guarda por traza) y exportar a CSV.
+- **Cálculo:** corre **en segundo plano** y se guarda; la página muestra el último resultado y su fecha, sin recalcular al abrirse.

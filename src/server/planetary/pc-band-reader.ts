@@ -319,3 +319,75 @@ export async function readBandAtCrsPoints(
     return null;
   }
 }
+
+/**
+ * Rejilla de una banda que cubre una caja geográfica completa (una sola lectura por banda).
+ * Valores crudos (DN) en orden fila-columna; origen = esquina noroeste de la celda [0][0].
+ */
+export interface BandBboxGrid {
+  values: Array<number | null>;
+  width: number;
+  height: number;
+  originX: number;
+  originY: number;
+  resolutionMeters: number;
+  epsg: number;
+}
+
+async function attemptReadBandBboxGrid(
+  signedHref: string,
+  min: { latitude: number; longitude: number },
+  max: { latitude: number; longitude: number }
+): Promise<BandBboxGrid | null> {
+  const tiff = await fromUrl(signedHref);
+  const image: GeoTIFFImage = await tiff.getImage();
+  const geoKeys = image.getGeoKeys() as { ProjectedCSTypeGeoKey?: number } | undefined;
+  const epsg = geoKeys?.ProjectedCSTypeGeoKey;
+  if (!epsg) return null;
+
+  const corners = [
+    wgs84ToCrs(epsg, min.latitude, min.longitude),
+    wgs84ToCrs(epsg, max.latitude, max.longitude),
+    wgs84ToCrs(epsg, min.latitude, max.longitude),
+    wgs84ToCrs(epsg, max.latitude, min.longitude),
+  ];
+  const bbox = image.getBoundingBox();
+  const res = Math.abs(image.getResolution()[0]);
+  const col0 = Math.max(0, Math.floor((Math.min(...corners.map((c) => c.x)) - bbox[0]) / res));
+  const col1 = Math.min(image.getWidth(), Math.ceil((Math.max(...corners.map((c) => c.x)) - bbox[0]) / res));
+  const row0 = Math.max(0, Math.floor((bbox[3] - Math.max(...corners.map((c) => c.y))) / res));
+  const row1 = Math.min(image.getHeight(), Math.ceil((bbox[3] - Math.min(...corners.map((c) => c.y))) / res));
+  if (col1 <= col0 || row1 <= row0) return null;
+
+  const data = await image.readRasters({ window: [col0, row0, col1, row1] });
+  const flat = data[0] as unknown as ArrayLike<number>;
+  const values: Array<number | null> = Array.from(flat, (v) => (Number.isFinite(v) ? v : null));
+  return {
+    values,
+    width: col1 - col0,
+    height: row1 - row0,
+    originX: bbox[0] + col0 * res,
+    originY: bbox[3] - row0 * res,
+    resolutionMeters: res,
+    epsg,
+  };
+}
+
+/** Una lectura por banda para toda la caja (cupo compartido + reintentos). */
+export async function readBandBboxGrid(
+  assetHref: string,
+  min: { latitude: number; longitude: number },
+  max: { latitude: number; longitude: number }
+): Promise<BandBboxGrid | null> {
+  try {
+    return await withRetry(
+      async () => {
+        const signedHref = await signAssetHref(assetHref);
+        return withPlanetarySlot(() => attemptReadBandBboxGrid(signedHref, min, max));
+      },
+      { maxRetries: MAX_READ_RETRIES }
+    );
+  } catch {
+    return null;
+  }
+}
