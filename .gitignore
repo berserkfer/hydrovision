@@ -34,3 +34,6 @@ services/**/.venv/
 
 # Binario local de la skill impeccable (17 MB, no se versiona)
 .claude/skills/impeccable/scripts/bin/
+
+# Datos locales calculados y subidos (reportes, geometrías, imágenes propias)
+.hv-data/

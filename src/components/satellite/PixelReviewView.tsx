@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
 import { PageContent } from "@/components/layout/PageContent";
 import { DataTag } from "@/components/ui/DataTag";
+import { JobStatusBar } from "@/components/ui/JobStatusBar";
+import { useBackgroundJob } from "@/hooks/useBackgroundJob";
 import { cn } from "@/lib/utils";
 import type {
   PixelReviewReport,
@@ -44,24 +46,10 @@ function coord(lat: number | null, lon: number | null): string {
 }
 
 export function PixelReviewView() {
-  const [report, setReport] = useState<PixelReviewReport | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const job = useBackgroundJob<PixelReviewReport>("/api/satellite/pixel-review");
+  const report = job.latest?.result ?? null;
+  const error = job.error;
   const [filter, setFilter] = useState<Filter>("attention");
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/satellite/pixel-review?days=90")
-      .then(async (r) => {
-        const body = (await r.json()) as { data?: PixelReviewReport; error?: { message?: string } };
-        if (!r.ok || !body.data) throw new Error(body.error?.message ?? `Error ${r.status}`);
-        return body.data;
-      })
-      .then((data) => !cancelled && setReport(data))
-      .catch((e: unknown) => !cancelled && setError(e instanceof Error ? e.message : "No se pudo cargar la revisión."));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const active = FILTERS.find((f) => f.value === filter)!;
   const rows = useMemo(() => (report ? report.rows.filter(active.match) : []), [report, active]);
@@ -84,9 +72,16 @@ export function PixelReviewView() {
       />
       <PageContent>
         <div className="mx-auto max-w-[1600px] space-y-6">
-          {!report && !error && (
+          <JobStatusBar
+            state={job.state}
+            computedAt={job.latest?.computedAt ?? null}
+            starting={job.starting}
+            onStart={() => void job.start({ days: 90 })}
+          />
+          {!report && !error && job.state?.status !== "running" && (
             <p className="text-sm text-[var(--hv-foreground-muted)]">
-              Consultando escenas de los 10 puntos (la primera vez puede tardar; luego queda en caché)…
+              Todavía no hay una revisión guardada. Lance el cálculo: recorre los 10 puntos y sus escenas
+              recientes en segundo plano (puede tardar varios minutos) y queda guardado.
             </p>
           )}
           {error && (
@@ -139,7 +134,7 @@ export function PixelReviewView() {
                   ))}
                 </div>
                 <a
-                  href="/api/satellite/pixel-review?days=90&format=csv"
+                  href="/api/satellite/pixel-review?format=csv"
                   className="inline-flex items-center gap-2 rounded-[3px] border border-[var(--hv-ink)]/30 px-3 py-1.5 text-xs font-medium text-[var(--hv-ink)] hover:bg-[var(--hv-ink-wash)]"
                 >
                   <Download className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden />

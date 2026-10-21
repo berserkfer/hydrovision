@@ -110,8 +110,10 @@ export function toPixelReviewRow(
   };
 }
 
+export const PIXEL_REVIEW_JOB = "pixel-review";
+
 export async function buildPixelReview(
-  options: { days?: number } = {},
+  options: { days?: number; onProgress?: (p: { done: number; total: number; message?: string }) => void } = {},
   deps: PixelReviewDeps = defaultDeps
 ): Promise<PixelReviewReport> {
   const days = Math.min(Math.max(options.days ?? 90, 15), 365);
@@ -123,7 +125,8 @@ export async function buildPixelReview(
   const stationsWithoutScenes: PixelReviewStationGap[] = [];
   let searchRadiusM: number | null = null;
 
-  for (const point of DREN_4000_POINTS) {
+  for (const [index, point] of DREN_4000_POINTS.entries()) {
+    options.onProgress?.({ done: index, total: DREN_4000_POINTS.length, message: `Punto ${point.codigo}` });
     const station = {
       id: `${DREN_4000_RIO_ID}-${point.codigo.toLowerCase()}`,
       codigo: point.codigo,
@@ -157,6 +160,7 @@ export async function buildPixelReview(
     }
   }
 
+  options.onProgress?.({ done: DREN_4000_POINTS.length, total: DREN_4000_POINTS.length });
   rows.sort((a, b) => a.codigo.localeCompare(b.codigo, "es", { numeric: true }) || b.acquisitionDate.localeCompare(a.acquisitionDate));
 
   const summary = Object.fromEntries(PIXEL_REVIEW_STATUSES.map((s) => [s, 0])) as Record<PixelReviewStatus, number>;
