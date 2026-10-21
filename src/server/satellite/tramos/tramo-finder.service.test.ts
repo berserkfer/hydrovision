@@ -134,12 +134,18 @@ describe("buscador de tramos aptos", () => {
     const proposals = await getProposals();
     expect(proposals[proposalKey(result.traceKey, top.id)].proposed).toBe(true);
 
-    const csv = tramoCandidatesToCsv(result, proposals);
+    const csv = tramoCandidatesToCsv(result, proposals, { [top.id]: { count: 2, latest: "geotiff 2026-10-20" } });
     const [header, first] = csv.split("\n");
-    expect(header).toContain("este_utm17s");
-    expect(header).toContain("origen");
-    expect(first).toContain(top.id);
-    expect(first.endsWith(",si")).toBe(true);
+    const columns = header.split(",");
+    const values = first.split(",");
+    const col = (name: string) => values[columns.indexOf(name)];
+    expect(columns).toContain("este_utm17s");
+    expect(columns).toContain("origen");
+    expect(col("id")).toBe(top.id);
+    expect(col("propuesto")).toBe("si");
+    // La imagen propia va en columnas separadas, no mezclada con la aptitud satelital.
+    expect(col("imagen_propia_n")).toBe("2");
+    expect(col("imagen_propia_ultima")).toBe("geotiff 2026-10-20");
   });
 
   it("usa la traza subida (GeoJSON de línea) en vez de la por defecto", async () => {

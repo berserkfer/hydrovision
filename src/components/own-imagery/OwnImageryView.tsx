@@ -177,7 +177,9 @@ export function OwnImageryView() {
 
           <div className="flex items-baseline justify-between gap-3">
             <h2 className="text-[22px] font-light tracking-[-0.02em] text-[var(--hv-ink)]">Registros ({records.length})</h2>
-            <a href="/api/imagenes-propias?format=csv" className="inline-flex items-center gap-2 rounded-[3px] border border-[var(--hv-ink)]/30 px-3 py-1.5 text-xs font-medium text-[var(--hv-ink)] hover:bg-[var(--hv-ink-wash)]">
+            {/* Descarga de un archivo desde la API, no navegación entre páginas. */}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/api/imagenes-propias?format=csv" download className="inline-flex items-center gap-2 rounded-[3px] border border-[var(--hv-ink)]/30 px-3 py-1.5 text-xs font-medium text-[var(--hv-ink)] hover:bg-[var(--hv-ink-wash)]">
               <Download className="h-3.5 w-3.5" strokeWidth={1.6} aria-hidden />
               Exportar CSV (imagen_propia)
             </a>
