@@ -9,8 +9,20 @@ import { interpretSclPixelQuality } from "@/satellite/quality/pixel-quality";
 import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
 import { TtlCache } from "@/server/cache/ttl-cache";
 import { getSentinel2ItemById, searchSentinel2Items, type StacItem } from "./pc-stac.client";
-import { readBandPixelAtPoint, readBandWindowAtPoint } from "./pc-band-reader";
-import { assessWaterSufficiency, computeWaterFraction } from "@/satellite/quality/water-fraction";
+import {
+  crsToWgs84,
+  readBandAtCrsPoints,
+  readBandGridAtPoint,
+  readBandPixelAtPoint,
+  type BandGridReadResult,
+} from "./pc-band-reader";
+import {
+  getWaterSearchRadiusM,
+  requiredGridHalfSize,
+  selectWaterPixel,
+  type PixelGrid,
+  type WaterPixelSelectionRecord,
+} from "@/satellite/quality/water-pixel-selection";
 import { convertDnToReflectance, resolveBoaOffset } from "./pc-band.mapper";
 import { mapCopernicusReflectances } from "@/server/copernicus/copernicus-band.mapper";
 import { processGeeSurfaceReflectances } from "@/server/gee/gee-band.mapper";
@@ -25,31 +37,22 @@ import type {
 const REFLECTANCE_BANDS = ["B03", "B04", "B05", "B08", "B11"] as const;
 const SCL_BAND = "SCL";
 const SENTINEL2_L2A_COLLECTION = "sentinel-2-l2a" as const;
-const WATER_FRACTION_WINDOW_SIZE = 3;
 
 /**
- * Fracción de agua en la ventana 3×3 con NDWI. Si no hay ventanas válidas
- * devuelve "unknown" — nunca asume que el píxel es agua.
+ * Métricas de agua que viajan con la observación, derivadas de la selección del píxel:
+ * solo una selección utilizable (píxel del punto o ajustado) es "sufficient". Bloqueos y
+ * descartes son "insufficient" (la predicción se bloquea con NO_WATER_PIXELS); sin datos,
+ * "unknown" — nunca se asume que el píxel es agua.
  */
-function computeWaterMetrics(
-  greenRaw: number[] | undefined,
-  nirRaw: number[] | undefined,
-  boaOffset: number
-): { waterFraction: number | null; pixelsUsed: number; waterSufficiency: "sufficient" | "insufficient" | "unknown" } {
-  if (!greenRaw || !nirRaw || greenRaw.length === 0 || greenRaw.length !== nirRaw.length) {
-    return { waterFraction: null, pixelsUsed: 0, waterSufficiency: "unknown" };
-  }
-
-  const pixels = greenRaw.map((green, i) => ({
-    green: convertDnToReflectance(green, boaOffset),
-    nir: convertDnToReflectance(nirRaw[i], boaOffset),
-  }));
-
-  const { waterFraction, pixelsUsed } = computeWaterFraction(pixels);
+function waterMetricsFromSelection(record: WaterPixelSelectionRecord): {
+  waterFraction: number | null;
+  pixelsUsed: number;
+  waterSufficiency: "sufficient" | "insufficient" | "unknown";
+} {
   return {
-    waterFraction,
-    pixelsUsed,
-    waterSufficiency: assessWaterSufficiency(waterFraction, pixelsUsed),
+    waterFraction: record.window.waterFraction,
+    pixelsUsed: record.window.validPixels,
+    waterSufficiency: record.usable ? "sufficient" : record.status === "no_data" ? "unknown" : "insufficient",
   };
 }
 
@@ -147,55 +150,57 @@ export class PlanetaryAdapter {
       const resolvedItem = item;
 
       const boaOffset = resolveBoaOffset(resolvedItem.properties["s2:processing_baseline"]);
+      const hrefOf = (band: string) => resolvedItem.assets[band]?.href;
 
-      // Cada banda es un asset COG independiente (petición HTTP propia) — leerlas en paralelo
-      // en vez de una a una recorta drásticamente la latencia total (antes: hasta 6 lecturas
-      // secuenciales por escena, cada una de varios segundos reales contra Azure Blob Storage).
-      const bandsToRead = [...REFLECTANCE_BANDS, SCL_BAND] as const;
-      const waterWindows: { green?: number[]; nir?: number[] } = {};
+      // 1) Selección robusta del píxel de agua: rejillas B03/B08 (10 m) + SCL (20 m) muestreada
+      //    en el centro de cada píxel de 10 m. Ver src/satellite/quality/water-pixel-selection.ts.
+      const searchRadiusM = getWaterSearchRadiusM();
+      const half = requiredGridHalfSize(searchRadiusM);
+      const greenHref = hrefOf("B03");
+      const nirHref = hrefOf("B08");
+      const [greenGrid, nirGrid] = await Promise.all([
+        greenHref ? readBandGridAtPoint(greenHref, request.latitude, request.longitude, half) : null,
+        nirHref ? readBandGridAtPoint(nirHref, request.latitude, request.longitude, half) : null,
+      ]);
 
-      const bandReads = await Promise.all(
-        bandsToRead.map(async (band) => {
-          const href = resolvedItem.assets[band]?.href;
+      const selection = await this.selectWaterPixelForScene(
+        request,
+        greenGrid,
+        nirGrid,
+        hrefOf(SCL_BAND),
+        boaOffset,
+        searchRadiusM
+      );
+
+      // 2) Las demás bandas se leen en el píxel elegido (o en el punto si no se eligió ninguno);
+      //    B03/B08/SCL salen de la misma rejilla, sin una segunda lectura.
+      const sample = selection.record.adjustedCoordinate ?? selection.record.originalCoordinate;
+      const otherBands = REFLECTANCE_BANDS.filter((b) => b !== "B03" && b !== "B08");
+      const otherReads = await Promise.all(
+        otherBands.map(async (band) => {
+          const href = hrefOf(band);
           if (!href) return null;
-
-          // B03 y B08 se leen como ventana 3×3 para estimar la fracción de agua.
-          // El valor puntual sigue siendo el píxel central de esa ventana.
-          if (band === "B03" || band === "B08") {
-            const window = await readBandWindowAtPoint(
-              href,
-              request.latitude,
-              request.longitude,
-              WATER_FRACTION_WINDOW_SIZE
-            );
-            if (!window) return null;
-            const center = window.rawValues[Math.floor(window.rawValues.length / 2)];
-            if (center === undefined || !Number.isFinite(center)) return null;
-            if (band === "B03") waterWindows.green = window.rawValues;
-            else waterWindows.nir = window.rawValues;
-            return { band, rawValue: center } as const;
-          }
-
-          const pixel = await readBandPixelAtPoint(href, request.latitude, request.longitude);
+          const pixel = await readBandPixelAtPoint(href, sample.latitude, sample.longitude);
           return pixel ? ({ band, rawValue: pixel.rawValue } as const) : null;
         })
       );
 
       const rawAllBands: Record<string, number> = {};
-      for (const read of bandReads) {
-        if (!read) continue;
-        rawAllBands[read.band] =
-          read.band === SCL_BAND
-            ? read.rawValue // SCL es una clasificación entera, sin escalar
-            : convertDnToReflectance(read.rawValue, boaOffset);
+      for (const read of otherReads) {
+        if (read) rawAllBands[read.band] = convertDnToReflectance(read.rawValue, boaOffset);
       }
+      const cell = selection.sampleCell;
+      const greenRaw = greenGrid?.values[cell.row]?.[cell.col];
+      const nirRaw = nirGrid?.values[cell.row]?.[cell.col];
+      if (greenRaw != null) rawAllBands.B03 = convertDnToReflectance(greenRaw, boaOffset);
+      if (nirRaw != null) rawAllBands.B08 = convertDnToReflectance(nirRaw, boaOffset);
+      const sclRawValue = selection.sclAtSample;
 
       if (Object.keys(rawAllBands).length === 0) return null;
 
-      const { [SCL_BAND]: sclRawValue, ...reflectanceBands } = rawAllBands;
-      const processed = processGeeSurfaceReflectances(reflectanceBands, mapCopernicusReflectances);
+      const processed = processGeeSurfaceReflectances(rawAllBands, mapCopernicusReflectances);
       const pixelQualityStatus = interpretSclPixelQuality(sclRawValue ?? null);
-      const water = computeWaterMetrics(waterWindows.green, waterWindows.nir, boaOffset);
+      const water = waterMetricsFromSelection(selection.record);
       const acquisitionDate = item.properties.datetime.slice(0, 10);
 
       const base: PlanetaryReflectanceRecord = {
@@ -214,6 +219,7 @@ export class PlanetaryAdapter {
         waterFraction: water.waterFraction,
         pixelsUsed: water.pixelsUsed,
         waterSufficiency: water.waterSufficiency,
+        waterPixelSelection: selection.record,
       };
 
       if (processed.semanticStatus !== "valid") {
@@ -225,6 +231,90 @@ export class PlanetaryAdapter {
       // Nunca se fabrica una reflectancia ante un fallo de red/lectura del COG.
       return null;
     }
+  }
+
+  /** Arma la rejilla con máscara SCL, elige el píxel y devuelve el registro trazable. */
+  private async selectWaterPixelForScene(
+    request: PlanetaryReflectanceRequest,
+    greenGrid: BandGridReadResult | null,
+    nirGrid: BandGridReadResult | null,
+    sclHref: string | undefined,
+    boaOffset: number,
+    searchRadiusM: number
+  ): Promise<{ record: WaterPixelSelectionRecord; sampleCell: { row: number; col: number }; sclAtSample: number | null }> {
+    const originalCoordinate = { latitude: request.latitude, longitude: request.longitude };
+    const emptyRecord = (reason: string): WaterPixelSelectionRecord => ({
+      status: "no_data",
+      usable: false,
+      reason,
+      originalCoordinate,
+      adjustedCoordinate: null,
+      adjustmentDistanceM: 0,
+      pixelOffset: null,
+      searchRadiusM,
+      channelCheck: "connected_water_body",
+      window: { waterPixels: 0, validPixels: 0, contaminatedPixels: 0, waterFraction: null },
+      selectedNdwi: null,
+      selectedScl: null,
+    });
+
+    if (!greenGrid || !nirGrid || greenGrid.values.length !== nirGrid.values.length) {
+      const half = greenGrid ? Math.floor(greenGrid.values.length / 2) : 0;
+      return { record: emptyRecord("No se pudieron leer las bandas B03/B08 alrededor del punto."), sampleCell: { row: half, col: half }, sclAtSample: null };
+    }
+
+    const size = greenGrid.values.length;
+    const half = Math.floor(size / 2);
+    const centers = greenGrid.cellCenters.flat();
+    const sclFlat = sclHref ? await readBandAtCrsPoints(sclHref, centers) : null;
+    if (!sclFlat) {
+      return { record: emptyRecord("No se pudo leer la banda SCL: sin máscara de calidad no se elige píxel."), sampleCell: { row: half, col: half }, sclAtSample: null };
+    }
+
+    const grid: PixelGrid = {
+      pixelSizeM: greenGrid.resolutionMeters,
+      pixels: greenGrid.values.map((row, r) =>
+        row.map((g, c) => {
+          const n = nirGrid.values[r]?.[c];
+          return {
+            green: g == null ? null : convertDnToReflectance(g, boaOffset),
+            nir: n == null ? null : convertDnToReflectance(n, boaOffset),
+            scl: sclFlat[r * size + c] ?? null,
+          };
+        })
+      ),
+    };
+
+    const selection = selectWaterPixel(grid, { searchRadiusM });
+    const offset = selection.pixelOffset;
+    const sampleCell = offset ? { row: half + offset.dRow, col: half + offset.dCol } : { row: half, col: half };
+    const adjustedCoordinate = offset
+      ? crsToWgs84(greenGrid.epsg, greenGrid.cellCenters[sampleCell.row][sampleCell.col])
+      : null;
+
+    return {
+      record: {
+        status: selection.status,
+        usable: selection.usable,
+        reason: selection.reason,
+        originalCoordinate,
+        adjustedCoordinate: adjustedCoordinate
+          ? {
+              latitude: Number(adjustedCoordinate.latitude.toFixed(7)),
+              longitude: Number(adjustedCoordinate.longitude.toFixed(7)),
+            }
+          : null,
+        adjustmentDistanceM: selection.adjustmentDistanceM,
+        pixelOffset: selection.pixelOffset,
+        searchRadiusM: selection.searchRadiusM,
+        channelCheck: selection.channelCheck,
+        window: selection.window,
+        selectedNdwi: selection.selectedNdwi,
+        selectedScl: selection.selectedScl,
+      },
+      sampleCell,
+      sclAtSample: sclFlat[sampleCell.row * size + sampleCell.col] ?? null,
+    };
   }
 }
 

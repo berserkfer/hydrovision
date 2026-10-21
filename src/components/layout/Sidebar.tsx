@@ -9,6 +9,7 @@ import {
   Brain,
   Camera,
   ClipboardList,
+  Crosshair,
   Cloud,
   Download,
   FileText,
@@ -58,6 +59,7 @@ const icons = {
   camera: Camera,
   normative: Scale,
   planner: CalendarDays,
+  crosshair: Crosshair,
   users: Users,
 } as const;
 

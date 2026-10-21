@@ -83,6 +83,10 @@ Planetary Computer limita la frecuencia de peticiones, sobre todo la de firma SA
 
 Las cachés son en memoria y por proceso: un reinicio del servidor las vacía.
 
+## Selección del píxel de agua
+
+Con Planetary Computer, cada escena pasa por la selección robusta del píxel de agua: máscara SCL, NDWI 3×3, ajuste al agua más cercana del cauce (30 m) y bloqueo si no se cumple f_agua. Ver `docs/WATER_PIXEL_SELECTION.md` y la página `/revision-pixeles`.
+
 ## Diferencias entre proveedores
 
 - **Mismo producto (Sentinel-2 L2A)**, pero con procesado y catálogo propios: puede haber pequeñas diferencias de reflectancia y de disponibilidad de escenas entre CDSE y Planetary Computer.

@@ -3,6 +3,7 @@
  * scientificStatus siempre "descriptive_only" en esta fase — sin predicción ni correlación.
  */
 
+import type { WaterPixelSelectionRecord } from "../quality/water-pixel-selection";
 import type { SatelliteDataProvider } from "./data-origin.types";
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import type { SpectralIndexCode } from "../catalog/spectral-indices.catalog";
@@ -37,6 +38,8 @@ export interface SatelliteComparisonSide {
   systemTimeStart?: number | null;
   /** Proveedor que sirvió la observación. */
   provider?: SatelliteDataProvider;
+  /** Píxel de agua usado (y por qué), si el proveedor lo calcula. */
+  waterPixelSelection?: WaterPixelSelectionRecord;
   sourceType: "satellite";
   isSimulated: boolean;
 }

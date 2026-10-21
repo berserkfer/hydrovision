@@ -165,3 +165,157 @@ export async function readBandPixelAtPoint(
     return null;
   }
 }
+
+// ─── Rejillas para la selección del píxel de agua ───────────────────────────────────────
+
+/** Coordenada en la CRS proyectada del raster (UTM, metros). */
+export interface CrsPoint {
+  x: number;
+  y: number;
+}
+
+/**
+ * Rejilla (2·half+1)² de valores crudos centrada en el píxel que contiene el punto.
+ * Las celdas fuera del raster quedan en null (nunca se rellenan con un valor inventado).
+ * `cellCenters[r][c]` es el centro de cada píxel en la CRS del raster.
+ */
+export interface BandGridReadResult {
+  values: Array<Array<number | null>>;
+  cellCenters: CrsPoint[][];
+  epsg: number;
+  resolutionMeters: number;
+}
+
+export function wgs84ToCrs(epsg: number, latitude: number, longitude: number): CrsPoint {
+  const [x, y] = proj4(WGS84, utmProj4Def(epsg), [longitude, latitude]);
+  return { x, y };
+}
+
+export function crsToWgs84(epsg: number, point: CrsPoint): { latitude: number; longitude: number } {
+  const [longitude, latitude] = proj4(utmProj4Def(epsg), WGS84, [point.x, point.y]);
+  return { latitude, longitude };
+}
+
+async function attemptReadBandGrid(
+  signedHref: string,
+  latitude: number,
+  longitude: number,
+  half: number
+): Promise<BandGridReadResult | null> {
+  const tiff = await fromUrl(signedHref);
+  const image: GeoTIFFImage = await tiff.getImage();
+  const geoKeys = image.getGeoKeys() as { ProjectedCSTypeGeoKey?: number } | undefined;
+  const epsg = geoKeys?.ProjectedCSTypeGeoKey;
+  if (!epsg) return null;
+
+  const { x, y } = wgs84ToCrs(epsg, latitude, longitude);
+  const bbox = image.getBoundingBox();
+  const [resX] = image.getResolution();
+  const res = Math.abs(resX);
+  if (x < bbox[0] || x > bbox[2] || y < bbox[1] || y > bbox[3]) return null;
+
+  const col = Math.floor((x - bbox[0]) / res);
+  const row = Math.floor((bbox[3] - y) / res);
+  const size = 2 * half + 1;
+  const col0 = Math.max(0, col - half);
+  const row0 = Math.max(0, row - half);
+  const col1 = Math.min(image.getWidth(), col + half + 1);
+  const row1 = Math.min(image.getHeight(), row + half + 1);
+  if (col1 <= col0 || row1 <= row0) return null;
+
+  const data = await image.readRasters({ window: [col0, row0, col1, row1] });
+  const flat = data[0] as unknown as ArrayLike<number>;
+  const readWidth = col1 - col0;
+
+  const values: Array<Array<number | null>> = [];
+  const cellCenters: CrsPoint[][] = [];
+  for (let r = 0; r < size; r += 1) {
+    const rasterRow = row - half + r;
+    const rowValues: Array<number | null> = [];
+    const rowCenters: CrsPoint[] = [];
+    for (let c = 0; c < size; c += 1) {
+      const rasterCol = col - half + c;
+      rowCenters.push({ x: bbox[0] + (rasterCol + 0.5) * res, y: bbox[3] - (rasterRow + 0.5) * res });
+      const inside = rasterCol >= col0 && rasterCol < col1 && rasterRow >= row0 && rasterRow < row1;
+      const v = inside ? flat[(rasterRow - row0) * readWidth + (rasterCol - col0)] : undefined;
+      rowValues.push(v !== undefined && Number.isFinite(v) ? v : null);
+    }
+    values.push(rowValues);
+    cellCenters.push(rowCenters);
+  }
+  return { values, cellCenters, epsg, resolutionMeters: res };
+}
+
+/** Rejilla de una banda alrededor del punto (cupo compartido + reintentos). */
+export async function readBandGridAtPoint(
+  assetHref: string,
+  latitude: number,
+  longitude: number,
+  half: number
+): Promise<BandGridReadResult | null> {
+  try {
+    return await withRetry(
+      async () => {
+        const signedHref = await signAssetHref(assetHref);
+        return withPlanetarySlot(() => attemptReadBandGrid(signedHref, latitude, longitude, half));
+      },
+      { maxRetries: MAX_READ_RETRIES }
+    );
+  } catch {
+    return null;
+  }
+}
+
+async function attemptReadBandAtCrsPoints(
+  signedHref: string,
+  points: CrsPoint[]
+): Promise<Array<number | null> | null> {
+  const tiff = await fromUrl(signedHref);
+  const image: GeoTIFFImage = await tiff.getImage();
+  const bbox = image.getBoundingBox();
+  const res = Math.abs(image.getResolution()[0]);
+  const width = image.getWidth();
+  const height = image.getHeight();
+
+  const cells = points.map((p) => ({
+    col: Math.floor((p.x - bbox[0]) / res),
+    row: Math.floor((bbox[3] - p.y) / res),
+  }));
+  const inside = cells.filter((c) => c.col >= 0 && c.col < width && c.row >= 0 && c.row < height);
+  if (inside.length === 0) return points.map(() => null);
+
+  const col0 = Math.min(...inside.map((c) => c.col));
+  const row0 = Math.min(...inside.map((c) => c.row));
+  const col1 = Math.max(...inside.map((c) => c.col)) + 1;
+  const row1 = Math.max(...inside.map((c) => c.row)) + 1;
+  const data = await image.readRasters({ window: [col0, row0, col1, row1] });
+  const flat = data[0] as unknown as ArrayLike<number>;
+  const readWidth = col1 - col0;
+
+  return cells.map((c) => {
+    if (c.col < col0 || c.col >= col1 || c.row < row0 || c.row >= row1) return null;
+    const v = flat[(c.row - row0) * readWidth + (c.col - col0)];
+    return v !== undefined && Number.isFinite(v) ? v : null;
+  });
+}
+
+/**
+ * Valor de una banda (p. ej. SCL, 20 m) en el centro de cada píxel de otra rejilla (10 m):
+ * cada punto toma el píxel que lo contiene, sin suponer que las rejillas están alineadas.
+ */
+export async function readBandAtCrsPoints(
+  assetHref: string,
+  points: CrsPoint[]
+): Promise<Array<number | null> | null> {
+  try {
+    return await withRetry(
+      async () => {
+        const signedHref = await signAssetHref(assetHref);
+        return withPlanetarySlot(() => attemptReadBandAtCrsPoints(signedHref, points));
+      },
+      { maxRetries: MAX_READ_RETRIES }
+    );
+  } catch {
+    return null;
+  }
+}

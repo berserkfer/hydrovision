@@ -3,6 +3,7 @@
  */
 
 import { resolveSatelliteProvider } from "@/satellite/types/data-origin.types";
+import { pixelExportColumns, toPairPixelSelection } from "@/satellite/quality/water-pixel-selection";
 import type { FieldSatelliteComparison } from "@/satellite/types/field-satellite-comparison.types";
 import type { FieldSatelliteMatch } from "@/satellite/types/field-satellite-match.types";
 import {
@@ -90,6 +91,7 @@ export function buildScientificFieldSatellitePairs(
       cloudPercentage: comparison.satellite.cloudPercentage,
       reflectanceSemanticStatus: comparison.satellite.reflectanceSemanticStatus,
       pixelQualityStatus: comparison.satellite.pixelQualityStatus,
+      waterPixelSelection: comparison.satellite.waterPixelSelection ?? null,
     });
 
     const fieldValue = comparison.field.value;
@@ -120,6 +122,7 @@ export function buildScientificFieldSatellitePairs(
         comparison.satellite.provider,
         comparison.satellite.observationId
       ),
+      pixelSelection: toPairPixelSelection(comparison.satellite.waterPixelSelection),
       satelliteAcquisitionDate: comparison.satellite.acquisitionDate,
       spectralIndices,
       temporalDifferenceDays: comparison.matching.temporalDifferenceDays,
@@ -163,6 +166,7 @@ export function evaluateAllComparisonQualities(
       cloudPercentage: comparison.satellite.cloudPercentage,
       reflectanceSemanticStatus: comparison.satellite.reflectanceSemanticStatus,
       pixelQualityStatus: comparison.satellite.pixelQualityStatus,
+      waterPixelSelection: comparison.satellite.waterPixelSelection ?? null,
     }).qualityStatus;
   });
 }
@@ -254,6 +258,7 @@ export function toScientificDatasetExportRow(
     satellite_observation_id: pair.satelliteObservationId,
     satellite_scene_id: pair.satelliteSceneId,
     satellite_provider: pair.satelliteProvider,
+    ...pixelExportColumns(pair.pixelSelection),
     satellite_acquisition_date: pair.satelliteAcquisitionDate,
     temporal_difference_days: pair.temporalDifferenceDays,
     distance_meters: pair.distanceMeters,

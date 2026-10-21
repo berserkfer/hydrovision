@@ -146,6 +146,11 @@ export interface ScientificCalibrationDatasetRow {
   field_date: string;
   satellite_scene_id: string | null;
   satellite_provider: SatelliteDataProvider;
+  pixel_status: string | null;
+  pixel_adjustment_m: number | null;
+  pixel_latitude: number | null;
+  pixel_longitude: number | null;
+  pixel_reason: string | null;
   satellite_acquisition_date: string | null;
   temporal_difference_days: number | null;
   distance_meters: number | null;

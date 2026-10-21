@@ -72,6 +72,14 @@ export const PLATFORM_NAVIGATION: PlatformNavSection[] = [
             moduleId: "environmental-monitoring",
           },
           {
+            id: "pixel-review",
+            label: "Revisión de Píxeles",
+            href: "/revision-pixeles",
+            icon: "crosshair",
+            status: "active",
+            moduleId: "environmental-monitoring",
+          },
+          {
             id: "campaign-planner",
             label: "Planificador de Campañas",
             href: "/planificador",

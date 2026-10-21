@@ -90,8 +90,17 @@ function fail(payload: {
   throw new PredictionInsufficientDataError({ ...payload, scientificStatus: "descriptive_only" });
 }
 
+/**
+ * Más reciente primero, pero las escenas cuyo píxel de agua quedó bloqueado o descartado
+ * (nubes, sin agua en el radio, f_agua insuficiente) van al final: así se usa la escena
+ * utilizable más reciente. Si ninguna lo es, la primera sigue siendo la más reciente y la
+ * predicción se bloquea con su motivo.
+ */
 function sortByAcquisitionDateDesc(observations: SatelliteObservation[]): SatelliteObservation[] {
-  return [...observations].sort((a, b) => b.acquisitionDate.localeCompare(a.acquisitionDate));
+  const blocked = (o: SatelliteObservation) => (o.waterSufficiency === "insufficient" ? 1 : 0);
+  return [...observations].sort(
+    (a, b) => blocked(a) - blocked(b) || b.acquisitionDate.localeCompare(a.acquisitionDate)
+  );
 }
 
 interface ResolvedObservation {
@@ -356,10 +365,11 @@ export class PredictionService {
       const fraction = resolved.observation.waterFraction;
       fail({
         status: "NO_WATER_PIXELS",
-        message:
-          `La ventana satelital de ${resolved.observation.acquisitionDate} no tiene píxeles de agua suficientes ` +
-          `(fracción ${fraction === null || fraction === undefined ? "desconocida" : fraction.toFixed(2)}, ` +
-          `${resolved.observation.pixelsUsed ?? 0} píxeles válidos). No se emite una predicción.`,
+        message: resolved.observation.waterPixelSelection
+          ? `Escena de ${resolved.observation.acquisitionDate}: ${resolved.observation.waterPixelSelection.reason} No se emite una predicción.`
+          : `La ventana satelital de ${resolved.observation.acquisitionDate} no tiene píxeles de agua suficientes ` +
+            `(fracción ${fraction === null || fraction === undefined ? "desconocida" : fraction.toFixed(2)}, ` +
+            `${resolved.observation.pixelsUsed ?? 0} píxeles válidos). No se emite una predicción.`,
         stationId,
         parameterCode,
         sampleSize,

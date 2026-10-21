@@ -133,6 +133,82 @@ describe("trazabilidad del proveedor satelital", () => {
   });
 });
 
+describe("píxel de agua en el par de calibración", () => {
+  const original = { latitude: -6.8764, longitude: -79.9282 };
+  const base = {
+    reason: "Ajustado al píxel de agua más cercano dentro del cauce.",
+    originalCoordinate: original,
+    searchRadiusM: 30,
+    channelCheck: "connected_water_body" as const,
+    window: { waterPixels: 6, validPixels: 9, contaminatedPixels: 0, waterFraction: 0.6667 },
+    selectedNdwi: 0.6,
+    selectedScl: 6,
+  };
+
+  it("marca el par con el píxel usado, la distancia de ajuste y el proveedor", () => {
+    const [pair] = buildScientificFieldSatellitePairs([
+      makeComparison({
+        satellite: {
+          provider: "planetary",
+          observationId: "planetary-est-e01-S2A_x",
+          waterPixelSelection: {
+            ...base,
+            status: "adjusted",
+            usable: true,
+            adjustedCoordinate: { latitude: -6.8764, longitude: -79.92811 },
+            adjustmentDistanceM: 10,
+            pixelOffset: { dRow: 0, dCol: 1 },
+          },
+        },
+      }),
+    ]);
+
+    expect(pair.qualityStatus).toBe("accepted");
+    expect(pair.satelliteProvider).toBe("planetary");
+    expect(pair.pixelSelection).toMatchObject({
+      status: "adjusted",
+      adjustmentDistanceM: 10,
+      originalCoordinate: original,
+      adjustedCoordinate: { latitude: -6.8764, longitude: -79.92811 },
+      pixelOffset: { dRow: 0, dCol: 1 },
+    });
+    expect(toScientificDatasetExportRow(pair)).toMatchObject({
+      satellite_provider: "planetary",
+      pixel_status: "adjusted",
+      pixel_adjustment_m: 10,
+      pixel_latitude: -6.8764,
+      pixel_longitude: -79.92811,
+    });
+  });
+
+  it("un píxel bloqueado o descartado rechaza el par con el motivo", () => {
+    const [pair] = buildScientificFieldSatellitePairs([
+      makeComparison({
+        satellite: {
+          waterPixelSelection: {
+            ...base,
+            status: "discarded_clouds",
+            usable: false,
+            reason: "La ventana 3×3 del punto tiene nube…",
+            adjustedCoordinate: null,
+            adjustmentDistanceM: 0,
+            pixelOffset: null,
+          },
+        },
+      }),
+    ]);
+    expect(pair.qualityStatus).toBe("rejected");
+    expect(pair.rejectionReason).toMatch(/Píxel de agua no utilizable/);
+    expect(pair.pixelSelection?.status).toBe("discarded_clouds");
+  });
+
+  it("sin selección (proveedor sin soporte) el par lo declara con null", () => {
+    const [pair] = buildScientificFieldSatellitePairs([makeComparison()]);
+    expect(pair.pixelSelection).toBeNull();
+    expect(toScientificDatasetExportRow(pair).pixel_status).toBeNull();
+  });
+});
+
 describe("filterPairsByIncludeSimulated", () => {
   const pairs = buildScientificFieldSatellitePairs([
     makeComparison(),

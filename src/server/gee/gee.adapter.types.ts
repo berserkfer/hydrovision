@@ -2,6 +2,7 @@
  * Tipos del adaptador GEE — datos crudos sin índices calculados.
  */
 
+import type { WaterPixelSelectionRecord } from "@/satellite/quality/water-pixel-selection";
 import type { Sentinel2BandCode, Sentinel2ReflectanceMap } from "@/satellite/catalog/sentinel2-bands.catalog";
 import type { PixelQualityStatus } from "@/satellite/quality/pixel-quality";
 import type { WaterSufficiency } from "@/satellite/quality/water-fraction";
@@ -48,6 +49,8 @@ export interface GeeReflectanceRecord {
   waterFraction?: number | null;
   pixelsUsed?: number;
   waterSufficiency?: WaterSufficiency;
+  /** Selección robusta del píxel de agua (solo proveedores que la implementan: Planetary). */
+  waterPixelSelection?: WaterPixelSelectionRecord;
 }
 
 export interface GeeSceneSearchRequest {

@@ -317,6 +317,7 @@ function makePair(overrides: Partial<ScientificFieldSatellitePair> = {}): Scient
     satelliteObservationId: "sat-1",
     satelliteSceneId: "S2A_1",
     satelliteProvider: "planetary",
+    pixelSelection: null,
     satelliteAcquisitionDate: "2025-05-31",
     spectralIndices: { ndti: 0.1, ndvi: null, ndci: null, ndwi: null, mndwi: null, ndmi: null },
     temporalDifferenceDays: 1,

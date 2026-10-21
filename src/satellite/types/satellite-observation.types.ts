@@ -3,6 +3,7 @@
  * Mapea parcialmente a Prisma SatelliteIndex + ImagenSatelital (bandas/metadata JSON).
  */
 
+import type { WaterPixelSelectionRecord } from "../quality/water-pixel-selection";
 import type { Sentinel2BandCode, Sentinel2ReflectanceMap } from "../catalog/sentinel2-bands.catalog";
 import type { SpectralIndexCode } from "../catalog/spectral-indices.catalog";
 import type { EstimatedVariableCode } from "../catalog/estimated-variables.catalog";
@@ -57,6 +58,8 @@ export interface SatelliteObservation {
   pixelsUsed?: number;
   /** Suficiencia de píxeles acuáticos para emitir un valor. */
   waterSufficiency?: WaterSufficiency;
+  /** Selección del píxel de agua: coordenada original/ajustada, distancia y motivo. */
+  waterPixelSelection?: WaterPixelSelectionRecord;
   quality: SatelliteQualityMetadata;
   createdAt: string;
 }

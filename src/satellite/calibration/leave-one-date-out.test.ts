@@ -18,6 +18,7 @@ function pair(date: string, x: number, y: number, index: number): ScientificFiel
     satelliteObservationId: `obs-${date}`,
     satelliteSceneId: `scene-${date}`,
     satelliteProvider: "planetary",
+    pixelSelection: null,
     satelliteAcquisitionDate: date,
     spectralIndices: {
       ndvi: null,

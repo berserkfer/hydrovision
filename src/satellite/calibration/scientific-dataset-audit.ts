@@ -2,6 +2,7 @@
  * Auditoría del dataset científico — determinista, sin DB/GEE.
  */
 
+import { pixelExportColumns } from "../quality/water-pixel-selection";
 import { CANDIDATE_RELATIONSHIPS } from "../catalog/comparability.catalog";
 import type { SpectralIndexCode } from "../catalog/spectral-indices.catalog";
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
@@ -191,6 +192,7 @@ export function toCalibrationDatasetRow(
     field_date: pair.fieldDate,
     satellite_scene_id: pair.satelliteSceneId,
     satellite_provider: pair.satelliteProvider,
+    ...pixelExportColumns(pair.pixelSelection),
     satellite_acquisition_date: pair.satelliteAcquisitionDate,
     temporal_difference_days: pair.temporalDifferenceDays,
     distance_meters: pair.distanceMeters,

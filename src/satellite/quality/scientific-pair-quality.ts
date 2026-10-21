@@ -38,6 +38,8 @@ export interface QualityEvaluationInput {
   cloudPercentage: number | null;
   reflectanceSemanticStatus?: ReflectanceSemanticStatus | null;
   pixelQualityStatus?: PixelQualityStatus | null;
+  /** Selección del píxel de agua; si existe y no es utilizable, el par se rechaza. */
+  waterPixelSelection?: { usable: boolean; reason: string } | null;
 }
 
 export interface QualityEvaluationResult {
@@ -166,6 +168,14 @@ export function evaluateScientificPairQuality(
     return {
       qualityStatus: "insufficient_data",
       rejectionReason: `Reflectancia no válida (${input.reflectanceSemanticStatus}) — índices bloqueados`,
+      isSimulated: false,
+    };
+  }
+
+  if (input.waterPixelSelection && !input.waterPixelSelection.usable) {
+    return {
+      qualityStatus: "rejected",
+      rejectionReason: `Píxel de agua no utilizable — ${input.waterPixelSelection.reason}`,
       isSimulated: false,
     };
   }

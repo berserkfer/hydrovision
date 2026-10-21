@@ -138,6 +138,7 @@ function buildComparisons(
         tileId: obs?.quality.tileId ?? null,
         systemTimeStart: obs?.quality.systemTimeStart ?? null,
         provider: obs?.provider,
+        waterPixelSelection: obs?.waterPixelSelection,
         sourceType: "satellite",
         isSimulated: obs?.isSimulated ?? match.isSimulated,
       },

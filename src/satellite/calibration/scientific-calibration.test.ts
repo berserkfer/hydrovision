@@ -46,6 +46,7 @@ function makeRealPair(
     satelliteObservationId: `sat-${index}`,
     satelliteSceneId: `S2A_${index}`,
     satelliteProvider: "planetary",
+    pixelSelection: null,
     satelliteAcquisitionDate: `2025-${month}-${day}`,
     spectralIndices: {
       ndvi: 0.1,

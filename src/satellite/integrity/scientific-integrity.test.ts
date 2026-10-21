@@ -368,6 +368,7 @@ describe("Hallazgo 8 — leakage por observación satelital", () => {
       satelliteObservationId: obsId,
       satelliteSceneId: `S2A_${index}`,
       satelliteProvider: "planetary",
+      pixelSelection: null,
       satelliteAcquisitionDate: `2025-${month}-${day}`,
       spectralIndices: { ndti: 0.1, ndvi: null, ndci: null, ndwi: null, mndwi: null, ndmi: null },
       temporalDifferenceDays: 1,

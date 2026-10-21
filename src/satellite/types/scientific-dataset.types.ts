@@ -4,6 +4,7 @@
  */
 
 import type { SatelliteDataProvider } from "./data-origin.types";
+import type { WaterPixelSelectionRecord } from "../quality/water-pixel-selection";
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import type { ScientificDatasetQualityReport } from "../quality/dataset-quality-metrics";
 import type { GeeEmpiricalVerificationReport } from "./gee-verification.types";
@@ -47,6 +48,11 @@ export interface ScientificFieldSatellitePair {
   satelliteSceneId: string | null;
   /** Proveedor de la escena (trazabilidad): Planetary, Copernicus, GEE… o "unknown". */
   satelliteProvider: SatelliteDataProvider;
+  /**
+   * Píxel usado para el par: estado, coordenadas original/ajustada, distancia y motivo.
+   * null = el proveedor no hace selección de píxel (p. ej. Copernicus) o dato antiguo.
+   */
+  pixelSelection: PairPixelSelection | null;
   satelliteAcquisitionDate: string | null;
   spectralIndices: SpectralIndicesSnapshot;
   temporalDifferenceDays: number | null;
@@ -104,6 +110,11 @@ export interface ScientificDatasetExportRow {
   satellite_observation_id: string | null;
   satellite_scene_id: string | null;
   satellite_provider: SatelliteDataProvider;
+  pixel_status: string | null;
+  pixel_adjustment_m: number | null;
+  pixel_latitude: number | null;
+  pixel_longitude: number | null;
+  pixel_reason: string | null;
   satellite_acquisition_date: string | null;
   temporal_difference_days: number | null;
   distance_meters: number | null;
@@ -151,3 +162,16 @@ export interface ScientificDatasetResponse {
   parameterReadiness?: ParameterDatasetReadinessSummary[];
   geeVerification?: GeeEmpiricalVerificationReport;
 }
+
+/** Resumen del píxel usado en un par de calibración (ver water-pixel-selection.ts). */
+export type PairPixelSelection = Pick<
+  WaterPixelSelectionRecord,
+  | "status"
+  | "usable"
+  | "reason"
+  | "originalCoordinate"
+  | "adjustedCoordinate"
+  | "adjustmentDistanceM"
+  | "pixelOffset"
+  | "channelCheck"
+>;
