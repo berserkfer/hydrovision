@@ -11,6 +11,7 @@ import {
 } from "@/environmental-model/environmental-model.service";
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import type { EnvironmentalWaterMatrix } from "@/environmental-model/config/environmental-parameters.config";
+import { isApiError } from "@/server/api/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -62,7 +63,7 @@ export async function GET(request: Request) {
       return NextResponse.json(error.payload, { status: 422 });
     }
     const message = error instanceof Error ? error.message : "Error al evaluar el modelo ambiental";
-    const status = message.includes("Forbidden") ? 403 : message.includes("Unauthorized") ? 401 : 500;
+    const status = isApiError(error) ? error.status : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

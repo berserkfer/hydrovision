@@ -1,12 +1,10 @@
 /**
- * Contexto de usuario simulado para desarrollo — Sprint 3I
- * NO es autenticación real. Separado explícitamente para reemplazo futuro.
+ * Contexto de usuario de una petición — tipo común + usuario SIMULADO de desarrollo.
  *
- * En producción (NODE_ENV=production) la simulación queda bloqueada:
- * - el header `x-hydrovision-dev-user` y `DEV_SIMULATED_USER_ID` no tienen efecto;
- * - nunca se asigna ADMIN por defecto: se devuelve un visitante anónimo de solo
- *   lectura (rol VIEWER). Cualquier escritura responde 403 hasta que exista
- *   autenticación real.
+ * El usuario simulado (header `x-hydrovision-dev-user` o `DEV_SIMULATED_USER_ID`) NO es
+ * autenticación: solo funciona con NODE_ENV=development. En cualquier otro entorno
+ * (production, test…) queda bloqueado y la petición necesita una sesión real
+ * (ver request-user.ts y src/server/auth/).
  */
 
 import { getDataStore } from "@/data/store-access";
@@ -21,28 +19,19 @@ export interface AuthUserContext {
   email: string;
   role: AppRole;
   status: "active" | "inactive";
-  isSimulated: true;
-  /** dev-simulated: usuario elegido en desarrollo · production-anonymous: visitante sin autenticar. */
-  authMode: "dev-simulated" | "production-anonymous";
+  /** true solo para el usuario simulado de desarrollo. */
+  isSimulated: boolean;
+  /** session: inicio de sesión real · dev-simulated: usuario simulado de desarrollo. */
+  authMode: "session" | "dev-simulated";
 }
 
 const DEFAULT_DEV_USER_ID = "usr-admin";
 export const DEV_USER_HEADER = "x-hydrovision-dev-user";
 
-/** true cuando la simulación de usuario está bloqueada (producción). */
+/** El usuario simulado solo existe con NODE_ENV=development. */
 export function isSimulatedAuthBlocked(): boolean {
-  return process.env.NODE_ENV === "production";
+  return process.env.NODE_ENV !== "development";
 }
-
-export const ANONYMOUS_PRODUCTION_USER: AuthUserContext = Object.freeze({
-  id: "anonymous",
-  name: "Visitante sin autenticar",
-  email: "",
-  role: "VIEWER",
-  status: "active",
-  isSimulated: true,
-  authMode: "production-anonymous",
-});
 
 function mapStatus(activo: boolean, estado?: string): "active" | "inactive" {
   if (!activo) return "inactive";
@@ -82,7 +71,7 @@ async function fromDatabase(userId: string): Promise<AuthUserContext | null> {
   }
 }
 
-/** Id del usuario simulado en desarrollo; null en producción (simulación bloqueada). */
+/** Id del usuario simulado en desarrollo; null fuera de desarrollo (simulación bloqueada). */
 export function resolveDevUserId(request?: Request): string | null {
   if (isSimulatedAuthBlocked()) return null;
   const header = request?.headers.get(DEV_USER_HEADER);
@@ -90,9 +79,10 @@ export function resolveDevUserId(request?: Request): string | null {
   return process.env.DEV_SIMULATED_USER_ID?.trim() || DEFAULT_DEV_USER_ID;
 }
 
-export async function getSimulatedUserContext(request?: Request): Promise<AuthUserContext> {
+/** Usuario simulado de desarrollo; null fuera de desarrollo. */
+export async function getSimulatedUserContext(request?: Request): Promise<AuthUserContext | null> {
   const userId = resolveDevUserId(request);
-  if (userId === null) return { ...ANONYMOUS_PRODUCTION_USER };
+  if (userId === null) return null;
 
   const fromDb = isMonitoringDatabaseEnabled() ? await fromDatabase(userId) : null;
   const user = fromDb ?? fromMock(userId) ?? fromMock(DEFAULT_DEV_USER_ID);

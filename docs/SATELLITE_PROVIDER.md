@@ -16,8 +16,14 @@ Historia: en una primera versión de la rama `rediseno`, Copernicus fue el princ
 | `SATELLITE_PROVIDER_FALLBACK` | `true`, `false` | `true` | Si el principal no devuelve datos, se intenta el otro |
 | `COPERNICUS_CLIENT_ID` / `COPERNICUS_CLIENT_SECRET` | credenciales OAuth de CDSE | sin definir | Activan el respaldo de Copernicus; sin ellas se salta |
 | `PLANETARY_COMPUTER_ENABLED` | `true`, `false` | `true` | Desactiva Planetary Computer |
-| `PLANETARY_MAX_CONCURRENCY` | entero ≥ 1 | `4` | Peticiones simultáneas máximas a Planetary Computer |
-| `PLANETARY_MAX_RETRIES` | entero ≥ 0 | `3` | Reintentos ante 429 / 5xx / fallo de red (firma, STAC) |
+| `PLANETARY_MAX_CONCURRENCY` | 2–4 | `3` | Peticiones simultáneas máximas a Planetary Computer (fuera de rango se acota) |
+| `PLANETARY_MAX_RETRIES` | 0–6 | `3` | Reintentos ante 429 / 408 / 5xx / fallo de red (firma, STAC, lecturas) |
+| `PLANETARY_RETRY_BASE_DELAY_MS` | ms | `500` | Espera del primer reintento; se duplica en cada uno |
+| `PLANETARY_RETRY_MAX_DELAY_MS` | ms | `8000` | Tope de la espera entre reintentos |
+| `PLANETARY_STAC_CACHE_TTL_SECONDS` | s | `600` | Vida de la caché de búsquedas STAC (`0` la desactiva) |
+| `PLANETARY_STAC_CACHE_MAX_ENTRIES` | entero | `100` | Búsquedas STAC guardadas como máximo |
+
+Todos estos límites se leen en `getPlanetaryRequestConfig()` (`src/config/planetary-computer.config.ts`).
 
 Ejemplos:
 
@@ -66,11 +72,11 @@ Si una escena llega desde el **respaldo de Copernicus**, su `waterSufficiency` e
 
 Planetary Computer limita la frecuencia de peticiones, sobre todo la de firma SAS. Antes, una consulta de observaciones podía lanzar 3 escenas × 6 bandas en paralelo, con una firma por banda y 2 intentos a 150 ms. Ahora (`src/server/planetary/pc-request-pool.ts`):
 
-- **Cupo compartido:** como máximo `PLANETARY_MAX_CONCURRENCY` (4) peticiones simultáneas. La firma y la lectura del COG toman turnos separados, nunca anidados, para que el cupo no se bloquee.
+- **Cupo compartido:** como máximo `PLANETARY_MAX_CONCURRENCY` (3 por defecto, entre 2 y 4) peticiones simultáneas. La firma y la lectura del COG toman turnos separados, nunca anidados, para que el cupo no se bloquee.
 - **Reintentos con espera:** ante 429, 408, 5xx o fallo de red, espera exponencial con jitter (0,5 s, 1 s, 2 s… hasta 8 s), respetando `Retry-After`. Un 404 no se reintenta.
 - **Reutilización de resultados:**
   - firma SAS por asset, hasta 5 min antes de su `msft:expiry` (y peticiones simultáneas del mismo asset comparten una sola firma);
-  - búsqueda STAC: 10 min (ya existía);
+  - búsqueda STAC: 10 min por defecto (`PLANETARY_STAC_CACHE_TTL_SECONDS`), y las búsquedas idénticas simultáneas comparten una sola petición;
   - ítem STAC por id: 30 min;
   - reflectancia por escena y punto: 6 h (una escena publicada no cambia).
 - **Los fallos nunca se guardan en caché**, para que una consulta posterior pueda obtener el dato.
@@ -87,4 +93,5 @@ Las cachés son en memoria y por proceso: un reinicio del servidor las vacía.
 - `src/server/satellite/sentinel2-provider.test.ts`: orden por defecto y configurable, respaldo sin credenciales o con fallo de red, descarte de escenas simuladas, reflectancia del mismo proveedor.
 - `src/server/satellite/validation/scientific-dataset.builder.test.ts`: proveedor en el par (declarado, deducido o `unknown`) y en la exportación.
 - `src/server/planetary/pc-request-pool.test.ts`: cupo de concurrencia, reintentos con `Retry-After` y espera exponencial, sin reintento ante 404.
+- `src/server/planetary/pc-stac.client.test.ts`: búsqueda STAC con respuestas 429/503 simuladas (reintentos, `PLANETARY_MAX_RETRIES`, sin reintento ante 400), caché de búsquedas repetidas y simultáneas, fallos fuera de caché, cupo de concurrencia y acotado de la configuración.
 - `src/server/planetary/pc-sign.client.test.ts`: reutilización de la firma, firma compartida entre peticiones simultáneas, no reutilizar una firma a punto de caducar.

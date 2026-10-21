@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { getEarthEngineAuthService, getGeeProvider } from "@/services/google-earth-engine";
+import { guardPermission } from "@/server/authorization/guards";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(request: Request) {
+  const denied = await guardPermission(request, "MANAGE_USERS");
+  if (denied) return denied;
+
   try {
     const authService = getEarthEngineAuthService();
     const result = await authService.testConnection();

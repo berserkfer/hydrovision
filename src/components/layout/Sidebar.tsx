@@ -32,6 +32,7 @@ import { PLATFORM_NAVIGATION } from "@/platform/modules";
 import type { PlatformNavItem } from "@/platform/modules";
 import { InkFlow } from "@/components/ui/InkFlow";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { SidebarUser } from "@/components/auth/SidebarUser";
 
 const icons = {
   dashboard: LayoutDashboard,
@@ -199,10 +200,7 @@ export function Sidebar() {
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate text-[12px] font-medium text-[var(--hv-foreground)]">Fernando Chumpen</p>
-            <p className="text-[10px] text-[var(--hv-sidebar-text-muted)]">Tesis · Ing. Ambiental</p>
-          </div>
+          <SidebarUser />
           <ThemeToggle compact />
         </div>
       </div>

@@ -4,11 +4,15 @@ import {
   DEFAULT_HORIZON_DAYS,
   getCampaignOpportunities,
 } from "@/server/satellite/opportunities/opportunity.service";
+import { guardPermission } from "@/server/authorization/guards";
 
 const MIN_HORIZON = 3;
 const MAX_HORIZON = 16;
 
 export async function GET(request: Request) {
+  const denied = await guardPermission(request, "STATIONS_VIEW");
+  if (denied) return denied;
+
   const rate = satelliteRateLimiter.check(clientKeyFromRequest(request));
   if (!rate.allowed) {
     return NextResponse.json(

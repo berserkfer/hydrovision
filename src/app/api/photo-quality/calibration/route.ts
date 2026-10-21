@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { requirePermission } from "@/server/authorization/guards";
 import { evaluatePhotoCalibration } from "@/photo-quality/photo-calibration.service";
 import type { PhotoCalibrationParameterCode } from "@/photo-quality/photo-calibration.store";
+import { isApiError } from "@/server/api/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
     return NextResponse.json(status);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error al evaluar la calibración";
-    const status = message.includes("Forbidden") ? 403 : message.includes("Unauthorized") ? 401 : 500;
+    const status = isApiError(error) ? error.status : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

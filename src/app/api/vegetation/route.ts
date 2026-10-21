@@ -11,6 +11,7 @@ import { evaluateLagoonVegetationAlert } from "@/vegetation/lagoon-alert.service
 import { interpretNdviVigor } from "@/vegetation/ndvi-interpretation";
 import { DEFAULT_LAGOON_ALERT_THRESHOLD } from "@/vegetation/config/vegetation-alert.config";
 import { isVegetationZoneId } from "@/vegetation/config/vegetation-zones.config";
+import { isApiError } from "@/server/api/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ...result, interpretation });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error al calcular el índice de vegetación";
-    const status = message.includes("Forbidden") ? 403 : message.includes("Unauthorized") ? 401 : 500;
+    const status = isApiError(error) ? error.status : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

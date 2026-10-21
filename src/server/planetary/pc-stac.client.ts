@@ -3,12 +3,35 @@
  * Sin autenticación. Ver planetary-computer.config.ts.
  */
 
-import { PLANETARY_COMPUTER_COLLECTION, PLANETARY_COMPUTER_STAC_URL } from "@/config/planetary-computer.config";
+import {
+  PLANETARY_COMPUTER_COLLECTION,
+  PLANETARY_COMPUTER_STAC_URL,
+  getPlanetaryRequestConfig,
+} from "@/config/planetary-computer.config";
 import { TtlCache } from "@/server/cache/ttl-cache";
 import { PlanetaryHttpError, planetaryFetch } from "./pc-request-pool";
 
-/** Las búsquedas STAC idénticas se reutilizan durante 10 minutos. */
-const stacSearchCache = new TtlCache<StacItem[]>(10 * 60_000, 100);
+/**
+ * Las búsquedas STAC idénticas se reutilizan (PLANETARY_STAC_CACHE_TTL_SECONDS, por defecto
+ * 10 min) y las idénticas simultáneas comparten una sola petición. Solo se guardan respuestas
+ * correctas: un fallo nunca queda en caché.
+ */
+let stacSearchCache: TtlCache<StacItem[]> | null = null;
+const stacSearchInFlight = new Map<string, Promise<StacItem[]>>();
+
+function getStacSearchCache(): TtlCache<StacItem[]> {
+  if (!stacSearchCache) {
+    const { stacCacheTtlMs, stacCacheMaxEntries } = getPlanetaryRequestConfig();
+    stacSearchCache = new TtlCache<StacItem[]>(stacCacheTtlMs, stacCacheMaxEntries);
+  }
+  return stacSearchCache;
+}
+
+/** Solo para pruebas: vacía la caché y vuelve a leer su configuración. */
+export function resetStacSearchCacheForTests(): void {
+  stacSearchCache = null;
+  stacSearchInFlight.clear();
+}
 
 export interface StacSearchParams {
   latitude: number;
@@ -52,12 +75,30 @@ interface StacSearchResponse {
 
 export async function searchSentinel2Items(params: StacSearchParams): Promise<StacItem[]> {
   const cacheKey = JSON.stringify(params);
-  const cached = stacSearchCache.get(cacheKey);
+  const cache = getStacSearchCache();
+  const cached = cache.get(cacheKey);
   if (cached) return cached;
 
+  const pending = stacSearchInFlight.get(cacheKey);
+  if (pending) return pending;
+
+  const request = fetchStacSearch(params).then((items) => {
+    cache.set(cacheKey, items);
+    return items;
+  });
+  stacSearchInFlight.set(cacheKey, request);
+  try {
+    return await request;
+  } finally {
+    stacSearchInFlight.delete(cacheKey);
+  }
+}
+
+async function fetchStacSearch(params: StacSearchParams): Promise<StacItem[]> {
   const cloudMax = params.cloudCoverMax ?? 30;
   const limit = params.limit ?? 10;
 
+  // planetaryFetch: cupo de concurrencia compartido + reintentos ante 429 / 5xx.
   const response = await planetaryFetch(PLANETARY_COMPUTER_STAC_URL, {
     method: "POST",
     cache: "no-store",
@@ -73,9 +114,7 @@ export async function searchSentinel2Items(params: StacSearchParams): Promise<St
   });
 
   const data = (await response.json()) as StacSearchResponse;
-  const items = data.features ?? [];
-  stacSearchCache.set(cacheKey, items);
-  return items;
+  return data.features ?? [];
 }
 
 /** Un ítem STAC publicado no cambia: se reutiliza 30 min. */

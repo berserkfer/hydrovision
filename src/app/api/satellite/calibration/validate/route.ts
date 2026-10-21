@@ -6,6 +6,7 @@ import {
 } from "@/server/satellite/calibration/scientific-calibration.service";
 import type { ParametroCodigoDb } from "@/database/constants/parametros-catalog";
 import type { SpectralIndexCode } from "@/satellite/catalog/spectral-indices.catalog";
+import { isApiError } from "@/server/api/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +81,7 @@ export async function GET(request: Request) {
     }
 
     const message = error instanceof Error ? error.message : "Error en validación de calibración";
-    const status = message.includes("Forbidden") ? 403 : message.includes("Unauthorized") ? 401 : 500;
+    const status = isApiError(error) ? error.status : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

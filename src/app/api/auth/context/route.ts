@@ -1,14 +1,11 @@
 /**
- * GET /api/auth/context — usuario simulado de desarrollo
- * GET /api/auth/roles — roles y matriz de permisos
+ * GET /api/auth/context — usuario de la sesión (o simulado en desarrollo); 401 sin sesión.
+ * GET /api/auth/context?mode=roles — roles y matriz de permisos (requiere sesión).
  */
 
 import { runRouteHandler } from "@/server/api/handler";
 import { jsonSuccess } from "@/server/api/response";
-import {
-  getSimulatedUserContext,
-  isSimulatedAuthBlocked,
-} from "@/server/authorization/dev-user-context";
+import { isSimulatedAuthBlocked } from "@/server/authorization/dev-user-context";
 import { permissionService } from "@/server/authorization/permission.service";
 import { roleService } from "@/server/authorization/role.service";
 import { authorizationService } from "@/server/authorization/authorization.service";
@@ -17,10 +14,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   return runRouteHandler(async () => {
+    const user = await authorizationService.authenticate(request);
     const { searchParams } = new URL(request.url);
-    const mode = searchParams.get("mode");
 
-    if (mode === "roles") {
+    if (searchParams.get("mode") === "roles") {
       return jsonSuccess(
         {
           roles: roleService.listRoles(),
@@ -30,19 +27,17 @@ export async function GET(request: Request) {
       );
     }
 
-    const user = await getSimulatedUserContext(request);
-    const permissions = roleService.permissionsFor(user.role);
-    const blocked = isSimulatedAuthBlocked();
-
+    const devMode = !isSimulatedAuthBlocked();
     return jsonSuccess(
       {
         user,
-        permissions,
+        permissions: roleService.permissionsFor(user.role),
         canManageUsers: authorizationService.can(user, "MANAGE_USERS"),
-        devMode: !blocked,
-        hint: blocked
-          ? "Producción: usuario simulado deshabilitado; acceso anónimo de solo lectura hasta configurar autenticación real."
-          : "Use header X-HydroVision-Dev-User o DEV_SIMULATED_USER_ID para simular otro usuario",
+        devMode,
+        hint:
+          user.authMode === "dev-simulated"
+            ? "Desarrollo: usuario simulado (header X-HydroVision-Dev-User o DEV_SIMULATED_USER_ID). No funciona fuera de NODE_ENV=development."
+            : "Sesión iniciada con correo y contraseña.",
       },
       "mock"
     );

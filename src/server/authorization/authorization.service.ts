@@ -5,7 +5,8 @@
 import { ApiError } from "@/server/api/errors";
 import { ROLE_PERMISSION_MATRIX, type PermissionCode } from "./permissions";
 import { type AppRole } from "./roles";
-import { getSimulatedUserContext, type AuthUserContext } from "./dev-user-context";
+import type { AuthUserContext } from "./dev-user-context";
+import { resolveRequestUser, type RequestUserDeps } from "./request-user";
 
 export class AuthorizationService {
   hasRole(user: AuthUserContext, role: AppRole): boolean {
@@ -35,9 +36,23 @@ export class AuthorizationService {
     }
   }
 
-  async authorize(request: Request, permission: PermissionCode): Promise<AuthUserContext> {
-    const user = await getSimulatedUserContext(request);
+  /** Sin usuario → 401; usuario sin el permiso (o inactivo) → 403. */
+  async authorize(
+    request: Request,
+    permission: PermissionCode,
+    deps?: RequestUserDeps
+  ): Promise<AuthUserContext> {
+    const user = await resolveRequestUser(request, deps);
+    if (!user) throw ApiError.unauthorized();
     this.assertPermission(user, permission);
+    return user;
+  }
+
+  /** Exige solo una sesión (o usuario simulado en desarrollo), sin permiso concreto. */
+  async authenticate(request: Request, deps?: RequestUserDeps): Promise<AuthUserContext> {
+    const user = await resolveRequestUser(request, deps);
+    if (!user) throw ApiError.unauthorized();
+    this.assertActive(user);
     return user;
   }
 }

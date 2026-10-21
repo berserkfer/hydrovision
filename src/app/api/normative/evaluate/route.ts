@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { evaluateNormativeRequest } from "@/server/normative/evaluate-normative.service";
+import { guardPermission } from "@/server/authorization/guards";
 
 export async function POST(request: Request) {
+  const denied = await guardPermission(request, "STATIONS_VIEW");
+  if (denied) return denied;
+
   let body: unknown;
   try {
     body = await request.json();

@@ -8,6 +8,7 @@ import { requirePermission } from "@/server/authorization/guards";
 import { savePhotoObservation } from "@/photo-quality/photo-observation.store";
 import type { PhotoObservationInput } from "@/photo-quality/photo-observation.types";
 import { listPhotoObservations } from "@/photo-quality/photo-observation.store";
+import { isApiError } from "@/server/api/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error al guardar la observación";
-    const status = message.includes("Forbidden") ? 403 : message.includes("Unauthorized") ? 401 : 500;
+    const status = isApiError(error) ? error.status : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -55,7 +56,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ observations: listPhotoObservations() });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Error al listar observaciones";
-    const status = message.includes("Forbidden") ? 403 : message.includes("Unauthorized") ? 401 : 500;
+    const status = isApiError(error) ? error.status : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

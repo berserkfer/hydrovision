@@ -865,6 +865,8 @@ model Usuario {
   id            String         @id
   nombre        String         @db.VarChar(150)
   email         String         @unique @db.VarChar(255)
+  /// Hash bcrypt de la contraseña. null = el usuario no puede iniciar sesión.
+  passwordHash  String?        @map("password_hash") @db.VarChar(100)
   rol           RolUsuario     @default(viewer)
   institucion   String         @db.VarChar(200)
   activo        Boolean        @default(true)

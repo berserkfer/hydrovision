@@ -6,6 +6,7 @@ export type ApiErrorCode =
   | "VALIDATION_ERROR"
   | "NOT_FOUND"
   | "DUPLICATE_ERROR"
+  | "UNAUTHORIZED"
   | "FORBIDDEN"
   | "DATABASE_ERROR"
   | "INTERNAL_ERROR";
@@ -43,6 +44,10 @@ export class ApiError extends Error {
 
   static duplicate(message: string, details?: unknown): ApiError {
     return new ApiError("DUPLICATE_ERROR", message, 409, details);
+  }
+
+  static unauthorized(message = "Inicie sesión para continuar"): ApiError {
+    return new ApiError("UNAUTHORIZED", message, 401);
   }
 
   static forbidden(message = "No tiene permiso para realizar esta acción", details?: unknown): ApiError {

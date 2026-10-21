@@ -3,23 +3,17 @@
  *
  * Planetary Computer limita la frecuencia de peticiones (sobre todo la firma SAS). Una sola
  * consulta de observaciones puede disparar 3 escenas × 6 bandas en paralelo, así que aquí se:
- *  - limita la concurrencia (PLANETARY_MAX_CONCURRENCY, por defecto 4);
- *  - reintenta ante 429 / 5xx / fallo de red con espera exponencial + jitter, respetando
- *    Retry-After (PLANETARY_MAX_RETRIES, por defecto 3 reintentos).
+ *  - limita la concurrencia (2–4 solicitudes simultáneas);
+ *  - reintenta ante 429 / 408 / 5xx / fallo de red con espera exponencial + jitter,
+ *    respetando Retry-After.
+ * Los valores vienen de getPlanetaryRequestConfig() (src/config/planetary-computer.config.ts),
+ * configurables por variables de entorno.
  *
  * Nunca se fabrica una respuesta: si se agotan los intentos, el error sube al llamador, que
  * ya trata el fallo como "sin datos".
  */
 
-export const DEFAULT_PLANETARY_MAX_CONCURRENCY = 4;
-export const DEFAULT_PLANETARY_MAX_RETRIES = 3;
-const BASE_DELAY_MS = 500;
-const MAX_DELAY_MS = 8_000;
-
-function envInt(key: string, fallback: number, min: number): number {
-  const parsed = Number.parseInt(process.env[key] ?? "", 10);
-  return Number.isFinite(parsed) && parsed >= min ? parsed : fallback;
-}
+import { getPlanetaryRequestConfig } from "@/config/planetary-computer.config";
 
 export class PlanetaryHttpError extends Error {
   constructor(
@@ -36,19 +30,28 @@ export function isRetryableStatus(status: number): boolean {
   return status === 429 || status === 408 || status >= 500;
 }
 
-/** Retry-After en segundos o como fecha HTTP → milisegundos (acotado). */
-export function parseRetryAfter(value: string | null, now = Date.now()): number | null {
+/** Retry-After en segundos o como fecha HTTP → milisegundos (acotado a 4× la espera máxima). */
+export function parseRetryAfter(
+  value: string | null,
+  now = Date.now(),
+  maxDelayMs = getPlanetaryRequestConfig().retryMaxDelayMs
+): number | null {
   if (!value) return null;
+  const cap = maxDelayMs * 4;
   const seconds = Number(value);
-  if (Number.isFinite(seconds)) return Math.min(Math.max(0, seconds * 1000), MAX_DELAY_MS * 4);
+  if (Number.isFinite(seconds)) return Math.min(Math.max(0, seconds * 1000), cap);
   const date = Date.parse(value);
-  if (Number.isFinite(date)) return Math.min(Math.max(0, date - now), MAX_DELAY_MS * 4);
+  if (Number.isFinite(date)) return Math.min(Math.max(0, date - now), cap);
   return null;
 }
 
-/** Espera exponencial con jitter "full" para el intento n (1 = primer reintento). */
-export function backoffDelayMs(attempt: number, random = Math.random): number {
-  const ceiling = Math.min(MAX_DELAY_MS, BASE_DELAY_MS * 2 ** (attempt - 1));
+/** Espera exponencial con jitter para el intento n (1 = primer reintento): [techo/2, techo]. */
+export function backoffDelayMs(
+  attempt: number,
+  random: () => number = Math.random,
+  config: { retryBaseDelayMs: number; retryMaxDelayMs: number } = getPlanetaryRequestConfig()
+): number {
+  const ceiling = Math.min(config.retryMaxDelayMs, config.retryBaseDelayMs * 2 ** (attempt - 1));
   return Math.round(ceiling / 2 + random() * (ceiling / 2));
 }
 
@@ -64,6 +67,7 @@ export function createLimiter(max: number) {
   };
 
   return {
+    max,
     async run<T>(task: () => Promise<T>): Promise<T> {
       if (active >= max) {
         await new Promise<void>((resolve) => queue.push(resolve));
@@ -98,7 +102,8 @@ const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(r
  * reintentable (p. ej. 404) se propaga de inmediato.
  */
 export async function withRetry<T>(task: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
-  const maxRetries = options.maxRetries ?? envInt("PLANETARY_MAX_RETRIES", DEFAULT_PLANETARY_MAX_RETRIES, 0);
+  const config = getPlanetaryRequestConfig();
+  const maxRetries = options.maxRetries ?? config.maxRetries;
   const sleep = options.sleep ?? defaultSleep;
 
   for (let attempt = 0; ; attempt += 1) {
@@ -109,23 +114,32 @@ export async function withRetry<T>(task: () => Promise<T>, options: RetryOptions
         error instanceof PlanetaryHttpError ? isRetryableStatus(error.status) : true;
       if (!retryable || attempt >= maxRetries) throw error;
       const hinted = error instanceof PlanetaryHttpError ? error.retryAfterMs : null;
-      await sleep(hinted ?? backoffDelayMs(attempt + 1, options.random));
+      await sleep(hinted ?? backoffDelayMs(attempt + 1, options.random, config));
     }
   }
 }
 
-const sharedLimiter = createLimiter(
-  envInt("PLANETARY_MAX_CONCURRENCY", DEFAULT_PLANETARY_MAX_CONCURRENCY, 1)
-);
+let sharedLimiter: ReturnType<typeof createLimiter> | null = null;
+
+/** Cupo compartido, creado con la configuración vigente la primera vez que se usa. */
+export function getPlanetaryLimiter(): ReturnType<typeof createLimiter> {
+  sharedLimiter ??= createLimiter(getPlanetaryRequestConfig().maxConcurrency);
+  return sharedLimiter;
+}
+
+/** Solo para pruebas: vuelve a leer la configuración en el próximo uso. */
+export function resetPlanetaryLimiterForTests(): void {
+  sharedLimiter = null;
+}
 
 /** Reserva un turno del cupo compartido de Planetary Computer para `task`. */
 export function withPlanetarySlot<T>(task: () => Promise<T>): Promise<T> {
-  return sharedLimiter.run(task);
+  return getPlanetaryLimiter().run(task);
 }
 
 /**
  * fetch hacia Planetary Computer con cupo compartido y reintentos. Devuelve la respuesta
- * correcta (2xx); un estado de error no reintentable se lanza como PlanetaryHttpError.
+ * correcta (2xx); un estado de error se lanza como PlanetaryHttpError.
  */
 export async function planetaryFetch(url: string, init?: RequestInit): Promise<Response> {
   return withRetry(() =>
