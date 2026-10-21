@@ -39,6 +39,7 @@ describe("buildPixelReview", () => {
   it("lista ajustados, bloqueados y puntos sin escenas", async () => {
     const report = await buildPixelReview({}, {
       now: () => new Date("2026-10-21T12:00:00Z"),
+      channelName: async () => null,
       listObservations: async ({ stationId = "" }) => {
         if (stationId.endsWith("p1")) {
           return [
@@ -69,6 +70,7 @@ describe("buildPixelReview", () => {
   it("no inventa filas si el proveedor falla", async () => {
     const report = await buildPixelReview({}, {
       now: () => new Date("2026-10-21T12:00:00Z"),
+      channelName: async () => null,
       listObservations: async () => {
         throw new Error("timeout");
       },

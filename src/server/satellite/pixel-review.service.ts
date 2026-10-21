@@ -13,6 +13,7 @@ import {
 } from "@/satellite/quality/water-pixel-selection";
 import type { SatelliteObservation } from "@/satellite/types/satellite-observation.types";
 import { satelliteService } from "./satellite.service";
+import { getChannelPolygon } from "./channel/channel-polygon.store";
 import type { SatelliteQueryFilters } from "./satellite.types";
 
 export type PixelReviewStatus = WaterPixelSelectionStatus | "not_evaluated";
@@ -55,17 +56,21 @@ export interface PixelReviewReport {
   /** Puntos sin ninguna escena para revisar. */
   stationsWithoutScenes: PixelReviewStationGap[];
   summary: Record<PixelReviewStatus, number>;
+  /** Criterio "dentro del cauce" vigente al calcular. */
+  channel: { source: "channel_polygon" | "connected_water_body"; name: string | null };
   note: string;
 }
 
 export interface PixelReviewDeps {
   listObservations: (filters: SatelliteQueryFilters) => Promise<SatelliteObservation[]>;
   now: () => Date;
+  channelName: () => Promise<string | null>;
 }
 
 const defaultDeps: PixelReviewDeps = {
   listObservations: async (filters) => (await satelliteService.listObservations(filters)).observations,
   now: () => new Date(),
+  channelName: async () => (await getChannelPolygon())?.name ?? null,
 };
 
 export const PIXEL_REVIEW_STATUSES: PixelReviewStatus[] = [
@@ -175,6 +180,10 @@ export async function buildPixelReview(
     rows,
     stationsWithoutScenes,
     summary,
+    channel: await (async () => {
+      const name = await deps.channelName();
+      return { source: name ? ("channel_polygon" as const) : ("connected_water_body" as const), name };
+    })(),
     note:
       "Revise los puntos ajustados y bloqueados antes de calibrar. Un ajuste mueve el muestreo al píxel de agua más cercano dentro del cauce (cuerpo de agua conexo, mientras no haya polígono del cauce); un bloqueo o descarte excluye la escena del punto.",
   };

@@ -13,6 +13,12 @@ import {
   tramoCandidatesToCsv,
   type TramoFinderDeps,
 } from "./tramo-finder.service";
+import {
+  getChannelPolygon,
+  resetChannelPolygonCacheForTests,
+  saveChannelPolygon,
+} from "../channel/channel-polygon.store";
+import * as reflectanceCache from "@/server/planetary/pc-reflectance-cache";
 
 const P3 = { latitude: -6.8739979666, longitude: -79.9257441957 };
 const P4 = { latitude: -6.8759197636, longitude: -79.92769465 };
@@ -78,9 +84,12 @@ let dir: string;
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), "hv-tramos-"));
   vi.stubEnv("HV_DATA_DIR", dir);
+  resetChannelPolygonCacheForTests();
 });
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.restoreAllMocks();
+  resetChannelPolygonCacheForTests();
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -151,5 +160,28 @@ describe("buscador de tramos aptos", () => {
     await expect(
       runTramoFinder({}, { ...deps, readSceneGrid: async () => null })
     ).rejects.toThrow(/Ninguna escena/);
+  });
+
+  it("con polígono del cauce, el agua fuera del polígono no hace apto al tramo (Fase 3)", async () => {
+    // Polígono de 40 m de ancho centrado en la traza, desplazado 200 m al oeste del parche de agua.
+    const corner = (de: number, dn: number) => {
+      const p = fromUtm({ easting: WATER_CENTER.easting + de, northing: WATER_CENTER.northing + dn });
+      return [p.longitude, p.latitude];
+    };
+    const clear = vi.spyOn(reflectanceCache, "clearPlanetaryReflectanceCache");
+    await saveChannelPolygon(
+      JSON.stringify({
+        type: "Polygon",
+        coordinates: [[corner(-260, -40), corner(-220, -40), corner(-220, 40), corner(-260, 40), corner(-260, -40)]],
+      }),
+      "cauce-prueba.geojson",
+      "admin@hydrovision.test"
+    );
+    expect(clear).toHaveBeenCalled();
+    expect((await getChannelPolygon())?.name).toBe("cauce-prueba.geojson");
+
+    const result = await runTramoFinder({}, deps);
+    expect(result.candidates.every((c) => c.scenesApt === 0)).toBe(true);
+    expect(result.notes.some((n) => n.includes("cauce-prueba.geojson"))).toBe(true);
   });
 });

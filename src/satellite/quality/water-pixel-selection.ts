@@ -266,8 +266,10 @@ export function selectWaterPixel(grid: PixelGrid, options: SelectionOptions = {}
   let targetRow = half;
   let targetCol = half;
   let status: WaterPixelSelectionStatus = "center_water";
+  // Con polígono del cauce, el píxel central solo vale si además queda dentro del polígono.
+  const centerOutsideChannel = center.isWater && options.isInChannel ? !options.isInChannel(0, 0) : false;
 
-  if (!center.isWater) {
+  if (!center.isWater || centerOutsideChannel) {
     const radiusPx = searchRadiusM / grid.pixelSizeM;
     const candidates: Array<{ p: EvaluatedPixel; dist: number }> = [];
     for (const row of evaluated) {
@@ -285,8 +287,9 @@ export function selectWaterPixel(grid: PixelGrid, options: SelectionOptions = {}
     }
 
     if (candidates.length === 0) {
-      const why =
-        center.mask === "water"
+      const why = centerOutsideChannel
+        ? "el píxel del punto es agua pero queda fuera del polígono del cauce"
+        : center.mask === "water"
           ? `el píxel del punto es agua según SCL pero NDWI ≤ 0`
           : `el píxel del punto no es agua (SCL ${grid.pixels[half][half].scl ?? "?"})`;
       return finish(

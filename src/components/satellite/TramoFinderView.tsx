@@ -7,6 +7,7 @@ import { MonitoringHeader } from "@/components/layout/MonitoringHeader";
 import { PageContent } from "@/components/layout/PageContent";
 import { DataTag } from "@/components/ui/DataTag";
 import { JobStatusBar } from "@/components/ui/JobStatusBar";
+import { ChannelPolygonCard } from "@/components/satellite/ChannelPolygonCard";
 import { cn, formatDate } from "@/lib/utils";
 import type { JobState, StoredResult } from "@/server/jobs/background-jobs";
 import type {
@@ -196,6 +197,8 @@ export function TramoFinderView() {
           {error && (
             <p role="alert" className="rounded-[3px] border border-red-500/35 bg-red-500/10 px-3 py-2 text-sm text-red-700">{error}</p>
           )}
+
+          <ChannelPolygonCard />
 
           <section className="grid gap-4 rounded-[5px] border border-[var(--hv-border)] bg-[var(--hv-surface)] p-4 lg:grid-cols-[1fr_auto]">
             <div className="text-sm">

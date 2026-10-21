@@ -11,6 +11,7 @@
  */
 
 import { createHash } from "node:crypto";
+import { getChannelPolygon } from "@/server/satellite/channel/channel-polygon.store";
 import { readJson, writeJson, removeData } from "@/server/storage/file-store";
 import { searchSentinel2Items, getSentinel2ItemById } from "@/server/planetary/pc-stac.client";
 import { readBandAtCrsPoints, readBandBboxGrid } from "@/server/planetary/pc-band-reader";
@@ -231,6 +232,7 @@ export async function runTramoFinder(
 
   const searchRadiusM = getWaterSearchRadiusM();
   const cloudMode = getCloudMode();
+  const channel = await getChannelPolygon();
   const allPoints = [...samples, ...references].map((s) => s.coordinate);
   // Margen: radio de búsqueda + ventana 3×3 + un píxel de holgura.
   const { min, max } = boundingBox(allPoints, searchRadiusM + 30);
@@ -256,7 +258,11 @@ export async function runTramoFinder(
     });
     if (!grid) continue;
     for (const sample of [...samples, ...references]) {
-      const result = evaluateSampleInScene(grid, sample.coordinate, { searchRadiusM, cloudMode });
+      const result = evaluateSampleInScene(grid, sample.coordinate, {
+        searchRadiusM,
+        cloudMode,
+        channelPolygons: channel?.polygons ?? null,
+      });
       perSample.set(sample.id, [...(perSample.get(sample.id) ?? []), result]);
     }
   }
@@ -277,6 +283,9 @@ export async function runTramoFinder(
     `Criterio de aptitud por escena: SCL = 6 y NDWI > 0, ventana 3×3, ≥ 3 píxeles de agua conectados y f_agua ≥ 0,5, con ajuste ≤ ${searchRadiusM} m dentro del cauce.`,
     "Frecuencia de aptitud = escenas aptas / escenas con datos en el tramo (las descartadas por nubes cuentan como no aptas).",
     `Regla de nubes: ${CLOUD_MODE_LABELS[cloudMode]} (WATER_PIXEL_CLOUD_MODE).`,
+    channel
+      ? `"Dentro del cauce" = dentro del polígono subido (${channel.name}).`
+      : "\"Dentro del cauce\" = cuerpo de agua conexo de ≥ 3 píxeles (no hay polígono del cauce subido).",
     "Un tramo a ≤ 25 m de un punto de Nizama y Cabrera (2014) se marca como histórico; el resto, como nuevo.",
   ];
   if (trace.source === "default_points") {

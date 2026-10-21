@@ -64,7 +64,10 @@ export function PixelReviewView() {
           <>
             <DataTag tone="real">Escenas Sentinel-2 reales · últimos 90 días</DataTag>
             <DataTag tone="neutral">
-              Radio de ajuste {report?.searchRadiusM ?? 30} m · cauce = cuerpo de agua conexo
+              Radio de ajuste {report?.searchRadiusM ?? 30} m · cauce ={" "}
+              {report?.channel?.source === "channel_polygon"
+                ? `polígono subido (${report.channel.name})`
+                : "cuerpo de agua conexo"}
             </DataTag>
           </>
         }

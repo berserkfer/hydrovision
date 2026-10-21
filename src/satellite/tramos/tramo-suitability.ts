@@ -17,6 +17,8 @@ import {
 } from "../quality/water-pixel-selection";
 import { UTM_17S_EPSG, distanceMeters, fromUtm, toUtm, type LatLon } from "../geo/projection";
 import type { HistoricalPoint, TraceSample } from "../geo/trace";
+import type { GeoRing } from "../geo/geojson";
+import { isInsideChannel } from "../geo/channel-polygon";
 
 /** Un tramo a ≤ este radio de un punto histórico se considera ese punto histórico. */
 export const HISTORICAL_MATCH_RADIUS_M = 25;
@@ -91,11 +93,15 @@ export function subGridAt(grid: SceneGrid, point: LatLon, half: number): { pixel
 export function evaluateSampleInScene(
   grid: SceneGrid,
   point: LatLon,
-  options: SelectionOptions & { searchRadiusM: number }
+  options: SelectionOptions & { searchRadiusM: number; channelPolygons?: GeoRing[][] | null }
 ): SampleSceneResult {
   const half = requiredGridHalfSize(options.searchRadiusM, grid.pixelSizeM);
   const { pixelGrid, centerRow, centerCol } = subGridAt(grid, point, half);
-  const selection = selectWaterPixel(pixelGrid, options);
+  const { channelPolygons, ...selectionOptions } = options;
+  const isInChannel = channelPolygons
+    ? (dRow: number, dCol: number) => isInsideChannel(cellCenter(grid, centerRow + dRow, centerCol + dCol), channelPolygons)
+    : selectionOptions.isInChannel;
+  const selection = selectWaterPixel(pixelGrid, { ...selectionOptions, isInChannel });
   const offset = selection.pixelOffset;
   return {
     sceneId: grid.sceneId,

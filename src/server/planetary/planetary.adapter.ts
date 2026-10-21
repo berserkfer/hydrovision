@@ -7,7 +7,9 @@
 
 import { interpretSclPixelQuality } from "@/satellite/quality/pixel-quality";
 import { isPlanetaryComputerEnabled } from "@/config/planetary-computer.config";
-import { TtlCache } from "@/server/cache/ttl-cache";
+import { reflectanceCache, reflectanceCacheKey } from "./pc-reflectance-cache";
+import { getChannelPolygon } from "@/server/satellite/channel/channel-polygon.store";
+import { isInsideChannel } from "@/satellite/geo/channel-polygon";
 import { getSentinel2ItemById, searchSentinel2Items, type StacItem } from "./pc-stac.client";
 import {
   crsToWgs84,
@@ -78,21 +80,8 @@ function sceneRecordFromStacItem(item: StacItem): PlanetarySceneRecord {
   };
 }
 
-/**
- * Una escena Sentinel-2 publicada no cambia: la reflectancia leída en un punto se reutiliza
- * 6 h para no repetir 6 lecturas de COG por cada consulta. Solo se guardan lecturas
- * obtenidas (nunca un fallo), y solo cuando se pidió una escena concreta.
- */
-const reflectanceCache = new TtlCache<PlanetaryReflectanceRecord>(6 * 60 * 60_000, 300);
-
-function reflectanceCacheKey(request: PlanetaryReflectanceRequest): string | null {
-  if (!request.sceneId) return null;
-  return `${request.sceneId}|${request.latitude.toFixed(6)}|${request.longitude.toFixed(6)}`;
-}
-
-export function clearPlanetaryReflectanceCache(): void {
-  reflectanceCache.clear();
-}
+// Caché de reflectancias: ver pc-reflectance-cache.ts (se reexporta para compatibilidad).
+export { clearPlanetaryReflectanceCache } from "./pc-reflectance-cache";
 
 export class PlanetaryAdapter {
   getStatus(): PlanetaryAdapterStatus {
@@ -288,7 +277,16 @@ export class PlanetaryAdapter {
       ),
     };
 
-    const selection = selectWaterPixel(grid, { searchRadiusM, cloudMode });
+    // Con polígono del cauce subido, el píxel de agua debe quedar dentro de él (prioridad sobre
+    // la regla de cuerpo de agua conexo).
+    const channel = await getChannelPolygon();
+    const isInChannel = channel
+      ? (dRow: number, dCol: number) => {
+          const cell = greenGrid.cellCenters[half + dRow]?.[half + dCol];
+          return cell ? isInsideChannel(crsToWgs84(greenGrid.epsg, cell), channel.polygons) : false;
+        }
+      : undefined;
+    const selection = selectWaterPixel(grid, { searchRadiusM, cloudMode, isInChannel });
     const offset = selection.pixelOffset;
     const sampleCell = offset ? { row: half + offset.dRow, col: half + offset.dCol } : { row: half, col: half };
     const adjustedCoordinate = offset

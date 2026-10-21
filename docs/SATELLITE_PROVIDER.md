@@ -137,3 +137,18 @@ Los puntos históricos dentro del dren (P1–P5) no tienen agua visible en el p�
 - **En las exportaciones:** columna `pixel_cloud_mode` del dataset y `regla_nubes` de la revisión de píxeles.
 - **En el buscador de tramos:** lo indica en sus notas.
 - **Registros antiguos:** los anteriores a esta fase se evaluaron con la regla estricta y así se exportan.
+
+## Fase 3 · Polígono del cauce
+
+- **Importación:** en `/tramos-aptos`, tarjeta "Polígono del cauce", o con `POST /api/satellite/cauce` y `{ name, geojson }`. Se quita con `DELETE`.
+- **Validaciones:**
+  - **Tipo:** solo `Polygon` o `MultiPolygon`.
+  - **Sistema de coordenadas:** WGS84 (por defecto en GeoJSON) o UTM 17S declarado (`EPSG:32717`); cualquier otro `crs` se rechaza.
+  - **Tamaño:** máximo `GEOJSON_MAX_BYTES` (1 MB) y 20 000 vértices.
+  - **Geometría válida:** anillos cerrados, sin autointersecciones, con área > 0, y agujeros dentro de su anillo exterior.
+  - **Ubicación:** dentro de la zona del Dren 4000.
+- **Efecto:**
+  - Con polígono, el píxel de agua **debe quedar dentro** de él. Esto vale también para el píxel central: si es agua pero queda fuera, se busca agua dentro.
+  - El polígono **tiene prioridad** sobre la regla de cuerpo de agua conexo. `channelCheck` pasa de `connected_water_body` a `channel_polygon`.
+  - Se aplica en la selección del píxel (predicción, pares, revisión de píxeles) y en el buscador de tramos.
+  - Al cambiar el polígono se vacía la caché de reflectancias.
