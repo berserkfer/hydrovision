@@ -104,6 +104,17 @@ Con Planetary Computer, cada escena pasa por la selección robusta del píxel de
 
 # Reglas Sentinel-2 del Dren 4000 (fases 1–5)
 
+## Transversal · Reportes pesados en segundo plano
+
+La revisión de píxeles (`/revision-pixeles`) y el buscador de tramos (`/tramos-aptos`) **no calculan al abrir la página**.
+
+- **GET:** devuelve el último resultado guardado, su fecha y el estado del cálculo. Responde al instante.
+- **POST:** lanza el cálculo en segundo plano, uno por tipo a la vez. El progreso se consulta cada 3 s.
+- **Fallos:** un cálculo que falla no borra el último resultado correcto. Si el servidor se reinicia a mitad de un cálculo, este figura como "interrumpido".
+- **Almacenamiento:** en `HV_DATA_DIR` (`jobs/<tipo>/status.json` y `latest.json`).
+- **Requisito:** un proceso Node persistente. En plataformas sin proceso persistente habría que usar una cola externa.
+
+
 ## Fase 1 · Buscador de tramos aptos (`/tramos-aptos`)
 
 Los puntos históricos dentro del dren (P1–P5) no tienen agua visible en el píxel de 10 m. El buscador indica **dónde** muestrear para que el par campo–satélite sea posible.
